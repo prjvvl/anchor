@@ -1,0 +1,113 @@
+<title>Daily Anchor</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    max-width: 720px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    color: #1a1a1a;
+  }
+  h1 {
+    font-size: 1.5rem;
+  }
+  .video {
+    display: flex;
+    gap: 1rem;
+    border-bottom: 1px solid #ddd;
+    padding: 1rem 0;
+  }
+  .video img {
+    width: 160px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .video a {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #0645ad;
+    text-decoration: none;
+  }
+  .video a:hover {
+    text-decoration: underline;
+  }
+  .meta {
+    color: #666;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+  }
+  #status {
+    color: #666;
+  }
+</style>
+
+<h1>Daily Anchor</h1>
+<div id="status">Loading videos…</div>
+<div id="videos"></div>
+
+<script src="config.js"></script>
+<script>
+  async function loadVideos() {
+    const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
+    const statusEl = document.getElementById("status");
+    const listEl = document.getElementById("videos");
+
+    if (!supabaseUrl || !supabasePublishableKey) {
+      statusEl.textContent = "Missing Supabase config — fill in config.js";
+      return;
+    }
+
+    const url = `${supabaseUrl}/rest/v1/videos?select=*&active=eq.true&order=created_at.desc`;
+
+    try {
+      const res = await fetch(url, {
+        headers: {
+          apikey: supabasePublishableKey,
+          Authorization: `Bearer ${supabasePublishableKey}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`Supabase request failed: ${res.status}`);
+      }
+
+      const videos = await res.json();
+
+      if (videos.length === 0) {
+        statusEl.textContent = "No videos yet.";
+        return;
+      }
+
+      statusEl.remove();
+      listEl.innerHTML = videos
+        .map(
+          (v) => `
+        <div class="video">
+          <a href="https://youtu.be/${v.youtube_video_id}" target="_blank" rel="noopener">
+            <img src="https://img.youtube.com/vi/${v.youtube_video_id}/hqdefault.jpg" alt="" loading="lazy" />
+          </a>
+          <div>
+            <a href="https://youtu.be/${v.youtube_video_id}" target="_blank" rel="noopener">${escapeHtml(v.title)}</a>
+            <div class="meta">${escapeHtml(v.channel_name ?? "")} · ${escapeHtml(v.category ?? "other")}</div>
+          </div>
+        </div>
+      `
+        )
+        .join("");
+    } catch (err) {
+      statusEl.textContent = "Failed to load videos.";
+      console.error(err);
+    }
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  loadVideos();
+</script>
