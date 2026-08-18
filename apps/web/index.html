@@ -1,52 +1,161 @@
 <title>Daily Anchor</title>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <style>
+  :root {
+    --bg: #f6f7fb;
+    --card-bg: #ffffff;
+    --ink: #16233f;
+    --muted: #6b7280;
+    --accent: #16233f;
+    --border: #e5e7eb;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
   body {
-    font-family: system-ui, sans-serif;
-    max-width: 720px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-    color: #1a1a1a;
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    margin: 0;
   }
-  h1 {
-    font-size: 1.5rem;
-  }
-  .video {
+
+  header {
     display: flex;
-    gap: 1rem;
-    border-bottom: 1px solid #ddd;
-    padding: 1rem 0;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 1rem;
   }
-  .video img {
-    width: 160px;
-    height: 90px;
-    object-fit: cover;
-    border-radius: 4px;
-    flex-shrink: 0;
+
+  header img {
+    width: 36px;
+    height: 36px;
   }
-  .video a {
-    font-size: 1.05rem;
+
+  header h1 {
+    font-size: 1.4rem;
+    margin: 0;
+  }
+
+  header p {
+    margin: 0.15rem 0 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  main {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1rem 1.25rem 3rem;
+  }
+
+  #status {
+    color: var(--muted);
+    padding: 2rem 0;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .video {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  .video:hover {
+    box-shadow: 0 6px 18px rgba(22, 35, 63, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .video a.thumb {
+    display: block;
+    position: relative;
+  }
+
+  .duration {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font-size: 0.72rem;
     font-weight: 600;
-    color: #0645ad;
-    text-decoration: none;
+    padding: 1px 5px;
+    border-radius: 4px;
   }
-  .video a:hover {
+
+  .video img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+    background: #dfe3ea;
+  }
+
+  .video-body {
+    padding: 0.85rem 1rem 1rem;
+  }
+
+  .video-body a.title {
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.98rem;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .video-body a.title:hover {
     text-decoration: underline;
   }
+
   .meta {
-    color: #666;
-    font-size: 0.85rem;
-    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
   }
-  #status {
-    color: #666;
+
+  .category {
+    background: #eef0f6;
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 0.15rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
   }
 </style>
 
-<h1>Daily Anchor</h1>
-<div id="status">Loading videos…</div>
-<div id="videos"></div>
+<header>
+  <img src="favicon.svg" alt="Daily Anchor logo" />
+  <div>
+    <h1>Daily Anchor</h1>
+    <p>Curated videos worth your attention.</p>
+  </div>
+</header>
+
+<main>
+  <div id="status">Loading videos…</div>
+  <div class="grid" id="videos"></div>
+</main>
 
 <script src="config.js"></script>
 <script>
@@ -86,12 +195,20 @@
         .map(
           (v) => `
         <div class="video">
-          <a href="https://youtu.be/${v.youtube_video_id}" target="_blank" rel="noopener">
+          <a class="thumb" href="https://youtu.be/${v.youtube_video_id}" target="_blank" rel="noopener">
             <img src="https://img.youtube.com/vi/${v.youtube_video_id}/hqdefault.jpg" alt="" loading="lazy" />
+            ${v.duration ? `<span class="duration">${formatDuration(v.duration)}</span>` : ""}
           </a>
-          <div>
-            <a href="https://youtu.be/${v.youtube_video_id}" target="_blank" rel="noopener">${escapeHtml(v.title)}</a>
-            <div class="meta">${escapeHtml(v.channel_name ?? "")} · ${escapeHtml(v.category ?? "other")}</div>
+          <div class="video-body">
+            <a class="title" href="https://youtu.be/${v.youtube_video_id}" target="_blank" rel="noopener">${escapeHtml(v.title)}</a>
+            <div class="meta">
+              <span>${escapeHtml(v.channel_name ?? "")}</span>
+              ${v.metadata?.view_count != null ? `<span>· ${formatViews(v.metadata.view_count)} views</span>` : ""}
+              ${v.metadata?.published_at ? `<span>· ${formatRelativeTime(v.metadata.published_at)}</span>` : ""}
+            </div>
+            <div class="meta">
+              <span class="category">${escapeHtml(v.category ?? "other")}</span>
+            </div>
           </div>
         </div>
       `
@@ -107,6 +224,26 @@
     const div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  function formatDuration(totalSeconds) {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    const mm = h > 0 ? String(m).padStart(2, "0") : String(m);
+    const ss = String(s).padStart(2, "0");
+    return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+  }
+
+  function formatViews(count) {
+    return new Intl.NumberFormat("en", { notation: "compact" }).format(count);
+  }
+
+  function formatRelativeTime(isoString) {
+    const diffMs = Date.now() - new Date(isoString).getTime();
+    const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${Math.round(diffHours / 24)}d ago`;
   }
 
   loadVideos();
