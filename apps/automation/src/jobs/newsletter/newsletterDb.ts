@@ -35,6 +35,7 @@ export async function fetchDigestPool(): Promise<{ videos: VideoRow[]; headlines
       .from("videos")
       .select("id, youtube_video_id, title, channel_name, category")
       .eq("active", true)
+      .eq("playlist", "top-news")
       .gte("created_at", since)
       .order("created_at", { ascending: false }),
     supabase

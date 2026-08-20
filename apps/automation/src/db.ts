@@ -2,12 +2,17 @@ import type { JudgedChannelVideo } from "./gemini.js";
 import type { FeedItem } from "./rss.js";
 import { supabase } from "./supabaseClient.js";
 
-// Returns the subset of videoIds NOT already present in the DB —
-// i.e. the ones actually worth sending to Gemini for judgment.
-export async function filterAlreadySeen(videoIds: string[]): Promise<string[]> {
+// Returns the subset of videoIds NOT already present in the given playlist —
+// i.e. the ones actually worth sending to Gemini for judgment. Scoped per
+// playlist since the same video can legitimately belong to more than one.
+export async function filterAlreadySeen(videoIds: string[], playlist: string): Promise<string[]> {
   if (videoIds.length === 0) return [];
 
-  const { data, error } = await supabase.from("videos").select("youtube_video_id").in("youtube_video_id", videoIds);
+  const { data, error } = await supabase
+    .from("videos")
+    .select("youtube_video_id")
+    .eq("playlist", playlist)
+    .in("youtube_video_id", videoIds);
 
   if (error) throw error;
 
@@ -15,7 +20,7 @@ export async function filterAlreadySeen(videoIds: string[]): Promise<string[]> {
   return videoIds.filter((id) => !seen.has(id));
 }
 
-export async function insertChannelVideos(videos: JudgedChannelVideo[], category: string): Promise<void> {
+export async function insertChannelVideos(videos: JudgedChannelVideo[], category: string, playlist: string): Promise<void> {
   if (videos.length === 0) return;
 
   const rows = videos.map((v) => ({
@@ -23,16 +28,17 @@ export async function insertChannelVideos(videos: JudgedChannelVideo[], category
     channel_name: v.channelTitle,
     title: v.title,
     category,
+    playlist,
     duration: v.durationSeconds,
+    published_at: v.publishedAt,
+    views: v.viewCount,
     active: true,
     metadata: {
-      view_count: v.viewCount,
-      published_at: v.publishedAt,
       ai_reasoning: v.reasoning,
     },
   }));
 
-  const { error } = await supabase.from("videos").upsert(rows, { onConflict: "youtube_video_id", ignoreDuplicates: true });
+  const { error } = await supabase.from("videos").upsert(rows, { onConflict: "youtube_video_id,playlist", ignoreDuplicates: true });
   if (error) throw error;
 }
 

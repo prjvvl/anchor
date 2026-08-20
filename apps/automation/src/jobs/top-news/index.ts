@@ -6,6 +6,7 @@ import { notifyFailure } from "../../alert.js";
 runChannelJob({
   name: "top-news",
   category: "current-events",
+  playlist: "top-news",
   channelIds,
   // Job runs hourly — only look at uploads from the last hour so each run
   // covers fresh ground instead of re-scanning older uploads every time.

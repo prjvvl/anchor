@@ -7,10 +7,12 @@ const JOB_NAME = "archive-prune";
 
 async function run() {
   for (const table of tables) {
-    const rows = await fetchIdsForRetention(table.name, table.retention.groupBy);
-    const deleteIds = table.retention.groupBy ? idsBeyondRetentionPerGroup(rows, table.retention.keep) : rows.slice(table.retention.keep).map((r) => r.id);
+    const { keep, groupBy, scopeToGroups } = table.retention;
+    const rows = await fetchIdsForRetention(table.name, groupBy);
+    const scopedRows = scopeToGroups ? rows.filter((r) => scopeToGroups.includes(r.group ?? "")) : rows;
+    const deleteIds = groupBy ? idsBeyondRetentionPerGroup(scopedRows, keep) : scopedRows.slice(keep).map((r) => r.id);
 
-    const label = table.retention.groupBy ? `${table.retention.keep} per ${table.retention.groupBy}` : `${table.retention.keep}`;
+    const label = groupBy ? `${keep} per ${groupBy}${scopeToGroups ? ` (scoped to ${scopeToGroups.join(", ")})` : ""}` : `${keep}`;
     console.log(`[${JOB_NAME}] ${table.name}: keeping newest ${label}, deleting ${deleteIds.length}`);
 
     await deleteRowsByIds(table.name, deleteIds);

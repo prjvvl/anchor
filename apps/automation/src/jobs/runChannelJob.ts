@@ -6,6 +6,7 @@ import { judgeChannelVideos } from "../gemini.js";
 export interface ChannelJobConfig {
   name: string; // used for logging
   category: string; // must match the `videos.category` taxonomy
+  playlist: string; // which `videos.playlist` this job writes to
   channelIds: string[];
   thresholds?: FilterThresholds;
 }
@@ -16,7 +17,7 @@ export interface ChannelJobConfig {
 // Add a new job by adding a jobs/<name>/ folder that calls this with its own
 // category/channels/thresholds — no plumbing to repeat.
 export async function runChannelJob(config: ChannelJobConfig): Promise<void> {
-  const { name, category, channelIds, thresholds = DEFAULT_THRESHOLDS } = config;
+  const { name, category, playlist, channelIds, thresholds = DEFAULT_THRESHOLDS } = config;
 
   if (!process.env.GCP_API_KEY) {
     throw new Error("Missing GCP_API_KEY in .env");
@@ -43,7 +44,7 @@ export async function runChannelJob(config: ChannelJobConfig): Promise<void> {
   console.log(`[${name}] ${allCandidates.length} candidate(s) after filtering`);
   if (allCandidates.length === 0) return;
 
-  const newVideoIds = new Set(await filterAlreadySeen(allCandidates.map((v) => v.videoId)));
+  const newVideoIds = new Set(await filterAlreadySeen(allCandidates.map((v) => v.videoId), playlist));
   const newCandidates = allCandidates.filter((v) => newVideoIds.has(v.videoId));
   console.log(`[${name}] ${newCandidates.length} new (not already in DB)`);
   if (newCandidates.length === 0) return;
@@ -52,7 +53,7 @@ export async function runChannelJob(config: ChannelJobConfig): Promise<void> {
   console.log(`[${name}] Gemini picked ${picks.length} video(s)`);
   if (picks.length === 0) return;
 
-  await insertChannelVideos(picks, category);
+  await insertChannelVideos(picks, category, playlist);
 
   console.log(`[${name}] Inserted into DB:`);
   for (const p of picks) {
