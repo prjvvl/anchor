@@ -8,7 +8,9 @@
     "job:top-news": "tsx src/jobs/top-news/index.ts",
     "job:rss-headlines": "tsx src/jobs/rss-headlines/index.ts",
     "job:archive-sync": "tsx src/jobs/archive/sync.ts",
-    "job:archive-prune": "tsx src/jobs/archive/prune.ts"
+    "job:archive-prune": "tsx src/jobs/archive/prune.ts",
+    "job:newsletter": "tsx src/jobs/newsletter/index.ts",
+    "job:ops-report": "tsx src/jobs/ops-report/index.ts"
   },
   "keywords": [],
   "author": "",

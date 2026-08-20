@@ -2,6 +2,16 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=block" />
+<script>
+  (function () {
+    const stored = localStorage.getItem("anchor-theme");
+    const theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
 <style>
   :root {
     --bg: #f6f7fb;
@@ -10,6 +20,22 @@
     --muted: #6b7280;
     --accent: #16233f;
     --border: #e5e7eb;
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0f1420;
+    --card-bg: #161d2e;
+    --ink: #e8ebf3;
+    --muted: #8b93a7;
+    --accent: #e8ebf3;
+    --border: #262f45;
+  }
+
+  .material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+    font-size: 20px;
+    vertical-align: middle;
+    user-select: none;
   }
 
   * {
@@ -46,6 +72,25 @@
     margin: 0.15rem 0 0;
     color: var(--muted);
     font-size: 0.9rem;
+  }
+
+  .theme-toggle {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .theme-toggle:hover {
+    background: var(--border);
   }
 
   main {
@@ -245,8 +290,118 @@
     text-decoration: underline;
   }
 
+  .headline a .ext-icon {
+    font-size: 14px;
+    vertical-align: -2px;
+    color: var(--muted);
+  }
+
   .headline .meta {
     margin-top: 0.3rem;
+  }
+
+  footer {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 1.25rem 3rem;
+  }
+
+  .subscribe {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    justify-content: space-between;
+  }
+
+  .subscribe-copy strong {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .subscribe-copy p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+    max-width: 420px;
+  }
+
+  .subscribe-form {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .subscribe-form input[type="email"] {
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.9rem;
+    min-width: 220px;
+  }
+
+  .subscribe-form button {
+    padding: 0.6rem 1.1rem;
+    border-radius: 8px;
+    border: none;
+    background: var(--ink);
+    color: var(--bg);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .subscribe-form button:hover {
+    opacity: 0.9;
+  }
+
+  .subscribe-form button:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--card-bg);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 100;
+  }
+
+  .toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .toast.success .material-symbols-outlined {
+    color: #1a9c5f;
+  }
+
+  .toast.error .material-symbols-outlined {
+    color: #d1453b;
   }
 </style>
 
@@ -256,6 +411,9 @@
     <h1>Daily Anchor</h1>
     <p>Curated content worth your attention.</p>
   </div>
+  <button class="theme-toggle" type="button" id="theme-toggle" aria-label="Toggle dark mode">
+    <span class="material-symbols-outlined" id="theme-icon"></span>
+  </button>
 </header>
 
 <main>
@@ -275,6 +433,27 @@
     </section>
   </div>
 </main>
+
+<footer>
+  <div class="subscribe">
+    <div class="subscribe-copy">
+      <strong>Get the daily digest</strong>
+      <p>The day's best picks, distilled into one email.</p>
+    </div>
+    <form class="subscribe-form" id="subscribe-form">
+      <input type="email" id="subscribe-email" placeholder="you@example.com" required />
+      <button type="submit">
+        <span class="material-symbols-outlined">mail</span>
+        Subscribe
+      </button>
+    </form>
+  </div>
+</footer>
+
+<div class="toast" id="toast">
+  <span class="material-symbols-outlined" id="toast-icon"></span>
+  <span id="toast-message"></span>
+</div>
 
 <script src="config.js"></script>
 <script>
@@ -420,7 +599,7 @@
               <li class="headline">
                 ${h.image_url ? `<img class="headline-img" src="${escapeAttr(h.image_url)}" alt="" loading="lazy" />` : ""}
                 <div class="headline-body">
-                  <a href="${escapeAttr(h.link)}" target="_blank" rel="noopener">${escapeHtml(h.title)}</a>
+                  <a href="${escapeAttr(h.link)}" target="_blank" rel="noopener">${escapeHtml(h.title)} <span class="material-symbols-outlined ext-icon">open_in_new</span></a>
                   <div class="meta">
                     <span>${escapeHtml(h.source ?? "")}</span>
                   </div>
@@ -438,6 +617,58 @@
       statusEl.textContent = "Failed to load headlines.";
       console.error(err);
     }
+  }
+
+  let toastTimer;
+  function showToast(message, type) {
+    const toast = document.getElementById("toast");
+    document.getElementById("toast-icon").textContent = type === "success" ? "check_circle" : "error";
+    document.getElementById("toast-message").textContent = message;
+    toast.classList.remove("success", "error");
+    toast.classList.add(type, "visible");
+
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("visible"), 4000);
+  }
+
+  function initSubscribeForm() {
+    const form = document.getElementById("subscribe-form");
+    const button = form.querySelector("button");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
+      const email = document.getElementById("subscribe-email").value.trim();
+
+      button.disabled = true;
+
+      try {
+        const res = await fetch(`${supabaseUrl}/rest/v1/subscribers`, {
+          method: "POST",
+          headers: {
+            apikey: supabasePublishableKey,
+            Authorization: `Bearer ${supabasePublishableKey}`,
+            "Content-Type": "application/json",
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify({ email }),
+        });
+
+        if (res.status === 409) {
+          showToast("You're already subscribed.", "error");
+        } else if (!res.ok) {
+          throw new Error(`Subscribe failed: ${res.status}`);
+        } else {
+          showToast("Subscribed! Check your inbox tomorrow morning.", "success");
+          form.reset();
+        }
+      } catch (err) {
+        showToast("Something went wrong — please try again.", "error");
+        console.error(err);
+      } finally {
+        button.disabled = false;
+      }
+    });
   }
 
   function playInline(event) {
@@ -494,6 +725,26 @@
     return `${Math.round(diffHours / 24)}d ago`;
   }
 
+  function initThemeToggle() {
+    const toggle = document.getElementById("theme-toggle");
+    const icon = document.getElementById("theme-icon");
+
+    const applyIcon = (theme) => {
+      icon.textContent = theme === "dark" ? "light_mode" : "dark_mode";
+    };
+
+    applyIcon(document.documentElement.getAttribute("data-theme"));
+
+    toggle.addEventListener("click", () => {
+      const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("anchor-theme", next);
+      applyIcon(next);
+    });
+  }
+
+  initThemeToggle();
+  initSubscribeForm();
   loadVideos();
   loadHeadlines();
 </script>

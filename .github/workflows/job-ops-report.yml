@@ -1,13 +1,9 @@
-name: Job - Top News
+name: Job - Ops Report
 
 on:
   schedule:
-    - cron: "0 * * * *" # hourly
+    - cron: "0 2 * * 1" # 7:30 AM IST, Monday
   workflow_dispatch: {}
-
-concurrency:
-  group: job-top-news
-  cancel-in-progress: false
 
 jobs:
   run:
@@ -21,10 +17,8 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run job:top-news --workspace=apps/automation
+      - run: npm run job:ops-report --workspace=apps/automation
         env:
-          GCP_API_KEY: ${{ secrets.GCP_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}

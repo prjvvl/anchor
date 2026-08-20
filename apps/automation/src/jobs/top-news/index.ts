@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { runChannelJob } from "../runChannelJob.js";
 import { channelIds } from "./channels.js";
+import { notifyFailure } from "../../alert.js";
 
 runChannelJob({
   name: "top-news",
@@ -12,7 +13,8 @@ runChannelJob({
   // judging prompt and decides what's worth surfacing, rather than a
   // hardcoded threshold silently dropping fresh-but-not-yet-popular videos.
   thresholds: { minDurationSeconds: 180, maxAgeHours: 1 },
-}).catch((err) => {
+}).catch(async (err) => {
   console.error(err);
+  await notifyFailure("top-news", err);
   process.exit(1);
 });
