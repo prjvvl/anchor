@@ -2,7 +2,7 @@ import type { JudgedChannelVideo } from "./gemini.js";
 import type { FeedItem } from "./rss.js";
 import { supabase } from "./supabaseClient.js";
 
-// Returns the subset of videoIds NOT already present in the given playlist —
+// Returns the subset of videoIds NOT already present in the given playlist,
 // i.e. the ones actually worth sending to Gemini for judgment. Scoped per
 // playlist since the same video can legitimately belong to more than one.
 export async function filterAlreadySeen(videoIds: string[], playlist: string): Promise<string[]> {

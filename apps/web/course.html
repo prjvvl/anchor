@@ -1,0 +1,174 @@
+<title>Daily Anchor - Course</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=block" />
+<script src="theme-init.js"></script>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  .breadcrumb {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin: 0 0 0.9rem;
+  }
+
+  .breadcrumb a {
+    color: var(--muted);
+  }
+
+  .episode-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+</style>
+
+<header>
+  <button class="hamburger" type="button" id="hamburger" aria-label="Open menu">
+    <span class="material-symbols-outlined">menu</span>
+  </button>
+  <img src="favicon.svg" alt="Daily Anchor logo" />
+  <div>
+    <h1>Daily Anchor</h1>
+    <p>Curated content worth your attention.</p>
+  </div>
+  <button class="theme-toggle" type="button" id="theme-toggle" aria-label="Toggle dark mode">
+    <span class="material-symbols-outlined" id="theme-icon"></span>
+  </button>
+</header>
+
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<div class="app-body">
+  <nav class="sidebar" id="sidebar">
+    <a class="nav-item" href="index.html"><span class="material-symbols-outlined">today</span> Home</a>
+    <a class="nav-item" href="courses.html" aria-current="page"><span class="material-symbols-outlined">school</span> Courses</a>
+  </nav>
+
+  <main>
+    <p class="breadcrumb"><a href="courses.html">Courses</a> / <span id="course-crumb"></span></p>
+    <h2 class="page-heading" id="course-title"></h2>
+    <p class="page-sub" id="course-sub"></p>
+    <div id="status" class="sr-only">Loading lessons…</div>
+    <div class="card-grid" id="lessons"></div>
+  </main>
+</div>
+
+<footer>
+  <div class="subscribe">
+    <div class="subscribe-copy">
+      <strong>Get the daily digest</strong>
+      <p>The day's best picks, distilled into one email.</p>
+    </div>
+    <form class="subscribe-form" id="subscribe-form">
+      <input type="email" id="subscribe-email" placeholder="you@example.com" required />
+      <button type="submit">
+        <span class="material-symbols-outlined">mail</span>
+        Subscribe
+      </button>
+    </form>
+  </div>
+</footer>
+
+<div class="toast" id="toast">
+  <span class="material-symbols-outlined" id="toast-icon"></span>
+  <span id="toast-message"></span>
+</div>
+
+<script src="config.js"></script>
+<script src="playlists.js"></script>
+<script src="helpers.js"></script>
+<script>
+  // Same card as the homepage video grid. Ordered courses (real idx) get an
+  // episode number badge instead of a view count, since recency/views aren't
+  // meaningful for a fixed, complete series.
+  function renderLessons(videos, ordered) {
+    return videos
+      .map(
+        (v, i) => `
+        <div class="video">
+          <button class="thumb" type="button" data-video-id="${escapeAttr(v.youtube_video_id)}" aria-label="Play ${escapeAttr(v.title)}">
+            <img src="https://img.youtube.com/vi/${escapeAttr(v.youtube_video_id)}/hqdefault.jpg" alt="" loading="lazy" />
+            <span class="play-badge"></span>
+            ${ordered ? `<span class="episode-badge">EP ${i + 1}</span>` : ""}
+            ${v.duration ? `<span class="duration">${formatDuration(v.duration)}</span>` : ""}
+          </button>
+          <div class="video-body">
+            <span class="title">${escapeHtml(v.title)}</span>
+            <div class="meta">
+              <span>${escapeHtml(v.channel_name ?? "")}</span>
+              ${!ordered && v.views != null ? `<span>· ${formatViews(v.views)} views</span>` : ""}
+            </div>
+          </div>
+        </div>`
+      )
+      .join("");
+  }
+
+  async function loadCourse() {
+    const slug = new URLSearchParams(location.search).get("slug");
+    const statusEl = document.getElementById("status");
+    const lessonsEl = document.getElementById("lessons");
+    const info = window.ANCHOR_PLAYLISTS?.[slug];
+
+    if (!slug || !info || info.type !== "course") {
+      statusEl.textContent = "Course not found.";
+      statusEl.classList.remove("sr-only");
+      document.getElementById("course-title").textContent = "Course not found";
+      return;
+    }
+
+    document.title = `Daily Anchor - ${info.displayName}`;
+    document.getElementById("course-crumb").textContent = info.displayName;
+    document.getElementById("course-title").textContent = info.displayName;
+    document.getElementById("course-sub").textContent = info.description ?? "";
+
+    const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
+    if (!supabaseUrl || !supabasePublishableKey) {
+      statusEl.textContent = "Missing Supabase config — fill in config.js";
+      statusEl.classList.remove("sr-only");
+      return;
+    }
+
+    const url = `${supabaseUrl}/rest/v1/videos?select=*&active=eq.true&playlist=eq.${encodeURIComponent(slug)}&order=idx.asc.nullslast,published_at.desc,created_at.desc`;
+
+    try {
+      const res = await fetch(url, {
+        headers: {
+          apikey: supabasePublishableKey,
+          Authorization: `Bearer ${supabasePublishableKey}`,
+        },
+      });
+
+      if (!res.ok) throw new Error(`Supabase request failed: ${res.status}`);
+
+      const videos = await res.json();
+
+      if (videos.length === 0) {
+        statusEl.textContent = "No lessons yet.";
+        statusEl.classList.remove("sr-only");
+        return;
+      }
+
+      statusEl.remove();
+      lessonsEl.innerHTML = renderLessons(videos, Boolean(info.ordered));
+      lessonsEl.addEventListener("click", playInline);
+    } catch (err) {
+      statusEl.textContent = "Failed to load lessons.";
+      statusEl.classList.remove("sr-only");
+      console.error(err);
+    }
+  }
+
+  initThemeToggle();
+  initSidebarDrawer();
+  initSubscribeForm();
+  loadCourse();
+</script>

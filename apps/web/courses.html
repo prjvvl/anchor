@@ -1,0 +1,162 @@
+<title>Daily Anchor - Courses</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=block" />
+<script src="theme-init.js"></script>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  .course-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.2rem;
+    text-decoration: none;
+    color: var(--ink);
+    display: block;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  .course-card:hover {
+    box-shadow: 0 6px 18px rgba(22, 35, 63, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .course-card .title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0 0 0.35rem;
+  }
+
+  .course-card .desc {
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin: 0 0 0.75rem;
+  }
+
+  .course-card .meta {
+    margin-top: 0;
+  }
+</style>
+
+<header>
+  <button class="hamburger" type="button" id="hamburger" aria-label="Open menu">
+    <span class="material-symbols-outlined">menu</span>
+  </button>
+  <img src="favicon.svg" alt="Daily Anchor logo" />
+  <div>
+    <h1>Daily Anchor</h1>
+    <p>Curated content worth your attention.</p>
+  </div>
+  <button class="theme-toggle" type="button" id="theme-toggle" aria-label="Toggle dark mode">
+    <span class="material-symbols-outlined" id="theme-icon"></span>
+  </button>
+</header>
+
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<div class="app-body">
+  <nav class="sidebar" id="sidebar">
+    <a class="nav-item" href="index.html"><span class="material-symbols-outlined">today</span> Home</a>
+    <a class="nav-item" href="courses.html" aria-current="page"><span class="material-symbols-outlined">school</span> Courses</a>
+  </nav>
+
+  <main>
+    <h2 class="page-heading">Courses</h2>
+    <p class="page-sub">Complete series and curated playlists. Browse at your own pace, no daily rotation.</p>
+    <div id="status" class="sr-only">Loading courses…</div>
+    <div class="card-grid" id="courses"></div>
+  </main>
+</div>
+
+<footer>
+  <div class="subscribe">
+    <div class="subscribe-copy">
+      <strong>Get the daily digest</strong>
+      <p>The day's best picks, distilled into one email.</p>
+    </div>
+    <form class="subscribe-form" id="subscribe-form">
+      <input type="email" id="subscribe-email" placeholder="you@example.com" required />
+      <button type="submit">
+        <span class="material-symbols-outlined">mail</span>
+        Subscribe
+      </button>
+    </form>
+  </div>
+</footer>
+
+<div class="toast" id="toast">
+  <span class="material-symbols-outlined" id="toast-icon"></span>
+  <span id="toast-message"></span>
+</div>
+
+<script src="config.js"></script>
+<script src="playlists.js"></script>
+<script src="helpers.js"></script>
+<script>
+  async function fetchLessonCount(slug) {
+    const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
+    const res = await fetch(`${supabaseUrl}/rest/v1/videos?select=id&active=eq.true&playlist=eq.${slug}`, {
+      headers: {
+        apikey: supabasePublishableKey,
+        Authorization: `Bearer ${supabasePublishableKey}`,
+        Prefer: "count=exact",
+        Range: "0-0",
+      },
+    });
+    const range = res.headers.get("content-range"); // "0-0/43"
+    return range ? Number(range.split("/")[1]) : null;
+  }
+
+  async function loadCourses() {
+    const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
+    const statusEl = document.getElementById("status");
+    const listEl = document.getElementById("courses");
+
+    if (!supabaseUrl || !supabasePublishableKey) {
+      statusEl.textContent = "Missing Supabase config — fill in config.js";
+      statusEl.classList.remove("sr-only");
+      return;
+    }
+
+    const courseEntries = Object.entries(window.ANCHOR_PLAYLISTS ?? {}).filter(([, info]) => info.type === "course");
+
+    if (courseEntries.length === 0) {
+      statusEl.textContent = "No courses yet.";
+      statusEl.classList.remove("sr-only");
+      return;
+    }
+
+    try {
+      const counts = await Promise.all(courseEntries.map(([slug]) => fetchLessonCount(slug)));
+
+      statusEl.remove();
+      listEl.innerHTML = courseEntries
+        .map(([slug, info], i) => {
+          const count = counts[i];
+          return `
+          <a class="course-card" href="course.html?slug=${encodeURIComponent(slug)}">
+            <div class="title">${escapeHtml(info.displayName)}</div>
+            <p class="desc">${escapeHtml(info.description ?? "")}</p>
+            <div class="meta">
+              <span>${escapeHtml(info.source ?? "")}</span>
+              ${count != null ? `<span>· ${count} lessons</span>` : ""}
+            </div>
+          </a>`;
+        })
+        .join("");
+    } catch (err) {
+      listEl.innerHTML = "";
+      statusEl.textContent = "Failed to load courses.";
+      statusEl.classList.remove("sr-only");
+      console.error(err);
+    }
+  }
+
+  initThemeToggle();
+  initSidebarDrawer();
+  initSubscribeForm();
+  loadCourses();
+</script>

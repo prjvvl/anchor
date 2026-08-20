@@ -27,5 +27,5 @@ alter table videos alter column playlist set not null;
 alter table videos drop constraint videos_youtube_video_id_key;
 alter table videos add constraint videos_video_playlist_unique unique (youtube_video_id, playlist);
 
--- Superseded by `playlist` + `idx` — never populated by any code path.
+-- Superseded by `playlist` + `idx`, never populated by any code path.
 alter table videos drop column playlist_id;
