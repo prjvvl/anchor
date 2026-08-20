@@ -5,100 +5,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=block" />
-<script>
-  (function () {
-    const stored = localStorage.getItem("anchor-theme");
-    const theme = stored || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
-    document.documentElement.setAttribute("data-theme", theme);
-  })();
-</script>
+<script src="theme-init.js"></script>
+<link rel="stylesheet" href="styles.css" />
 <style>
-  :root {
-    --bg: #f6f7fb;
-    --card-bg: #ffffff;
-    --ink: #16233f;
-    --muted: #6b7280;
-    --accent: #16233f;
-    --border: #e5e7eb;
-  }
-
-  :root[data-theme="dark"] {
-    --bg: #0f1420;
-    --card-bg: #161d2e;
-    --ink: #e8ebf3;
-    --muted: #8b93a7;
-    --accent: #e8ebf3;
-    --border: #262f45;
-  }
-
-  .material-symbols-outlined {
-    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
-    font-size: 20px;
-    vertical-align: middle;
-    user-select: none;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    margin: 0;
-  }
-
-  header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 2rem 1.25rem 1rem;
-  }
-
-  header img {
-    width: 36px;
-    height: 36px;
-  }
-
-  header h1 {
-    font-size: 1.4rem;
-    margin: 0;
-  }
-
-  header p {
-    margin: 0.15rem 0 0;
-    color: var(--muted);
-    font-size: 0.9rem;
-  }
-
-  .theme-toggle {
-    margin-left: auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    flex-shrink: 0;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    background: var(--card-bg);
-    color: var(--ink);
-    cursor: pointer;
-  }
-
-  .theme-toggle:hover {
-    background: var(--border);
-  }
-
-  main {
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 1rem 1.25rem 3rem;
-  }
-
   .layout {
     display: grid;
     grid-template-columns: minmax(0, 2.2fr) minmax(260px, 1fr);
@@ -106,132 +15,10 @@
     align-items: start;
   }
 
-  @media (max-width: 860px) {
-    .layout {
-      grid-template-columns: 1fr;
-    }
-
-    .grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  #status {
-    color: var(--muted);
-    padding: 2rem 0;
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
-  }
-
-  .video {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    transition: box-shadow 0.15s ease, transform 0.15s ease;
-  }
-
-  .video:hover {
-    box-shadow: 0 6px 18px rgba(22, 35, 63, 0.1);
-    transform: translateY(-2px);
-  }
-
-  .video .thumb {
-    display: block;
-    position: relative;
-    cursor: pointer;
-    border: none;
-    padding: 0;
-    width: 100%;
-    background: none;
-  }
-
-  .duration {
-    position: absolute;
-    bottom: 6px;
-    right: 6px;
-    background: rgba(0, 0, 0, 0.75);
-    color: #fff;
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 1px 5px;
-    border-radius: 4px;
-  }
-
-  .video img,
-  .video iframe {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    object-fit: cover;
-    display: block;
-    background: #dfe3ea;
-    border: none;
-  }
-
-  .play-badge {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .play-badge::after {
-    content: "";
-    border-style: solid;
-    border-width: 8px 0 8px 13px;
-    border-color: transparent transparent transparent #fff;
-    margin-left: 3px;
-  }
-
-  .thumb:hover .play-badge {
-    background: rgba(0, 0, 0, 0.85);
-  }
-
-  .video-body {
-    padding: 0.85rem 1rem 1rem;
-  }
-
-  .video-body .title {
-    color: var(--ink);
-    font-weight: 600;
-    font-size: 0.98rem;
-    line-height: 1.35;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .meta {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--muted);
-    font-size: 0.8rem;
-    margin-top: 0.5rem;
-  }
-
   .videos-column h2,
   .headlines-column h2 {
     font-size: 1.1rem;
     margin: 0;
-  }
-
-  .last-updated {
-    color: var(--muted);
-    font-size: 0.78rem;
-    margin: 0.2rem 0 0.85rem;
   }
 
   .headline-group {
@@ -305,149 +92,59 @@
     margin-top: 0.3rem;
   }
 
-  footer {
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 0 1.25rem 3rem;
+  /* Top News / Headlines sub-tabs, mobile only. Desktop keeps both columns visible. */
+  .subtabs {
+    display: none;
   }
 
-  .subscribe {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.5rem;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 1rem;
-    justify-content: space-between;
-  }
-
-  .subscribe-copy strong {
-    display: block;
-    font-size: 1rem;
-    margin-bottom: 0.2rem;
-  }
-
-  .subscribe-copy p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 0.85rem;
-    max-width: 420px;
-  }
-
-  .subscribe-form {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .subscribe-form input[type="email"] {
-    padding: 0.6rem 0.8rem;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--ink);
-    font-size: 0.9rem;
-    min-width: 220px;
-  }
-
-  .subscribe-form button {
-    padding: 0.6rem 1.1rem;
-    border-radius: 8px;
-    border: none;
-    background: var(--ink);
-    color: var(--bg);
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-
-  .subscribe-form button:hover {
-    opacity: 0.9;
-  }
-
-  .subscribe-form button:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--card-bg);
-    color: var(--ink);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.75rem 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.88rem;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    z-index: 100;
-  }
-
-  .toast.visible {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-
-  .toast.success .material-symbols-outlined {
-    color: #1a9c5f;
-  }
-
-  .toast.error .material-symbols-outlined {
-    color: #d1453b;
-  }
-
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-
-  @keyframes shimmer {
-    0% {
-      background-position: -400px 0;
+  @media (max-width: 860px) {
+    .layout {
+      grid-template-columns: 1fr;
     }
-    100% {
-      background-position: 400px 0;
+
+    .subtabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.1rem;
     }
-  }
 
-  .skeleton {
-    background-image: linear-gradient(90deg, var(--border) 25%, var(--card-bg) 50%, var(--border) 75%);
-    background-size: 400px 100%;
-    animation: shimmer 1.4s linear infinite;
-  }
+    .subtab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.55rem;
+      cursor: pointer;
+    }
 
-  .video .thumb.skeleton {
-    display: block;
-    aspect-ratio: 16 / 9;
-  }
+    .subtab.active {
+      background: var(--ink);
+      color: var(--bg);
+      border-color: var(--ink);
+    }
 
-  .skeleton.line {
-    height: 0.85rem;
-    border-radius: 4px;
+    main[data-mobile-view="top-news"] .headlines-column {
+      display: none;
+    }
+
+    main[data-mobile-view="headlines"] .videos-column {
+      display: none;
+    }
   }
 </style>
 
 <header>
+  <button class="hamburger" type="button" id="hamburger" aria-label="Open menu">
+    <span class="material-symbols-outlined">menu</span>
+  </button>
   <img src="favicon.svg" alt="Daily Anchor logo" />
   <div>
     <h1>Daily Anchor</h1>
@@ -458,23 +155,40 @@
   </button>
 </header>
 
-<main>
-  <div class="layout">
-    <section class="videos-column">
-      <h2>Latest Videos</h2>
-      <div class="last-updated" id="videos-updated"></div>
-      <div id="status" class="sr-only">Loading videos…</div>
-      <div class="grid" id="videos"></div>
-    </section>
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<div class="app-body">
+  <nav class="sidebar" id="sidebar">
+    <a class="nav-item" href="index.html" aria-current="page"><span class="material-symbols-outlined">today</span> Home</a>
+    <a class="nav-item" href="courses.html"><span class="material-symbols-outlined">school</span> Courses</a>
+  </nav>
 
-    <section class="headlines-column">
-      <h2>Latest Headlines</h2>
-      <div class="last-updated" id="headlines-updated"></div>
-      <div id="headlines-status" class="sr-only">Loading headlines…</div>
-      <div id="headlines"></div>
-    </section>
-  </div>
-</main>
+  <main data-mobile-view="top-news">
+    <div class="subtabs">
+      <button class="subtab active" type="button" data-hometab="top-news">
+        <span class="material-symbols-outlined">play_circle</span> Top News
+      </button>
+      <button class="subtab" type="button" data-hometab="headlines">
+        <span class="material-symbols-outlined">newspaper</span> Headlines
+      </button>
+    </div>
+
+    <div class="layout">
+      <section class="videos-column">
+        <h2 id="videos-heading"></h2>
+        <div class="last-updated" id="videos-updated"></div>
+        <div id="status" class="sr-only">Loading videos…</div>
+        <div class="card-grid" id="videos"></div>
+      </section>
+
+      <section class="headlines-column">
+        <h2>Latest Headlines</h2>
+        <div class="last-updated" id="headlines-updated"></div>
+        <div id="headlines-status" class="sr-only">Loading headlines…</div>
+        <div id="headlines"></div>
+      </section>
+    </div>
+  </main>
+</div>
 
 <footer>
   <div class="subscribe">
@@ -498,7 +212,11 @@
 </div>
 
 <script src="config.js"></script>
+<script src="playlists.js"></script>
+<script src="helpers.js"></script>
 <script>
+  const VIDEOS_PLAYLIST = "top-news";
+
   function renderVideoSkeletons(count) {
     return Array.from({ length: count })
       .map(
@@ -541,6 +259,9 @@
     const statusEl = document.getElementById("status");
     const listEl = document.getElementById("videos");
 
+    const playlistInfo = window.ANCHOR_PLAYLISTS?.[VIDEOS_PLAYLIST];
+    document.getElementById("videos-heading").textContent = playlistInfo?.displayName ?? "Latest Videos";
+
     if (!supabaseUrl || !supabasePublishableKey) {
       statusEl.textContent = "Missing Supabase config — fill in config.js";
       statusEl.classList.remove("sr-only");
@@ -549,7 +270,7 @@
 
     listEl.innerHTML = renderVideoSkeletons(6);
 
-    const url = `${supabaseUrl}/rest/v1/videos?select=*&active=eq.true&playlist=eq.top-news&order=idx.asc.nullslast,published_at.desc,created_at.desc&limit=24`;
+    const url = `${supabaseUrl}/rest/v1/videos?select=*&active=eq.true&playlist=eq.${VIDEOS_PLAYLIST}&order=idx.asc.nullslast,published_at.desc,created_at.desc&limit=24`;
 
     try {
       const res = await fetch(url, {
@@ -712,132 +433,20 @@
     }
   }
 
-  let toastTimer;
-  function showToast(message, type) {
-    const toast = document.getElementById("toast");
-    document.getElementById("toast-icon").textContent = type === "success" ? "check_circle" : "error";
-    document.getElementById("toast-message").textContent = message;
-    toast.classList.remove("success", "error");
-    toast.classList.add(type, "visible");
-
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove("visible"), 4000);
-  }
-
-  function initSubscribeForm() {
-    const form = document.getElementById("subscribe-form");
-    const button = form.querySelector("button");
-
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
-      const email = document.getElementById("subscribe-email").value.trim();
-
-      button.disabled = true;
-
-      try {
-        const res = await fetch(`${supabaseUrl}/rest/v1/subscribers`, {
-          method: "POST",
-          headers: {
-            apikey: supabasePublishableKey,
-            Authorization: `Bearer ${supabasePublishableKey}`,
-            "Content-Type": "application/json",
-            Prefer: "return=minimal",
-          },
-          body: JSON.stringify({ email }),
-        });
-
-        if (res.status === 409) {
-          showToast("You're already subscribed.", "error");
-        } else if (!res.ok) {
-          throw new Error(`Subscribe failed: ${res.status}`);
-        } else {
-          showToast("Subscribed! Check your inbox tomorrow morning.", "success");
-          form.reset();
-        }
-      } catch (err) {
-        showToast("Something went wrong — please try again.", "error");
-        console.error(err);
-      } finally {
-        button.disabled = false;
-      }
-    });
-  }
-
-  function playInline(event) {
-    const thumb = event.target.closest(".thumb");
-    if (!thumb) return;
-
-    const videoId = thumb.dataset.videoId;
-    const iframe = document.createElement("iframe");
-    iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`;
-    iframe.title = thumb.getAttribute("aria-label") ?? "";
-    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-    iframe.allowFullscreen = true;
-
-    thumb.replaceWith(iframe);
-  }
-
-  function escapeHtml(str) {
-    const div = document.createElement("div");
-    div.textContent = str;
-    return div.innerHTML;
-  }
-
-  // escapeHtml alone isn't safe inside a quoted attribute — the
-  // textContent/innerHTML round-trip encodes <, >, and & but not double
-  // quotes, so a `"` in the source string could still break out of the
-  // attribute. Used for anything placed inside a quoted HTML attribute
-  // (href, src, aria-label, data-*), never for plain text content.
-  function escapeAttr(str) {
-    return escapeHtml(str ?? "").replaceAll('"', "&quot;");
-  }
-
-  function formatDuration(totalSeconds) {
-    const h = Math.floor(totalSeconds / 3600);
-    const m = Math.floor((totalSeconds % 3600) / 60);
-    const s = totalSeconds % 60;
-    const mm = h > 0 ? String(m).padStart(2, "0") : String(m);
-    const ss = String(s).padStart(2, "0");
-    return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
-  }
-
-  function formatViews(count) {
-    return new Intl.NumberFormat("en", { notation: "compact" }).format(count);
-  }
-
-  // Minute granularity — rounding straight to hours would show "0h ago"
-  // for anything under 30 minutes old, which is most of what shows up here
-  // given how often these sections refresh.
-  function formatMinutesAgo(timestampMs) {
-    const diffMinutes = Math.max(0, Math.round((Date.now() - timestampMs) / (1000 * 60)));
-    if (diffMinutes < 1) return "just now";
-    if (diffMinutes < 60) return `${diffMinutes}m ago`;
-    const diffHours = Math.round(diffMinutes / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${Math.round(diffHours / 24)}d ago`;
-  }
-
-  function initThemeToggle() {
-    const toggle = document.getElementById("theme-toggle");
-    const icon = document.getElementById("theme-icon");
-
-    const applyIcon = (theme) => {
-      icon.textContent = theme === "dark" ? "light_mode" : "dark_mode";
-    };
-
-    applyIcon(document.documentElement.getAttribute("data-theme"));
-
-    toggle.addEventListener("click", () => {
-      const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", next);
-      localStorage.setItem("anchor-theme", next);
-      applyIcon(next);
+  function initMobileHomeTabs() {
+    const main = document.querySelector("main");
+    document.querySelectorAll("[data-hometab]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        main.dataset.mobileView = btn.dataset.hometab;
+        document.querySelectorAll("[data-hometab]").forEach((b) => b.classList.toggle("active", b === btn));
+      });
     });
   }
 
   initThemeToggle();
+  initSidebarDrawer();
   initSubscribeForm();
+  initMobileHomeTabs();
   loadVideos();
   loadHeadlines();
 </script>
