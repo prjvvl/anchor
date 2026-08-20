@@ -173,17 +173,7 @@
     margin-top: 0.5rem;
   }
 
-  .category {
-    background: #eef0f6;
-    color: var(--accent);
-    border-radius: 999px;
-    padding: 0.15rem 0.55rem;
-    font-size: 0.72rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-  }
-
+  .videos-column h2,
   .headlines-column h2 {
     font-size: 1.1rem;
     margin: 0;
@@ -271,6 +261,7 @@
 <main>
   <div class="layout">
     <section class="videos-column">
+      <h2>Latest Videos</h2>
       <div class="last-updated" id="videos-updated"></div>
       <div id="status">Loading videos…</div>
       <div class="grid" id="videos"></div>
@@ -338,10 +329,7 @@
             <div class="meta">
               <span>${escapeHtml(v.channel_name ?? "")}</span>
               ${v.metadata?.view_count != null ? `<span>· ${formatViews(v.metadata.view_count)} views</span>` : ""}
-              ${v.metadata?.published_at ? `<span>· ${formatRelativeTime(v.metadata.published_at)}</span>` : ""}
-            </div>
-            <div class="meta">
-              <span class="category">${escapeHtml(v.category ?? "other")}</span>
+              ${v.metadata?.published_at ? `<span>· ${formatMinutesAgo(new Date(v.metadata.published_at).getTime())}</span>` : ""}
             </div>
           </div>
         </div>
@@ -494,16 +482,9 @@
     return new Intl.NumberFormat("en", { notation: "compact" }).format(count);
   }
 
-  function formatRelativeTime(isoString) {
-    const diffMs = Date.now() - new Date(isoString).getTime();
-    const diffHours = Math.round(diffMs / (1000 * 60 * 60));
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${Math.round(diffHours / 24)}d ago`;
-  }
-
-  // Minute-granularity version for "last updated" — the section can refresh
-  // every 90 min, so rounding straight to hours (like formatRelativeTime)
-  // would hide anything under 30 minutes as "0h ago".
+  // Minute granularity — rounding straight to hours would show "0h ago"
+  // for anything under 30 minutes old, which is most of what shows up here
+  // given how often these sections refresh.
   function formatMinutesAgo(timestampMs) {
     const diffMinutes = Math.max(0, Math.round((Date.now() - timestampMs) / (1000 * 60)));
     if (diffMinutes < 1) return "just now";

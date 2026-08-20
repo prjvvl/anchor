@@ -2,7 +2,7 @@ import type { VideoCandidate } from "./youtube.js";
 
 export interface FilterThresholds {
   minDurationSeconds: number; // excludes Shorts and low-effort clips
-  minViewCount: number;
+  minViewCount?: number; // omit to skip this gate entirely — let Gemini judge popularity/substance instead
   maxAgeHours: number;
 }
 
@@ -18,7 +18,7 @@ export function passesFilters(video: VideoCandidate, thresholds: FilterThreshold
 
   return (
     video.durationSeconds >= thresholds.minDurationSeconds &&
-    video.viewCount >= thresholds.minViewCount &&
+    (thresholds.minViewCount === undefined || video.viewCount >= thresholds.minViewCount) &&
     ageHours <= thresholds.maxAgeHours
   );
 }
