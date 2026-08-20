@@ -1,9 +1,13 @@
-name: Daily News Pipeline
+name: Job - Top News
 
 on:
   schedule:
-    - cron: "0 13 * * *" # 13:00 UTC daily
+    - cron: "0 * * * *" # hourly
   workflow_dispatch: {}
+
+concurrency:
+  group: job-top-news
+  cancel-in-progress: false
 
 jobs:
   run:
@@ -17,7 +21,7 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run news --workspace=apps/automation
+      - run: npm run job:top-news --workspace=apps/automation
         env:
           GCP_API_KEY: ${{ secrets.GCP_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

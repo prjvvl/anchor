@@ -1,12 +1,14 @@
 {
   "name": "@anchor/automation",
   "version": "1.0.0",
-  "description": "Daily discovery job: finds candidate videos from trusted channels for review",
+  "description": "Discovery jobs: find candidate videos from trusted YouTube channels and headlines from RSS feeds",
   "type": "module",
   "private": true,
   "scripts": {
-    "discover": "tsx src/index.ts",
-    "news": "tsx src/news/pipeline.ts"
+    "job:top-news": "tsx src/jobs/top-news/index.ts",
+    "job:rss-headlines": "tsx src/jobs/rss-headlines/index.ts",
+    "job:archive-sync": "tsx src/jobs/archive/sync.ts",
+    "job:archive-prune": "tsx src/jobs/archive/prune.ts"
   },
   "keywords": [],
   "author": "",

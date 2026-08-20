@@ -1,0 +1,30 @@
+name: Job - RSS Headlines
+
+on:
+  schedule:
+    # Two lines combine for an exact 90-minute cadence (00:00, 01:30, 03:00, ...) —
+    # cron has no native "every 90 minutes" step since minutes only go 0-59.
+    - cron: "0 0,3,6,9,12,15,18,21 * * *"
+    - cron: "30 1,4,7,10,13,16,19,22 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: job-rss-headlines
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      - run: npm run job:rss-headlines --workspace=apps/automation
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}

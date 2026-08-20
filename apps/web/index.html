@@ -27,7 +27,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    max-width: 1000px;
+    max-width: 1300px;
     margin: 0 auto;
     padding: 2rem 1.25rem 1rem;
   }
@@ -49,9 +49,22 @@
   }
 
   main {
-    max-width: 1000px;
+    max-width: 1300px;
     margin: 0 auto;
     padding: 1rem 1.25rem 3rem;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 2.2fr) minmax(260px, 1fr);
+    gap: 2rem;
+    align-items: start;
+  }
+
+  @media (max-width: 860px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
   }
 
   #status {
@@ -78,9 +91,14 @@
     transform: translateY(-2px);
   }
 
-  .video a.thumb {
+  .video .thumb {
     display: block;
     position: relative;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    width: 100%;
+    background: none;
   }
 
   .duration {
@@ -95,21 +113,48 @@
     border-radius: 4px;
   }
 
-  .video img {
+  .video img,
+  .video iframe {
     width: 100%;
     aspect-ratio: 16 / 9;
     object-fit: cover;
     display: block;
     background: #dfe3ea;
+    border: none;
+  }
+
+  .play-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .play-badge::after {
+    content: "";
+    border-style: solid;
+    border-width: 8px 0 8px 13px;
+    border-color: transparent transparent transparent #fff;
+    margin-left: 3px;
+  }
+
+  .thumb:hover .play-badge {
+    background: rgba(0, 0, 0, 0.85);
   }
 
   .video-body {
     padding: 0.85rem 1rem 1rem;
   }
 
-  .video-body a.title {
+  .video-body .title {
     color: var(--ink);
-    text-decoration: none;
     font-weight: 600;
     font-size: 0.98rem;
     line-height: 1.35;
@@ -117,10 +162,6 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-  }
-
-  .video-body a.title:hover {
-    text-decoration: underline;
   }
 
   .meta {
@@ -142,19 +183,106 @@
     text-transform: uppercase;
     letter-spacing: 0.03em;
   }
+
+  .headlines-column h2 {
+    font-size: 1.1rem;
+    margin: 0;
+  }
+
+  .last-updated {
+    color: var(--muted);
+    font-size: 0.78rem;
+    margin: 0.2rem 0 0.85rem;
+  }
+
+  .headline-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .headline-group h3 {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 0 0 0.5rem;
+  }
+
+  .headlines {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .headline {
+    display: flex;
+    gap: 0.7rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem;
+  }
+
+  .headline-img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 6px;
+    background: #dfe3ea;
+    flex-shrink: 0;
+  }
+
+  .headline-body {
+    min-width: 0;
+  }
+
+  .headline a {
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.92rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .headline a:hover {
+    text-decoration: underline;
+  }
+
+  .headline .meta {
+    margin-top: 0.3rem;
+  }
 </style>
 
 <header>
   <img src="favicon.svg" alt="Daily Anchor logo" />
   <div>
     <h1>Daily Anchor</h1>
-    <p>Curated videos worth your attention.</p>
+    <p>Curated content worth your attention.</p>
   </div>
 </header>
 
 <main>
-  <div id="status">Loading videos…</div>
-  <div class="grid" id="videos"></div>
+  <div class="layout">
+    <section class="videos-column">
+      <div class="last-updated" id="videos-updated"></div>
+      <div id="status">Loading videos…</div>
+      <div class="grid" id="videos"></div>
+    </section>
+
+    <section class="headlines-column">
+      <h2>Latest Headlines</h2>
+      <div class="last-updated" id="headlines-updated"></div>
+      <div id="headlines-status">Loading headlines…</div>
+      <div id="headlines"></div>
+    </section>
+  </div>
 </main>
 
 <script src="config.js"></script>
@@ -190,17 +318,23 @@
         return;
       }
 
+      const lastUpdated = videos.reduce((max, v) => Math.max(max, new Date(v.created_at).getTime()), 0);
+      if (lastUpdated) {
+        document.getElementById("videos-updated").textContent = `Last updated ${formatMinutesAgo(lastUpdated)}`;
+      }
+
       statusEl.remove();
       listEl.innerHTML = videos
         .map(
           (v) => `
         <div class="video">
-          <a class="thumb" href="https://youtu.be/${v.youtube_video_id}" target="_blank" rel="noopener">
-            <img src="https://img.youtube.com/vi/${v.youtube_video_id}/hqdefault.jpg" alt="" loading="lazy" />
+          <button class="thumb" type="button" data-video-id="${escapeAttr(v.youtube_video_id)}" aria-label="Play ${escapeAttr(v.title)}">
+            <img src="https://img.youtube.com/vi/${escapeAttr(v.youtube_video_id)}/hqdefault.jpg" alt="" loading="lazy" />
+            <span class="play-badge"></span>
             ${v.duration ? `<span class="duration">${formatDuration(v.duration)}</span>` : ""}
-          </a>
+          </button>
           <div class="video-body">
-            <a class="title" href="https://youtu.be/${v.youtube_video_id}" target="_blank" rel="noopener">${escapeHtml(v.title)}</a>
+            <span class="title">${escapeHtml(v.title)}</span>
             <div class="meta">
               <span>${escapeHtml(v.channel_name ?? "")}</span>
               ${v.metadata?.view_count != null ? `<span>· ${formatViews(v.metadata.view_count)} views</span>` : ""}
@@ -214,16 +348,137 @@
       `
         )
         .join("");
+
+      listEl.addEventListener("click", playInline);
     } catch (err) {
       statusEl.textContent = "Failed to load videos.";
       console.error(err);
     }
   }
 
+  async function loadHeadlines() {
+    const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
+    const statusEl = document.getElementById("headlines-status");
+    const listEl = document.getElementById("headlines");
+
+    if (!supabaseUrl || !supabasePublishableKey) {
+      statusEl.textContent = "Missing Supabase config — fill in config.js";
+      return;
+    }
+
+    const url = `${supabaseUrl}/rest/v1/headlines?select=*&order=published_at.desc&limit=150`;
+
+    // Controls display order; any category not listed here (e.g. a newly
+    // added feed) still renders, just appended after these.
+    const CATEGORY_ORDER = [
+      "Breaking News",
+      "India",
+      "Economics",
+      "Tech & AI",
+      "Science",
+      "Media Literacy",
+      "Ideas & Thinking",
+      "Self-Improvement",
+    ];
+    const MAX_PER_CATEGORY = 5;
+
+    try {
+      const res = await fetch(url, {
+        headers: {
+          apikey: supabasePublishableKey,
+          Authorization: `Bearer ${supabasePublishableKey}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`Supabase request failed: ${res.status}`);
+      }
+
+      const headlines = await res.json();
+
+      if (headlines.length === 0) {
+        statusEl.textContent = "No headlines yet.";
+        return;
+      }
+
+      const lastUpdated = headlines.reduce((max, h) => Math.max(max, new Date(h.created_at).getTime()), 0);
+      if (lastUpdated) {
+        document.getElementById("headlines-updated").textContent = `Last updated ${formatMinutesAgo(lastUpdated)}`;
+      }
+
+      const byCategory = new Map();
+      for (const h of headlines) {
+        const category = h.category ?? "Breaking News";
+        if (!byCategory.has(category)) byCategory.set(category, []);
+        if (byCategory.get(category).length < MAX_PER_CATEGORY) byCategory.get(category).push(h);
+      }
+
+      const orderedCategories = [
+        ...CATEGORY_ORDER.filter((c) => byCategory.has(c)),
+        ...[...byCategory.keys()].filter((c) => !CATEGORY_ORDER.includes(c)),
+      ];
+
+      statusEl.remove();
+      listEl.innerHTML = orderedCategories
+        .map(
+          (category) => `
+        <div class="headline-group">
+          <h3>${escapeHtml(category)}</h3>
+          <ul class="headlines">
+            ${byCategory
+              .get(category)
+              .map(
+                (h) => `
+              <li class="headline">
+                ${h.image_url ? `<img class="headline-img" src="${escapeAttr(h.image_url)}" alt="" loading="lazy" />` : ""}
+                <div class="headline-body">
+                  <a href="${escapeAttr(h.link)}" target="_blank" rel="noopener">${escapeHtml(h.title)}</a>
+                  <div class="meta">
+                    <span>${escapeHtml(h.source ?? "")}</span>
+                  </div>
+                </div>
+              </li>
+            `
+              )
+              .join("")}
+          </ul>
+        </div>
+      `
+        )
+        .join("");
+    } catch (err) {
+      statusEl.textContent = "Failed to load headlines.";
+      console.error(err);
+    }
+  }
+
+  function playInline(event) {
+    const thumb = event.target.closest(".thumb");
+    if (!thumb) return;
+
+    const videoId = thumb.dataset.videoId;
+    const iframe = document.createElement("iframe");
+    iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`;
+    iframe.title = thumb.getAttribute("aria-label") ?? "";
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    iframe.allowFullscreen = true;
+
+    thumb.replaceWith(iframe);
+  }
+
   function escapeHtml(str) {
     const div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  // escapeHtml alone isn't safe inside a quoted attribute — the
+  // textContent/innerHTML round-trip encodes <, >, and & but not double
+  // quotes, so a `"` in the source string could still break out of the
+  // attribute. Used for anything placed inside a quoted HTML attribute
+  // (href, src, aria-label, data-*), never for plain text content.
+  function escapeAttr(str) {
+    return escapeHtml(str ?? "").replaceAll('"', "&quot;");
   }
 
   function formatDuration(totalSeconds) {
@@ -246,5 +501,18 @@
     return `${Math.round(diffHours / 24)}d ago`;
   }
 
+  // Minute-granularity version for "last updated" — the section can refresh
+  // every 90 min, so rounding straight to hours (like formatRelativeTime)
+  // would hide anything under 30 minutes as "0h ago".
+  function formatMinutesAgo(timestampMs) {
+    const diffMinutes = Math.max(0, Math.round((Date.now() - timestampMs) / (1000 * 60)));
+    if (diffMinutes < 1) return "just now";
+    if (diffMinutes < 60) return `${diffMinutes}m ago`;
+    const diffHours = Math.round(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${Math.round(diffHours / 24)}d ago`;
+  }
+
   loadVideos();
+  loadHeadlines();
 </script>
