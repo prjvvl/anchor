@@ -58,13 +58,7 @@
       <strong>Get the daily digest</strong>
       <p>The day's best picks, distilled into one email.</p>
     </div>
-    <form class="subscribe-form" id="subscribe-form">
-      <input type="email" id="subscribe-email" placeholder="you@example.com" required />
-      <button type="submit">
-        <span class="material-symbols-outlined">mail</span>
-        Subscribe
-      </button>
-    </form>
+    <div id="footer-cta"></div>
   </div>
 </footer>
 
@@ -155,7 +149,8 @@
 
       statusEl.remove();
       lessonsEl.innerHTML = renderLessons(videos, Boolean(info.ordered));
-      lessonsEl.addEventListener("click", playInline);
+      lessonsEl.addEventListener("click", onThumbGridClick);
+      markViewedBadges(lessonsEl, videos.map((v) => v.youtube_video_id));
     } catch (err) {
       lessonsEl.innerHTML = "";
       statusEl.textContent = "Failed to load lessons.";
@@ -168,6 +163,5 @@
   initThemeToggle();
   initSidebarDrawer();
   initAuthControl();
-  initSubscribeForm();
   loadCourse();
 </script>

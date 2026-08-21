@@ -187,13 +187,7 @@
       <strong>Get the daily digest</strong>
       <p>The day's best picks, distilled into one email.</p>
     </div>
-    <form class="subscribe-form" id="subscribe-form">
-      <input type="email" id="subscribe-email" placeholder="you@example.com" required />
-      <button type="submit">
-        <span class="material-symbols-outlined">mail</span>
-        Subscribe
-      </button>
-    </form>
+    <div id="footer-cta"></div>
   </div>
 </footer>
 
@@ -298,7 +292,8 @@
         )
         .join("");
 
-      listEl.addEventListener("click", playInline);
+      listEl.addEventListener("click", onThumbGridClick);
+      markViewedBadges(listEl, videos.map((v) => v.youtube_video_id));
     } catch (err) {
       listEl.innerHTML = "";
       statusEl.textContent = "Failed to load videos.";
@@ -424,7 +419,6 @@
   initThemeToggle();
   initSidebarDrawer();
   initAuthControl();
-  initSubscribeForm();
   initMobileHomeTabs();
   loadVideos();
   loadHeadlines();

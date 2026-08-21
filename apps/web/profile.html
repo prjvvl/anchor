@@ -1,0 +1,174 @@
+<title>Daily Anchor - Profile</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=block" />
+<script src="theme-init.js"></script>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  .profile-card {
+    max-width: 420px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+  }
+
+  .profile-card p {
+    margin: 0 0 1.1rem;
+    font-size: 0.92rem;
+  }
+
+  .profile-card p strong {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin-bottom: 0.2rem;
+  }
+
+  .profile-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.9rem;
+    margin: 0 0 1.25rem;
+    cursor: pointer;
+  }
+
+  .profile-toggle input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+
+  #profile-signed-out {
+    color: var(--muted);
+    font-size: 0.92rem;
+  }
+</style>
+
+<div id="app-header"></div>
+
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<div class="app-body">
+  <nav class="sidebar" id="sidebar">
+    <button class="sidebar-close" type="button" id="sidebar-close" aria-label="Close menu">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    <a class="nav-item" href="index.html"><span class="material-symbols-outlined">today</span> Home</a>
+    <a class="nav-item" href="courses.html"><span class="material-symbols-outlined">school</span> Courses</a>
+  </nav>
+
+  <main>
+    <h2 class="page-heading">Your account</h2>
+    <div id="status" class="sr-only">Loading profile…</div>
+
+    <div id="profile-signed-out" hidden>
+      <p>Sign in using the button in the top right to view your profile.</p>
+    </div>
+
+    <div id="profile-content" class="profile-card" hidden>
+      <p><strong>Email</strong><span id="profile-email"></span></p>
+      <p><strong>Member since</strong><span id="profile-member-since"></span></p>
+      <label class="profile-toggle">
+        <input type="checkbox" id="profile-newsletter-toggle" disabled />
+        Send me the daily digest by email
+      </label>
+      <button class="btn-secondary" type="button" id="profile-signout">Sign out</button>
+    </div>
+  </main>
+</div>
+
+<footer>
+  <div class="subscribe">
+    <div class="subscribe-copy">
+      <strong>Get the daily digest</strong>
+      <p>The day's best picks, distilled into one email.</p>
+    </div>
+    <div id="footer-cta"></div>
+  </div>
+</footer>
+
+<div class="toast" id="toast">
+  <span class="material-symbols-outlined" id="toast-icon"></span>
+  <span id="toast-message"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script src="playlists.js"></script>
+<script src="helpers.js"></script>
+<script>
+  function renderProfile(session) {
+    document.getElementById("status")?.remove();
+    document.getElementById("profile-signed-out").hidden = Boolean(session);
+    document.getElementById("profile-content").hidden = !session;
+    if (!session) return;
+
+    document.getElementById("profile-email").textContent = session.user.email;
+
+    window.ANCHOR_AUTH.client
+      .from("profiles")
+      .select("created_at, newsletter_opt_in")
+      .eq("user_id", session.user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error || !data) {
+          console.error(error);
+          return;
+        }
+        document.getElementById("profile-member-since").textContent = formatDate(data.created_at);
+        const toggle = document.getElementById("profile-newsletter-toggle");
+        toggle.checked = data.newsletter_opt_in;
+        toggle.disabled = false;
+      });
+  }
+
+  document.getElementById("profile-newsletter-toggle").addEventListener("change", async (event) => {
+    const checkbox = event.target;
+    const next = checkbox.checked;
+    checkbox.disabled = true;
+
+    const { session } = await window.ANCHOR_AUTH.getSession();
+    const { error } = await window.ANCHOR_AUTH.client.from("profiles").update({ newsletter_opt_in: next }).eq("user_id", session.user.id);
+
+    checkbox.disabled = false;
+    if (error) {
+      checkbox.checked = !next;
+      showToast("Couldn't save — please try again.", "error");
+      return;
+    }
+    showToast(next ? "Subscribed to the daily digest." : "Unsubscribed from the daily digest.", "success");
+  });
+
+  document.getElementById("profile-signout").addEventListener("click", async (event) => {
+    event.target.disabled = true;
+    const { error } = await window.ANCHOR_AUTH.signOut();
+    if (error) {
+      event.target.disabled = false;
+      showToast("Something went wrong signing out.", "error");
+      return;
+    }
+    showToast("Signed out", "success");
+  });
+
+  mountHeader();
+  initThemeToggle();
+  initSidebarDrawer();
+  initAuthControl();
+
+  // Fires immediately with any restored session, then again on every future
+  // change — including signing out via the header widget on this same page.
+  // Single source of truth, no separate getSession() call needed here.
+  if (window.ANCHOR_AUTH) {
+    window.ANCHOR_AUTH.onAuthStateChange((event, session) => renderProfile(session));
+  } else {
+    renderProfile(null); // Supabase failed to load — resolve to signed-out rather than stay stuck loading
+  }
+</script>

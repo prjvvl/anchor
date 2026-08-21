@@ -74,6 +74,7 @@ function playInline(event) {
   if (!thumb) return;
 
   const videoId = thumb.dataset.videoId;
+  const badge = thumb.parentElement?.querySelector(".viewed-badge");
   const iframe = document.createElement("iframe");
   iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`;
   iframe.title = thumb.getAttribute("aria-label") ?? "";
@@ -81,6 +82,92 @@ function playInline(event) {
   iframe.allowFullscreen = true;
 
   thumb.replaceWith(iframe);
+  badge?.remove();
+  markViewed(videoId);
+}
+
+// Handles a click on a .viewed-badge (unmark) before falling through to
+// playInline. The badge sits next to .thumb rather than inside it — .thumb
+// is itself a <button>, and buttons can't nest — so this dispatcher is what
+// makes the badge clickable without needing a second, separately-bound
+// listener juggling stopPropagation against playInline's own.
+function onThumbGridClick(event) {
+  const badge = event.target.closest(".viewed-badge");
+  if (badge) return unmarkViewed(badge);
+  playInline(event);
+}
+
+function renderViewedBadge(videoId) {
+  return `<button class="viewed-badge" type="button" data-video-id="${escapeAttr(videoId)}" aria-label="Mark as not viewed">
+    <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+  </button>`;
+}
+
+// Best-effort — never blocks playback. No-op if signed out (nothing to
+// record for an anonymous visitor).
+async function markViewed(videoId) {
+  if (!window.ANCHOR_AUTH) return;
+  const { session } = await window.ANCHOR_AUTH.getSession();
+  if (!session) return;
+  const { error } = await window.ANCHOR_AUTH.client
+    .from("user_progress")
+    .upsert({ youtube_video_id: videoId }, { onConflict: "user_id,youtube_video_id", ignoreDuplicates: true });
+  if (error) console.error(error);
+}
+
+async function unmarkViewed(badge) {
+  const videoId = badge.dataset.videoId;
+  // .thumb is a sibling of the badge, not an ancestor (see the comment on
+  // renderViewedBadge's insertion point) — capture it via the shared parent
+  // before removing the badge, so a failed delete below can restore it.
+  const thumb = badge.parentElement?.querySelector(".thumb");
+  badge.remove();
+  const { error } = await window.ANCHOR_AUTH.client.from("user_progress").delete().eq("youtube_video_id", videoId);
+  if (error) {
+    console.error(error);
+    thumb?.insertAdjacentHTML("afterend", renderViewedBadge(videoId));
+  }
+}
+
+// Patches .viewed-badge onto already-rendered video cards for whichever of
+// the given ids the signed-in user has already watched. Runs after the
+// grid is on screen (fire-and-forget from the caller) so this never adds
+// auth-dependent latency to the primary video/headline load. No-op if
+// signed out.
+async function markViewedBadges(containerEl, youtubeVideoIds) {
+  if (!containerEl || !window.ANCHOR_AUTH || youtubeVideoIds.length === 0) return;
+  const { session } = await window.ANCHOR_AUTH.getSession();
+  if (!session) return;
+
+  const { data, error } = await window.ANCHOR_AUTH.client.from("user_progress").select("youtube_video_id").in("youtube_video_id", youtubeVideoIds);
+  if (error) return console.error(error);
+
+  const viewed = new Set((data ?? []).map((row) => row.youtube_video_id));
+  containerEl.querySelectorAll(".thumb").forEach((thumb) => {
+    if (viewed.has(thumb.dataset.videoId)) {
+      thumb.insertAdjacentHTML("afterend", renderViewedBadge(thumb.dataset.videoId));
+    }
+  });
+}
+
+// Returns the signed-in user's full watch history as a Set of
+// youtube_video_ids, or null if signed out (distinct from an empty Set —
+// "no history yet" vs. "not signed in, don't show progress at all").
+async function fetchViewedSet() {
+  if (!window.ANCHOR_AUTH) return null;
+  const { session } = await window.ANCHOR_AUTH.getSession();
+  if (!session) return null;
+
+  const { data, error } = await window.ANCHOR_AUTH.client.from("user_progress").select("youtube_video_id");
+  if (error) {
+    console.error(error);
+    return null;
+  }
+  return new Set((data ?? []).map((row) => row.youtube_video_id));
+}
+
+function formatDate(iso) {
+  return new Intl.DateTimeFormat("en", { year: "numeric", month: "long", day: "numeric" }).format(new Date(iso));
 }
 
 function renderHeader() {
@@ -200,6 +287,7 @@ function initAuthControl() {
     if (session) {
       return `
         <p class="auth-email">${escapeHtml(session.user.email)}</p>
+        <a class="btn-secondary" href="profile.html">Profile</a>
         <button class="btn-secondary" type="button" id="auth-signout">Sign out</button>
       `;
     }
@@ -232,6 +320,27 @@ function initAuthControl() {
       panelOpen = !panelOpen;
       render();
     });
+
+    // Footer newsletter CTA is optional — only present on pages that have
+    // it — but when present, it stays in lockstep with this same session
+    // value rather than running its own separate auth-state subscription.
+    const footerSlot = document.getElementById("footer-cta");
+    if (footerSlot) {
+      footerSlot.innerHTML = session
+        ? `<a class="btn-primary" href="profile.html">Manage newsletter preferences</a>`
+        : `<button class="btn-primary" type="button" id="footer-cta-signin">Sign in to subscribe</button>`;
+      document.getElementById("footer-cta-signin")?.addEventListener("click", (event) => {
+        // This button lives outside #auth-control, so its click isn't
+        // covered by that container's stopPropagation guard — without this,
+        // the click would bubble to the document listener below right after
+        // opening the panel, and immediately close it again (same failure
+        // mode the header toggle button hit during Phase 1 testing).
+        event.stopPropagation();
+        panelOpen = true;
+        render();
+        document.getElementById("auth-toggle")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    }
 
     if (session) {
       document.getElementById("auth-signout").addEventListener("click", async (event) => {
@@ -338,45 +447,4 @@ function showToast(message, type) {
 
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove("visible"), 4000);
-}
-
-function initSubscribeForm() {
-  const form = document.getElementById("subscribe-form");
-  if (!form) return;
-  const button = form.querySelector("button");
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
-    const email = document.getElementById("subscribe-email").value.trim();
-
-    button.disabled = true;
-
-    try {
-      const res = await fetch(`${supabaseUrl}/rest/v1/subscribers`, {
-        method: "POST",
-        headers: {
-          apikey: supabasePublishableKey,
-          Authorization: `Bearer ${supabasePublishableKey}`,
-          "Content-Type": "application/json",
-          Prefer: "return=minimal",
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (res.status === 409) {
-        showToast("You're already subscribed.", "error");
-      } else if (!res.ok) {
-        throw new Error(`Subscribe failed: ${res.status}`);
-      } else {
-        showToast("Subscribed! Check your inbox tomorrow morning.", "success");
-        form.reset();
-      }
-    } catch (err) {
-      showToast("Something went wrong — please try again.", "error");
-      console.error(err);
-    } finally {
-      button.disabled = false;
-    }
-  });
 }

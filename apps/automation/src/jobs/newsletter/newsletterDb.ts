@@ -53,7 +53,7 @@ export async function fetchDigestPool(): Promise<{ videos: VideoRow[]; headlines
 }
 
 export async function fetchSubscribers(): Promise<Subscriber[]> {
-  const { data, error } = await supabase.from("subscribers").select("email, unsubscribe_token");
+  const { data, error } = await supabase.from("profiles").select("email, unsubscribe_token").eq("newsletter_opt_in", true);
   if (error) throw error;
   return data ?? [];
 }

@@ -281,6 +281,7 @@ header p {
   font-size: 0.82rem;
   cursor: pointer;
   text-align: center;
+  text-decoration: none;
 }
 
 .btn-secondary:hover {
@@ -345,6 +346,7 @@ main {
 }
 
 .video {
+  position: relative;
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -377,6 +379,31 @@ main {
   font-weight: 600;
   padding: 1px 5px;
   border-radius: 4px;
+}
+
+.viewed-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.viewed-badge .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.viewed-badge:hover {
+  background: rgba(0, 0, 0, 0.9);
 }
 
 .video img,
@@ -476,23 +503,10 @@ footer {
   max-width: 420px;
 }
 
-.subscribe-form {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.subscribe-form input[type="email"] {
-  padding: 0.6rem 0.8rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--ink);
-  font-size: 0.9rem;
-  min-width: 220px;
-}
-
-.subscribe-form button {
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.6rem 1.1rem;
   border-radius: 8px;
   border: none;
@@ -501,16 +515,14 @@ footer {
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
+  text-decoration: none;
 }
 
-.subscribe-form button:hover {
+.btn-primary:hover {
   opacity: 0.9;
 }
 
-.subscribe-form button:disabled {
+.btn-primary:disabled {
   opacity: 0.6;
   cursor: default;
 }
