@@ -31,23 +31,14 @@
   }
 </style>
 
-<header>
-  <button class="hamburger" type="button" id="hamburger" aria-label="Open menu">
-    <span class="material-symbols-outlined">menu</span>
-  </button>
-  <img src="favicon.svg" alt="Daily Anchor logo" />
-  <div>
-    <h1>Daily Anchor</h1>
-    <p>Curated content worth your attention.</p>
-  </div>
-  <button class="theme-toggle" type="button" id="theme-toggle" aria-label="Toggle dark mode">
-    <span class="material-symbols-outlined" id="theme-icon"></span>
-  </button>
-</header>
+<div id="app-header"></div>
 
 <div class="drawer-backdrop" id="drawer-backdrop"></div>
 <div class="app-body">
   <nav class="sidebar" id="sidebar">
+    <button class="sidebar-close" type="button" id="sidebar-close" aria-label="Close menu">
+      <span class="material-symbols-outlined">close</span>
+    </button>
     <a class="nav-item" href="index.html"><span class="material-symbols-outlined">today</span> Home</a>
     <a class="nav-item" href="courses.html" aria-current="page"><span class="material-symbols-outlined">school</span> Courses</a>
   </nav>
@@ -82,7 +73,9 @@
   <span id="toast-message"></span>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
+<script src="auth.js"></script>
 <script src="playlists.js"></script>
 <script src="helpers.js"></script>
 <script>
@@ -137,6 +130,8 @@
       return;
     }
 
+    lessonsEl.innerHTML = renderVideoSkeletons(6);
+
     const url = `${supabaseUrl}/rest/v1/videos?select=*&active=eq.true&playlist=eq.${encodeURIComponent(slug)}&order=idx.asc.nullslast,published_at.desc,created_at.desc`;
 
     try {
@@ -152,6 +147,7 @@
       const videos = await res.json();
 
       if (videos.length === 0) {
+        lessonsEl.innerHTML = "";
         statusEl.textContent = "No lessons yet.";
         statusEl.classList.remove("sr-only");
         return;
@@ -161,14 +157,17 @@
       lessonsEl.innerHTML = renderLessons(videos, Boolean(info.ordered));
       lessonsEl.addEventListener("click", playInline);
     } catch (err) {
+      lessonsEl.innerHTML = "";
       statusEl.textContent = "Failed to load lessons.";
       statusEl.classList.remove("sr-only");
       console.error(err);
     }
   }
 
+  mountHeader();
   initThemeToggle();
   initSidebarDrawer();
+  initAuthControl();
   initSubscribeForm();
   loadCourse();
 </script>
