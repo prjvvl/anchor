@@ -1,0 +1,398 @@
+[
+  {
+    "id": "75f2bf49-0c03-4125-9af7-7c2ec79fb5a0",
+    "youtube_video_id": "zNg99lbBa3k",
+    "channel_name": "Associated Press",
+    "title": "LIVE: Donald and Melania Trump speak on the ‘Fostering the Future’ program",
+    "category": "current-events",
+    "duration": 1118,
+    "active": true,
+    "created_at": "2026-08-20T20:29:25.945721+00:00",
+    "metadata": {
+      "ai_reasoning": "Associated Press provides direct, unedited coverage of a public address on the 'Fostering the Future' initiative."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-20T20:09:54+00:00",
+    "views": 2875
+  },
+  {
+    "id": "ecbd35c3-aed2-4985-abc3-143902acb645",
+    "youtube_video_id": "7XCOFwZ9vOI",
+    "channel_name": "Al Jazeera English",
+    "title": "Is America Growing Safer? | This is America",
+    "category": "current-events",
+    "duration": 1599,
+    "active": true,
+    "created_at": "2026-08-20T20:29:25.945721+00:00",
+    "metadata": {
+      "ai_reasoning": "Al Jazeera English delivers an in-depth, contextual report examining long-term trends in public safety and crime across the United States."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-20T19:54:33+00:00",
+    "views": 154
+  },
+  {
+    "id": "b4078c53-2370-4c29-9206-5d50f23fb10f",
+    "youtube_video_id": "UWQBt0MxRR4",
+    "channel_name": "NDTV",
+    "title": "Pak's Twin Offensive Collapses | ICE Targets Indians | India-Japan Defence Deal",
+    "category": "current-events",
+    "duration": 1352,
+    "active": true,
+    "created_at": "2026-08-20T21:29:01.849252+00:00",
+    "metadata": {
+      "ai_reasoning": "NDTV provides a substantive news bulletin covering major international and geopolitical developments, including the India-Japan defence deal and regional security issues."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-20T20:45:06+00:00",
+    "views": 98
+  },
+  {
+    "id": "aa7d5c6d-9eae-49c5-badf-054003bb64cc",
+    "youtube_video_id": "ZtR3vOTAnEU",
+    "channel_name": "NDTV",
+    "title": "US Envoy’s Ladakh Outreach: Why Gor’s Leh Visit Matters",
+    "category": "current-events",
+    "duration": 388,
+    "active": true,
+    "created_at": "2026-08-20T22:28:15.374635+00:00",
+    "metadata": {
+      "ai_reasoning": "NDTV provides substantive analysis on US Envoy Sergio Gor's visit to Leh and its broader diplomatic significance."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-20T21:45:06+00:00",
+    "views": 41
+  },
+  {
+    "id": "10248101-4ac2-4e8b-a20b-ba9fcf17a005",
+    "youtube_video_id": "EKXuo8n8MWI",
+    "channel_name": "Al Jazeera English",
+    "title": "Trump’s Iran strategy unlikely to force Tehran to capitulate: Former US diplomat",
+    "category": "current-events",
+    "duration": 354,
+    "active": true,
+    "created_at": "2026-08-20T23:26:26.595003+00:00",
+    "metadata": {
+      "ai_reasoning": "Features analysis from a former US diplomat providing expert foreign policy context on US-Iran relations."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-20T22:32:49+00:00",
+    "views": 1579
+  },
+  {
+    "id": "b9c079b7-f0c6-472f-8690-e5d7e3db87de",
+    "youtube_video_id": "x-RCsSWPuV8",
+    "channel_name": "NDTV",
+    "title": "ICE Crackdown: Indians Caught In US Immigration Trap",
+    "category": "current-events",
+    "duration": 259,
+    "active": true,
+    "created_at": "2026-08-20T23:26:26.595003+00:00",
+    "metadata": {
+      "ai_reasoning": "Provides news coverage from a mainstream outlet on the practical impacts of US immigration enforcement on Indian nationals."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-20T22:30:06+00:00",
+    "views": 270
+  },
+  {
+    "id": "c1c5cae4-7e54-4ce9-980f-e955b039d8d3",
+    "youtube_video_id": "oelj6mR398A",
+    "channel_name": "WION",
+    "title": "Can Watching Reels Reduce Your Brain’s Focus Activity? | WION Podcast",
+    "category": "current-events",
+    "duration": 219,
+    "active": true,
+    "created_at": "2026-08-21T01:20:07.789754+00:00",
+    "metadata": {
+      "ai_reasoning": "This WION segment offers a structured, evidence-based look into how short-form video consumption impacts human attention spans and cognitive focus."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T00:30:05+00:00",
+    "views": 280
+  },
+  {
+    "id": "b30cfe02-b73c-4d49-a20b-dfc1fe9375f1",
+    "youtube_video_id": "MXGHvTW87Bk",
+    "channel_name": "WION",
+    "title": "LIVE: Chinese Foreign Minister Wang Yi and Indonesian Counterpart Sugiono Give Statements | WION",
+    "category": "current-events",
+    "duration": 2541,
+    "active": true,
+    "created_at": "2026-08-21T04:39:39.169196+00:00",
+    "metadata": {
+      "ai_reasoning": "Chinese Foreign Minister Wang Yi and Indonesian Foreign Minister Sugiono deliver joint press statements highlighting official diplomatic positions and bilateral relations."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T04:24:48+00:00",
+    "views": 168
+  },
+  {
+    "id": "26679d8f-9486-4492-8073-e3ee182efbf7",
+    "youtube_video_id": "LwRnufekNeU",
+    "channel_name": "Al Jazeera English",
+    "title": "Sudan displacement: Thousands seek refuge in Omdurman",
+    "category": "current-events",
+    "duration": 183,
+    "active": true,
+    "created_at": "2026-08-21T07:43:57.439486+00:00",
+    "metadata": {
+      "ai_reasoning": "Provides substantive, on-the-ground reporting from a reputable news organization on the ongoing displacement crisis and humanitarian conditions in Omdurman, Sudan."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T06:54:38+00:00",
+    "views": 232
+  },
+  {
+    "id": "56612f32-7bc6-4799-8e32-618f580b3acb",
+    "youtube_video_id": "zaBrYpswrqs",
+    "channel_name": "Al Jazeera English",
+    "title": "Israel’s E1 Settlement Plan Sparks International Condemnation",
+    "category": "current-events",
+    "duration": 338,
+    "active": true,
+    "created_at": "2026-08-21T10:31:50.7361+00:00",
+    "metadata": {
+      "ai_reasoning": "Provides clear, factual reporting and international context on the controversial revivement of Israel's E1 settlement construction plan."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T10:05:28+00:00",
+    "views": 359
+  },
+  {
+    "id": "3b33c237-8a5d-43aa-82dd-5af26dd280c3",
+    "youtube_video_id": "WroTrFr_6PA",
+    "channel_name": "WION",
+    "title": "Russia's Missile Drills Near Kurils: Russia Says Simulated Targets Were Hit Successfully | WION News",
+    "category": "current-events",
+    "duration": 185,
+    "active": true,
+    "created_at": "2026-08-21T10:31:50.7361+00:00",
+    "metadata": {
+      "ai_reasoning": "Offers concise, objective reporting on Russia's recent military missile exercises in the strategically sensitive Kuril Islands region."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T10:17:35+00:00",
+    "views": 86
+  },
+  {
+    "id": "d7077da8-01bd-4d69-a217-d5ab3447dfb0",
+    "youtube_video_id": "JZwW5V3EKg4",
+    "channel_name": "NDTV",
+    "title": "22 Lakh NEET, 1 Lakh Seats: MBBS in Georgia Explained | SEU Avicenna Batumi Medical University",
+    "category": "current-events",
+    "duration": 826,
+    "active": true,
+    "created_at": "2026-08-21T11:26:43.428866+00:00",
+    "metadata": {
+      "ai_reasoning": "NDTV provides a detailed, contextual overview of medical education options abroad for Indian students facing intense competition for domestic seats."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T11:02:11+00:00",
+    "views": 55
+  },
+  {
+    "id": "33ed25e8-e20f-49a7-b32d-a0de04fe23a6",
+    "youtube_video_id": "4LjCXKHuXi4",
+    "channel_name": "WION",
+    "title": "US-Iran War: US Treasury Chief Urges China To Join Iran's Economic Isolation | WION News",
+    "category": "current-events",
+    "duration": 219,
+    "active": true,
+    "created_at": "2026-08-21T12:49:44.464778+00:00",
+    "metadata": {
+      "ai_reasoning": "Provides substantive reporting on international geopolitical developments regarding US efforts to enforce economic sanctions on Iran."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T12:48:47+00:00",
+    "views": 1
+  },
+  {
+    "id": "0743bab9-2563-4662-b05f-a57725a834db",
+    "youtube_video_id": "aGszMZJsQTU",
+    "channel_name": "WION",
+    "title": "From Waste To Wonder: Srinagar Gets Its First ‘Wonder Garden’ | WION",
+    "category": "current-events",
+    "duration": 217,
+    "active": true,
+    "created_at": "2026-08-21T13:46:12.765221+00:00",
+    "metadata": {
+      "ai_reasoning": "This report provides constructive coverage of Srinagar's new eco-friendly initiative converting urban waste into a public garden."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T13:42:02+00:00",
+    "views": 4
+  },
+  {
+    "id": "549f8741-f4d1-45f2-95d6-49c1f0edc0d5",
+    "youtube_video_id": "ZPRjOnLZgCI",
+    "channel_name": "Al Jazeera English",
+    "title": "War on Iran: Phase II, Day 41",
+    "category": "current-events",
+    "duration": 180,
+    "active": true,
+    "created_at": "2026-08-21T14:36:18.884252+00:00",
+    "metadata": {
+      "ai_reasoning": "Provides a concise news update from Al Jazeera English on critical ongoing geopolitical developments in the Middle East."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T13:55:03+00:00",
+    "views": 1869
+  },
+  {
+    "id": "33a77844-9e7e-41ab-8b0d-b6e2ce7cf5df",
+    "youtube_video_id": "AED87w3dt5g",
+    "channel_name": "WION",
+    "title": "USS Abraham Lincoln To Head Home After Long Deployment | WION News",
+    "category": "current-events",
+    "duration": 242,
+    "active": true,
+    "created_at": "2026-08-21T14:36:18.884252+00:00",
+    "metadata": {
+      "ai_reasoning": "Delivers a straightforward news report on major U.S. naval deployment changes and military movements."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T14:34:52+00:00",
+    "views": 0
+  },
+  {
+    "id": "750ce394-894f-4825-a8ca-33474ac1948d",
+    "youtube_video_id": "7tR3aow7lKI",
+    "channel_name": "CNBC",
+    "title": "7 Alternative Routes To The Strait Of Hormuz",
+    "category": "current-events",
+    "duration": 350,
+    "active": true,
+    "created_at": "2026-08-21T14:36:18.884252+00:00",
+    "metadata": {
+      "ai_reasoning": "Offers substantive context and analysis from CNBC on energy logistics and strategic bypass routes around the Strait of Hormuz."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T14:00:17+00:00",
+    "views": 1388
+  },
+  {
+    "id": "1b0fe5eb-1be8-411a-8252-c5b56a4b01ef",
+    "youtube_video_id": "eogJoaHRBc4",
+    "channel_name": "NDTV",
+    "title": "No Waste Compliance, No Water or Power? Supreme Court's Tough Message On Garbage",
+    "category": "current-events",
+    "duration": 951,
+    "active": true,
+    "created_at": "2026-08-21T15:34:17.617865+00:00",
+    "metadata": {
+      "ai_reasoning": "It offers substantive reporting on the Indian Supreme Court's warnings and directives regarding urban municipal waste management compliance."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T15:12:21+00:00",
+    "views": 80
+  },
+  {
+    "id": "0d0c517b-ce7a-449a-bcc4-5281f123dd79",
+    "youtube_video_id": "fn_8zTXdM7Q",
+    "channel_name": "WION",
+    "title": "Enforcement Of Marathi-Language Requirement Begins | WION Race To Power",
+    "category": "current-events",
+    "duration": 321,
+    "active": true,
+    "created_at": "2026-08-21T15:34:17.617865+00:00",
+    "metadata": {
+      "ai_reasoning": "It provides a clear, focused news report on the commencement and real-world implementation of the mandatory Marathi-language requirement."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T15:28:46+00:00",
+    "views": 4
+  },
+  {
+    "id": "659ced9f-60c1-4128-aac7-46799d0aee50",
+    "youtube_video_id": "opEnUeW5KY0",
+    "channel_name": "WION",
+    "title": "British Church Leader Booked Under Anti-Conversion Law In India | GRAVITAS",
+    "category": "current-events",
+    "duration": 222,
+    "active": true,
+    "created_at": "2026-08-21T17:30:17.312242+00:00",
+    "metadata": {
+      "ai_reasoning": "Provides substantive reporting on the legal and diplomatic context surrounding a British church leader charged under India's anti-conversion laws."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T17:25:11+00:00",
+    "views": 8
+  },
+  {
+    "id": "0aba67dc-dbdf-4210-90fa-7015b6afb724",
+    "youtube_video_id": "meniKM4Ldxc",
+    "channel_name": "WION",
+    "title": "Two Hong Kong Activists Convicted Over Tiananmen Vigils | WION",
+    "category": "current-events",
+    "duration": 200,
+    "active": true,
+    "created_at": "2026-08-21T18:37:58.555409+00:00",
+    "metadata": {
+      "ai_reasoning": "This video delivers clear, factual reporting on the conviction of two Hong Kong activists for organizing Tiananmen Square vigils, providing important context on human rights and legal developments in the region."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T18:32:56+00:00",
+    "views": 4
+  },
+  {
+    "id": "f9d18e42-e158-4818-b51e-770bbaa75374",
+    "youtube_video_id": "U5_LlLkMh54",
+    "channel_name": "WION",
+    "title": "Jharkhand Exam Row: Ranchi Protests Turn Tense as Students Clash With Police | WION",
+    "category": "current-events",
+    "duration": 249,
+    "active": true,
+    "created_at": "2026-08-21T19:27:22.079371+00:00",
+    "metadata": {
+      "ai_reasoning": "Provides news coverage from an established international news network on the student protests and police clashes in Ranchi over exam irregularities."
+    },
+    "tags": [],
+    "playlist": "top-news",
+    "idx": null,
+    "published_at": "2026-08-21T18:38:19+00:00",
+    "views": 40
+  }
+]
