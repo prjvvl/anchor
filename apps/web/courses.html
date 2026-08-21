@@ -68,13 +68,7 @@
       <strong>Get the daily digest</strong>
       <p>The day's best picks, distilled into one email.</p>
     </div>
-    <form class="subscribe-form" id="subscribe-form">
-      <input type="email" id="subscribe-email" placeholder="you@example.com" required />
-      <button type="submit">
-        <span class="material-symbols-outlined">mail</span>
-        Subscribe
-      </button>
-    </form>
+    <div id="footer-cta"></div>
   </div>
 </footer>
 
@@ -89,18 +83,17 @@
 <script src="playlists.js"></script>
 <script src="helpers.js"></script>
 <script>
-  async function fetchLessonCount(slug) {
+  async function fetchLessonIds(slug) {
     const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
-    const res = await fetch(`${supabaseUrl}/rest/v1/videos?select=id&active=eq.true&playlist=eq.${slug}`, {
+    const res = await fetch(`${supabaseUrl}/rest/v1/videos?select=youtube_video_id&active=eq.true&playlist=eq.${slug}`, {
       headers: {
         apikey: supabasePublishableKey,
         Authorization: `Bearer ${supabasePublishableKey}`,
-        Prefer: "count=exact",
-        Range: "0-0",
       },
     });
-    const range = res.headers.get("content-range"); // "0-0/43"
-    return range ? Number(range.split("/")[1]) : null;
+    if (!res.ok) throw new Error(`Supabase request failed: ${res.status}`);
+    const rows = await res.json();
+    return rows.map((r) => r.youtube_video_id);
   }
 
   async function loadCourses() {
@@ -125,13 +118,18 @@
     listEl.innerHTML = renderCourseSkeletons(courseEntries.length);
 
     try {
-      const results = await Promise.allSettled(courseEntries.map(([slug]) => fetchLessonCount(slug)));
-      const counts = results.map((r) => (r.status === "fulfilled" ? r.value : null));
+      const [results, viewedSet] = await Promise.all([
+        Promise.allSettled(courseEntries.map(([slug]) => fetchLessonIds(slug))),
+        fetchViewedSet(),
+      ]);
+      const idLists = results.map((r) => (r.status === "fulfilled" ? r.value : null));
 
       statusEl.remove();
       listEl.innerHTML = courseEntries
         .map(([slug, info], i) => {
-          const count = counts[i];
+          const ids = idLists[i];
+          const count = ids?.length ?? null;
+          const watched = viewedSet && ids ? ids.filter((id) => viewedSet.has(id)).length : null;
           return `
           <a class="course-card" href="course.html?slug=${encodeURIComponent(slug)}">
             <div class="title">${escapeHtml(info.displayName)}</div>
@@ -139,6 +137,7 @@
             <div class="meta">
               <span>${escapeHtml(info.source ?? "")}</span>
               ${count != null ? `<span>· ${count} lessons</span>` : ""}
+              ${watched != null ? `<span>· ${watched}/${count} watched</span>` : ""}
             </div>
           </a>`;
         })
@@ -155,6 +154,5 @@
   initThemeToggle();
   initSidebarDrawer();
   initAuthControl();
-  initSubscribeForm();
   loadCourses();
 </script>

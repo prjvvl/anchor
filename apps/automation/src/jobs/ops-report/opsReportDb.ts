@@ -12,7 +12,7 @@ export async function fetchOpsSnapshot(sinceIso: string): Promise<OpsSnapshot> {
   const [videos, headlines, subscribers, sends] = await Promise.all([
     supabase.from("videos").select("id", { count: "exact", head: true }).gte("created_at", sinceIso),
     supabase.from("headlines").select("id", { count: "exact", head: true }).gte("created_at", sinceIso),
-    supabase.from("subscribers").select("id", { count: "exact", head: true }),
+    supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("newsletter_opt_in", true),
     supabase.from("newsletter_log").select("recipient_count").gte("sent_at", sinceIso),
   ]);
 
