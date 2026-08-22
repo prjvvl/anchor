@@ -43,7 +43,12 @@
 
   <main>
     <p class="breadcrumb"><a href="courses.html" id="course-crumb-tier">Courses</a> / <span id="course-crumb"></span></p>
-    <h2 class="page-heading" id="course-title"></h2>
+    <div class="section-heading-row">
+      <h2 class="page-heading" id="course-title"></h2>
+      <button class="btn-primary play-all-btn" type="button" id="play-all-lessons" hidden>
+        <span class="material-symbols-outlined">play_arrow</span> Play All
+      </button>
+    </div>
     <p class="page-sub" id="course-sub"></p>
     <div id="resume-slot"></div>
     <div id="status" class="sr-only">Loading lessons…</div>
@@ -71,6 +76,7 @@
 <script src="auth.js"></script>
 <script src="playlists.js"></script>
 <script src="helpers.js"></script>
+<script src="player.js"></script>
 <script>
   // Same card as the homepage video grid. Ordered courses (real idx) get an
   // episode number badge instead of a view count, since recency/views aren't
@@ -80,7 +86,7 @@
       .map(
         (v, i) => `
         <div class="video">
-          <button class="thumb" type="button" data-video-id="${escapeAttr(v.youtube_video_id)}" aria-label="Play ${escapeAttr(v.title)}">
+          <button class="thumb" type="button" data-video-id="${escapeAttr(v.youtube_video_id)}" data-title="${escapeAttr(v.title)}" data-channel="${escapeAttr(v.channel_name ?? "")}" data-duration="${v.duration ?? ""}" aria-label="Play ${escapeAttr(v.title)}">
             <img src="https://img.youtube.com/vi/${escapeAttr(v.youtube_video_id)}/hqdefault.jpg" alt="" loading="lazy" />
             <span class="play-badge"></span>
             ${ordered ? `<span class="episode-badge">EP ${i + 1}</span>` : ""}
@@ -116,6 +122,7 @@
     document.getElementById("course-crumb").textContent = info.displayName;
     document.getElementById("course-title").textContent = info.displayName;
     document.getElementById("course-sub").textContent = info.description ?? "";
+    lessonsEl.dataset.contextLabel = info.displayName;
 
     const tierInfo = (window.ANCHOR_TIERS ?? []).find((t) => t.key === info.tier);
     const crumbTier = document.getElementById("course-crumb-tier");
@@ -156,6 +163,10 @@
       statusEl.remove();
       lessonsEl.innerHTML = renderLessons(videos, Boolean(info.ordered));
       lessonsEl.addEventListener("click", onThumbGridClick);
+
+      const playAllBtn = document.getElementById("play-all-lessons");
+      playAllBtn.hidden = false;
+      playAllBtn.addEventListener("click", () => window.AnchorPlayer?.playAll(lessonsEl));
 
       // Only worth a "Resume" CTA when there's real partial progress —
       // signed out (viewedSet is null), zero watched, or fully watched all

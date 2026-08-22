@@ -296,7 +296,12 @@
 
     <div class="layout">
       <section class="videos-column">
-        <h2 id="videos-heading"></h2>
+        <div class="section-heading-row">
+          <h2 id="videos-heading"></h2>
+          <button class="btn-primary play-all-btn" type="button" id="play-all-videos" hidden>
+            <span class="material-symbols-outlined">play_arrow</span> Play All
+          </button>
+        </div>
         <div class="last-updated" id="videos-updated"></div>
         <div id="status" class="sr-only">Loading videos…</div>
         <div class="card-grid" id="videos"></div>
@@ -336,6 +341,7 @@
 <script src="auth.js"></script>
 <script src="playlists.js"></script>
 <script src="helpers.js"></script>
+<script src="player.js"></script>
 <script>
   const VIDEOS_PLAYLIST = "top-news";
 
@@ -367,6 +373,7 @@
 
     const playlistInfo = window.ANCHOR_PLAYLISTS?.[VIDEOS_PLAYLIST];
     document.getElementById("videos-heading").textContent = playlistInfo?.displayName ?? "Latest Videos";
+    listEl.dataset.contextLabel = playlistInfo?.displayName ?? "Latest Videos";
 
     if (!supabaseUrl || !supabasePublishableKey) {
       statusEl.textContent = "Missing Supabase config. Fill in config.js.";
@@ -409,7 +416,7 @@
         .map(
           (v) => `
         <div class="video">
-          <button class="thumb" type="button" data-video-id="${escapeAttr(v.youtube_video_id)}" aria-label="Play ${escapeAttr(v.title)}">
+          <button class="thumb" type="button" data-video-id="${escapeAttr(v.youtube_video_id)}" data-title="${escapeAttr(v.title)}" data-channel="${escapeAttr(v.channel_name ?? "")}" data-duration="${v.duration ?? ""}" aria-label="Play ${escapeAttr(v.title)}">
             <img src="https://img.youtube.com/vi/${escapeAttr(v.youtube_video_id)}/hqdefault.jpg" alt="" loading="lazy" />
             <span class="play-badge"></span>
             ${v.duration ? `<span class="duration">${formatDuration(v.duration)}</span>` : ""}
@@ -429,6 +436,10 @@
 
       listEl.addEventListener("click", onThumbGridClick);
       markViewedBadges(listEl, videos.map((v) => v.youtube_video_id));
+
+      const playAllBtn = document.getElementById("play-all-videos");
+      playAllBtn.hidden = false;
+      playAllBtn.addEventListener("click", () => window.AnchorPlayer?.playAll(listEl));
     } catch (err) {
       listEl.innerHTML = "";
       statusEl.textContent = "Failed to load videos.";
