@@ -131,16 +131,20 @@ async function unmarkViewed(badge) {
 
 // Patches .viewed-badge onto already-rendered video cards for whichever of
 // the given ids the signed-in user has already watched. Runs after the
-// grid is on screen (fire-and-forget from the caller) so this never adds
-// auth-dependent latency to the primary video/headline load. No-op if
-// signed out.
+// grid is on screen (most callers fire-and-forget this) so it never adds
+// auth-dependent latency to the primary video/headline load. Returns the
+// viewed Set for callers that need it (e.g. a "Resume" button) — null if
+// signed out, distinct from an empty Set ("no progress yet").
 async function markViewedBadges(containerEl, youtubeVideoIds) {
-  if (!containerEl || !window.ANCHOR_AUTH || youtubeVideoIds.length === 0) return;
+  if (!containerEl || !window.ANCHOR_AUTH || youtubeVideoIds.length === 0) return null;
   const { session } = await window.ANCHOR_AUTH.getSession();
-  if (!session) return;
+  if (!session) return null;
 
   const { data, error } = await window.ANCHOR_AUTH.client.from("user_progress").select("youtube_video_id").in("youtube_video_id", youtubeVideoIds);
-  if (error) return console.error(error);
+  if (error) {
+    console.error(error);
+    return null;
+  }
 
   const viewed = new Set((data ?? []).map((row) => row.youtube_video_id));
   containerEl.querySelectorAll(".thumb").forEach((thumb) => {
@@ -148,6 +152,7 @@ async function markViewedBadges(containerEl, youtubeVideoIds) {
       thumb.insertAdjacentHTML("afterend", renderViewedBadge(thumb.dataset.videoId));
     }
   });
+  return viewed;
 }
 
 // Returns the signed-in user's full watch history as a Set of
@@ -164,6 +169,25 @@ async function fetchViewedSet() {
     return null;
   }
   return new Set((data ?? []).map((row) => row.youtube_video_id));
+}
+
+// Active video ids for a course playlist, in playlist order (idx first,
+// then recency for anything without one). Used both by courses.html (per-
+// course lesson counts) and the homepage Continue Learning shelf.
+async function fetchLessonIds(slug) {
+  const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/videos?select=youtube_video_id&active=eq.true&playlist=eq.${encodeURIComponent(slug)}&order=idx.asc.nullslast,published_at.desc,created_at.desc`,
+    {
+      headers: {
+        apikey: supabasePublishableKey,
+        Authorization: `Bearer ${supabasePublishableKey}`,
+      },
+    }
+  );
+  if (!res.ok) throw new Error(`Supabase request failed: ${res.status}`);
+  const rows = await res.json();
+  return rows.map((r) => r.youtube_video_id);
 }
 
 function formatDate(iso) {
@@ -193,6 +217,36 @@ function mountHeader() {
   const placeholder = document.getElementById("app-header");
   if (!placeholder) return;
   placeholder.outerHTML = renderHeader();
+}
+
+// activeKey is "home" or a tier key (see window.ANCHOR_TIERS in playlists.js).
+// Sourcing the tier items from ANCHOR_TIERS instead of a separate hardcoded
+// list means a new tier only needs adding in one place to show up in nav.
+function renderSidebar(activeKey) {
+  const tierItems = (window.ANCHOR_TIERS ?? [])
+    .map(
+      (t) => `
+      <a class="nav-item" href="courses.html?tier=${encodeURIComponent(t.key)}"${t.key === activeKey ? ' aria-current="page"' : ""}>
+        <span class="material-symbols-outlined">${t.icon}</span> ${escapeHtml(t.displayName)}
+      </a>`
+    )
+    .join("");
+
+  return `
+    <button class="sidebar-close" type="button" id="sidebar-close" aria-label="Close menu">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    <a class="nav-item" href="index.html"${activeKey === "home" ? ' aria-current="page"' : ""}>
+      <span class="material-symbols-outlined">today</span> Home
+    </a>
+    ${tierItems}
+  `;
+}
+
+function mountSidebar(activeKey) {
+  const el = document.getElementById("sidebar");
+  if (!el) return;
+  el.innerHTML = renderSidebar(activeKey);
 }
 
 function initThemeToggle() {
@@ -312,7 +366,7 @@ function initAuthControl() {
   function render() {
     const label = session ? truncateEmail(session.user.email) : "Sign in";
     container.innerHTML = `
-      <button class="auth-btn" type="button" id="auth-toggle" aria-label="Account menu">${escapeHtml(label)}</button>
+      <button class="auth-btn" type="button" id="auth-toggle" aria-label="Account menu"><span class="auth-btn-label">${escapeHtml(label)}</span></button>
       <div class="auth-panel${panelOpen ? " open" : ""}" id="auth-panel">${panelBody()}</div>
     `;
 
@@ -379,7 +433,7 @@ function initAuthControl() {
         const { error } = await window.ANCHOR_AUTH.sendOtp(pendingEmail);
         if (error) {
           event.target.disabled = false;
-          showToast("Couldn't resend — please try again.", "error");
+          showToast("Couldn't resend. Please try again.", "error");
           return;
         }
         startCooldown();
@@ -400,7 +454,7 @@ function initAuthControl() {
         const { error } = await window.ANCHOR_AUTH.sendOtp(email);
         submitBtn.disabled = false;
         if (error) {
-          showToast("Couldn't send code — please try again.", "error");
+          showToast("Couldn't send code. Please try again.", "error");
           return;
         }
         pendingEmail = email;

@@ -50,19 +50,39 @@
     color: var(--muted);
     font-size: 0.92rem;
   }
+
+  .display-name-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .display-name-row input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.9rem;
+  }
+
+  .display-name-row button {
+    /* .btn-secondary defaults to width:100%/margin-top for standalone
+       full-width buttons elsewhere (e.g. Sign out) — inside this flex row
+       that fights flex-shrink:0 for space, squeezing the input to nothing.
+       Reset back to a natural, inline-sized button here. */
+    flex-shrink: 0;
+    width: auto;
+    margin-top: 0;
+  }
 </style>
 
 <div id="app-header"></div>
 
 <div class="drawer-backdrop" id="drawer-backdrop"></div>
 <div class="app-body">
-  <nav class="sidebar" id="sidebar">
-    <button class="sidebar-close" type="button" id="sidebar-close" aria-label="Close menu">
-      <span class="material-symbols-outlined">close</span>
-    </button>
-    <a class="nav-item" href="index.html"><span class="material-symbols-outlined">today</span> Home</a>
-    <a class="nav-item" href="courses.html"><span class="material-symbols-outlined">school</span> Courses</a>
-  </nav>
+  <nav class="sidebar" id="sidebar"></nav>
 
   <main>
     <h2 class="page-heading">Your account</h2>
@@ -75,6 +95,13 @@
     <div id="profile-content" class="profile-card" hidden>
       <p><strong>Email</strong><span id="profile-email"></span></p>
       <p><strong>Member since</strong><span id="profile-member-since"></span></p>
+      <p>
+        <strong>Display name</strong>
+        <span class="display-name-row">
+          <input type="text" id="profile-display-name" maxlength="60" placeholder="Not set" disabled />
+          <button class="btn-secondary" type="button" id="profile-display-name-save" disabled>Save</button>
+        </span>
+      </p>
       <label class="profile-toggle">
         <input type="checkbox" id="profile-newsletter-toggle" disabled />
         Send me the daily digest by email
@@ -115,7 +142,7 @@
 
     window.ANCHOR_AUTH.client
       .from("profiles")
-      .select("created_at, newsletter_opt_in")
+      .select("created_at, newsletter_opt_in, display_name")
       .eq("user_id", session.user.id)
       .maybeSingle()
       .then(({ data, error }) => {
@@ -127,6 +154,11 @@
         const toggle = document.getElementById("profile-newsletter-toggle");
         toggle.checked = data.newsletter_opt_in;
         toggle.disabled = false;
+
+        const nameInput = document.getElementById("profile-display-name");
+        nameInput.value = data.display_name ?? "";
+        nameInput.dataset.saved = data.display_name ?? "";
+        nameInput.disabled = false;
       });
   }
 
@@ -141,10 +173,35 @@
     checkbox.disabled = false;
     if (error) {
       checkbox.checked = !next;
-      showToast("Couldn't save — please try again.", "error");
+      showToast("Couldn't save. Please try again.", "error");
       return;
     }
     showToast(next ? "Subscribed to the daily digest." : "Unsubscribed from the daily digest.", "success");
+  });
+
+  document.getElementById("profile-display-name").addEventListener("input", (event) => {
+    document.getElementById("profile-display-name-save").disabled = event.target.value === event.target.dataset.saved;
+  });
+
+  document.getElementById("profile-display-name-save").addEventListener("click", async (event) => {
+    const input = document.getElementById("profile-display-name");
+    const btn = event.target;
+    const value = input.value.trim();
+    btn.disabled = true;
+    input.disabled = true;
+
+    const { session } = await window.ANCHOR_AUTH.getSession();
+    const { error } = await window.ANCHOR_AUTH.client.from("profiles").update({ display_name: value || null }).eq("user_id", session.user.id);
+
+    input.disabled = false;
+    if (error) {
+      btn.disabled = false;
+      showToast("Couldn't save. Please try again.", "error");
+      return;
+    }
+    input.value = value;
+    input.dataset.saved = value;
+    showToast("Display name updated.", "success");
   });
 
   document.getElementById("profile-signout").addEventListener("click", async (event) => {
@@ -159,6 +216,7 @@
   });
 
   mountHeader();
+  mountSidebar(null);
   initThemeToggle();
   initSidebarDrawer();
   initAuthControl();

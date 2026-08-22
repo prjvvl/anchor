@@ -29,24 +29,23 @@
     padding: 1px 6px;
     border-radius: 4px;
   }
+
+  .resume-btn {
+    margin: 0 0 1.4rem;
+  }
 </style>
 
 <div id="app-header"></div>
 
 <div class="drawer-backdrop" id="drawer-backdrop"></div>
 <div class="app-body">
-  <nav class="sidebar" id="sidebar">
-    <button class="sidebar-close" type="button" id="sidebar-close" aria-label="Close menu">
-      <span class="material-symbols-outlined">close</span>
-    </button>
-    <a class="nav-item" href="index.html"><span class="material-symbols-outlined">today</span> Home</a>
-    <a class="nav-item" href="courses.html" aria-current="page"><span class="material-symbols-outlined">school</span> Courses</a>
-  </nav>
+  <nav class="sidebar" id="sidebar"></nav>
 
   <main>
-    <p class="breadcrumb"><a href="courses.html">Courses</a> / <span id="course-crumb"></span></p>
+    <p class="breadcrumb"><a href="courses.html" id="course-crumb-tier">Courses</a> / <span id="course-crumb"></span></p>
     <h2 class="page-heading" id="course-title"></h2>
     <p class="page-sub" id="course-sub"></p>
+    <div id="resume-slot"></div>
     <div id="status" class="sr-only">Loading lessons…</div>
     <div class="card-grid" id="lessons"></div>
   </main>
@@ -109,6 +108,7 @@
       statusEl.textContent = "Course not found.";
       statusEl.classList.remove("sr-only");
       document.getElementById("course-title").textContent = "Course not found";
+      mountSidebar(null);
       return;
     }
 
@@ -117,9 +117,15 @@
     document.getElementById("course-title").textContent = info.displayName;
     document.getElementById("course-sub").textContent = info.description ?? "";
 
+    const tierInfo = (window.ANCHOR_TIERS ?? []).find((t) => t.key === info.tier);
+    const crumbTier = document.getElementById("course-crumb-tier");
+    crumbTier.textContent = tierInfo?.displayName ?? "Courses";
+    crumbTier.href = info.tier ? `courses.html?tier=${encodeURIComponent(info.tier)}` : "courses.html";
+    mountSidebar(info.tier ?? null);
+
     const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
     if (!supabaseUrl || !supabasePublishableKey) {
-      statusEl.textContent = "Missing Supabase config — fill in config.js";
+      statusEl.textContent = "Missing Supabase config. Fill in config.js.";
       statusEl.classList.remove("sr-only");
       return;
     }
@@ -150,7 +156,33 @@
       statusEl.remove();
       lessonsEl.innerHTML = renderLessons(videos, Boolean(info.ordered));
       lessonsEl.addEventListener("click", onThumbGridClick);
-      markViewedBadges(lessonsEl, videos.map((v) => v.youtube_video_id));
+
+      // Only worth a "Resume" CTA when there's real partial progress —
+      // signed out (viewedSet is null), zero watched, or fully watched all
+      // render nothing here rather than a misleading/empty button.
+      const viewedSet = await markViewedBadges(lessonsEl, videos.map((v) => v.youtube_video_id));
+      const resumeSlot = document.getElementById("resume-slot");
+      if (viewedSet) {
+        const watchedCount = videos.filter((v) => viewedSet.has(v.youtube_video_id)).length;
+        const next = videos.find((v) => !viewedSet.has(v.youtube_video_id));
+        if (watchedCount > 0 && next) {
+          // "Lesson N" only means something for ordered courses (a real,
+          // stable curriculum position). Unordered courses are sorted by
+          // recency, so a video's array position can shift as new videos
+          // are added — labeling it a fixed lesson number would be
+          // misleading there.
+          const label = info.ordered ? `Resume Lesson ${videos.indexOf(next) + 1}` : "Resume";
+          resumeSlot.innerHTML = `
+            <button class="btn-primary resume-btn" type="button" id="resume-btn">
+              <span class="material-symbols-outlined">play_arrow</span> ${label}
+            </button>`;
+          document.getElementById("resume-btn").addEventListener("click", () => {
+            const thumb = lessonsEl.querySelector(`.thumb[data-video-id="${CSS.escape(next.youtube_video_id)}"]`);
+            thumb?.scrollIntoView({ behavior: "smooth", block: "center" });
+            thumb?.click();
+          });
+        }
+      }
     } catch (err) {
       lessonsEl.innerHTML = "";
       statusEl.textContent = "Failed to load lessons.";
@@ -161,7 +193,11 @@
 
   mountHeader();
   initThemeToggle();
-  initSidebarDrawer();
   initAuthControl();
+  // loadCourse() calls mountSidebar() synchronously (before its first
+  // await), so it must run before initSidebarDrawer() binds the close
+  // button's listener — otherwise #sidebar-close doesn't exist yet and the
+  // click handler never gets attached.
   loadCourse();
+  initSidebarDrawer();
 </script>

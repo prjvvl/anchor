@@ -38,7 +38,7 @@ header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  max-width: 1300px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 2rem 1.25rem 1rem;
 }
@@ -76,7 +76,7 @@ header p {
 .app-body {
   display: flex;
   align-items: flex-start;
-  max-width: 1300px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -123,6 +123,19 @@ header p {
 @media (max-width: 860px) {
   .hamburger {
     display: inline-flex;
+  }
+
+  /* At mobile widths, hamburger + logo + title + auth pill + theme toggle
+     all competing in one row leaves too little space for "Daily Anchor" —
+     it wraps mid-word against the subtitle wrapping too, reading as a
+     cramped stack instead of a header. Drop the decorative subtitle and
+     tighten the auth pill so the title fits on one line. */
+  header p {
+    display: none;
+  }
+
+  .auth-btn {
+    max-width: 110px;
   }
 
   .sidebar-close {
@@ -198,9 +211,18 @@ header p {
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+/* text-overflow: ellipsis doesn't reliably render on native <button>
+   elements (a long-standing cross-browser quirk) — the box truncates
+   correctly but silently drops the "…" indicator, reading as broken text
+   rather than an intentional truncation. Applying it to this inner span
+   instead of the button itself renders correctly everywhere. */
+.auth-btn-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .auth-btn:hover {
@@ -333,16 +355,14 @@ main {
   padding: 2rem 0;
 }
 
+/* auto-fill + minmax instead of a fixed column count — column count
+   responds to actual available width (narrower inside a split layout like
+   the homepage's videos/headlines columns, wider on courses.html/course.html
+   which don't share the row), rather than one hardcoded breakpoint. */
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 1.25rem;
-}
-
-@media (max-width: 860px) {
-  .card-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .video {
@@ -389,13 +409,16 @@ main {
   height: 22px;
   border-radius: 50%;
   border: none;
-  background: rgba(0, 0, 0, 0.75);
+  /* Same green as .toast.success — "watched" reuses the site's existing
+     success color instead of introducing a new one. */
+  background: #1a9c5f;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
 .viewed-badge .material-symbols-outlined {
@@ -403,7 +426,7 @@ main {
 }
 
 .viewed-badge:hover {
-  background: rgba(0, 0, 0, 0.9);
+  background: #157f45;
 }
 
 .video img,
@@ -449,7 +472,7 @@ main {
 .video-body .title {
   color: var(--ink);
   font-weight: 600;
-  font-size: 0.98rem;
+  font-size: 0.9rem;
   line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -473,7 +496,7 @@ main {
 }
 
 footer {
-  max-width: 1300px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 0 1.25rem 3rem;
 }
