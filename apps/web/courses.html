@@ -40,25 +40,68 @@
   .course-card .meta {
     margin-top: 0;
   }
+
+  .dept {
+    margin-bottom: 2rem;
+  }
+
+  .dept-label {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 0.9rem;
+  }
+
+  .dept-label .material-symbols-outlined {
+    color: var(--muted);
+    font-size: 1.1rem;
+  }
+
+  .locked-card {
+    background: var(--card-bg);
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 0.9rem 1.1rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .tier-empty {
+    text-align: center;
+    padding: 3.5rem 1rem;
+    color: var(--muted);
+  }
+
+  .tier-empty .material-symbols-outlined {
+    font-size: 2.2rem;
+    display: block;
+    margin: 0 auto 0.75rem;
+  }
+
+  .tier-empty p {
+    max-width: 340px;
+    margin: 0.35rem auto 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
 </style>
 
 <div id="app-header"></div>
 
 <div class="drawer-backdrop" id="drawer-backdrop"></div>
 <div class="app-body">
-  <nav class="sidebar" id="sidebar">
-    <button class="sidebar-close" type="button" id="sidebar-close" aria-label="Close menu">
-      <span class="material-symbols-outlined">close</span>
-    </button>
-    <a class="nav-item" href="index.html"><span class="material-symbols-outlined">today</span> Home</a>
-    <a class="nav-item" href="courses.html" aria-current="page"><span class="material-symbols-outlined">school</span> Courses</a>
-  </nav>
+  <nav class="sidebar" id="sidebar"></nav>
 
   <main>
-    <h2 class="page-heading">Courses</h2>
-    <p class="page-sub">Complete series and curated playlists. Browse at your own pace, no daily rotation.</p>
+    <h2 class="page-heading" id="tier-heading">Courses</h2>
+    <p class="page-sub" id="tier-sub">Complete series and curated playlists. Browse at your own pace, no daily rotation.</p>
     <div id="status" class="sr-only">Loading courses…</div>
-    <div class="card-grid" id="courses"></div>
+    <div id="tier-content"></div>
   </main>
 </div>
 
@@ -83,67 +126,115 @@
 <script src="playlists.js"></script>
 <script src="helpers.js"></script>
 <script>
-  async function fetchLessonIds(slug) {
-    const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
-    const res = await fetch(`${supabaseUrl}/rest/v1/videos?select=youtube_video_id&active=eq.true&playlist=eq.${slug}`, {
-      headers: {
-        apikey: supabasePublishableKey,
-        Authorization: `Bearer ${supabasePublishableKey}`,
-      },
-    });
-    if (!res.ok) throw new Error(`Supabase request failed: ${res.status}`);
-    const rows = await res.json();
-    return rows.map((r) => r.youtube_video_id);
+  // Departments shown (locked, if empty) under every academic tier, in
+  // display order. Extracurricular has its own informal department set and
+  // doesn't use the locked-placeholder treatment — that promise ("more
+  // coming") only makes sense for the fixed academic ladder.
+  const ACADEMIC_DEPARTMENTS = ["humanities", "sciences", "stem", "society-civics", "arts-culture", "media-literacy"];
+  const EXTRACURRICULAR_DEPARTMENTS = ["games-strategy", "tech-curiosities", "places-culture", "food-culture", "life-skills-making"];
+
+  function currentTier() {
+    const requested = new URLSearchParams(location.search).get("tier");
+    const known = (window.ANCHOR_TIERS ?? []).some((t) => t.key === requested);
+    return known ? requested : "standard";
+  }
+
+  function courseCard(slug, info, ids, viewedSet) {
+    const count = ids?.length ?? null;
+    const watched = viewedSet && ids ? ids.filter((id) => viewedSet.has(id)).length : null;
+    return `
+      <a class="course-card" href="course.html?slug=${encodeURIComponent(slug)}">
+        <div class="title">${escapeHtml(info.displayName)}</div>
+        <p class="desc">${escapeHtml(info.description ?? "")}</p>
+        <div class="meta">
+          <span>${escapeHtml(info.source ?? "")}</span>
+          ${count != null ? `<span>· ${count} lessons</span>` : ""}
+          ${watched != null ? `<span>· ${watched}/${count} watched</span>` : ""}
+        </div>
+      </a>`;
   }
 
   async function loadCourses() {
     const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
     const statusEl = document.getElementById("status");
-    const listEl = document.getElementById("courses");
+    const contentEl = document.getElementById("tier-content");
+    const tier = currentTier();
+    const tierInfo = (window.ANCHOR_TIERS ?? []).find((t) => t.key === tier);
+
+    document.getElementById("tier-heading").textContent = tierInfo?.displayName ?? "Courses";
+    document.getElementById("tier-sub").textContent =
+      tier === "extracurricular"
+        ? "Skills and curiosities outside the academic ladder. Not a rigor progression, just genuinely good content."
+        : "Complete series and curated playlists. Browse at your own pace, no daily rotation.";
+    document.title = `Daily Anchor - ${tierInfo?.displayName ?? "Courses"}`;
 
     if (!supabaseUrl || !supabasePublishableKey) {
-      statusEl.textContent = "Missing Supabase config — fill in config.js";
+      statusEl.textContent = "Missing Supabase config. Fill in config.js.";
       statusEl.classList.remove("sr-only");
       return;
     }
 
-    const courseEntries = Object.entries(window.ANCHOR_PLAYLISTS ?? {}).filter(([, info]) => info.type === "course");
+    const allCourses = Object.entries(window.ANCHOR_PLAYLISTS ?? {}).filter(([, info]) => info.type === "course");
+    const tierCourses = allCourses.filter(([, info]) => info.tier === tier);
+    const departments = tier === "extracurricular" ? EXTRACURRICULAR_DEPARTMENTS : ACADEMIC_DEPARTMENTS;
 
-    if (courseEntries.length === 0) {
-      statusEl.textContent = "No courses yet.";
-      statusEl.classList.remove("sr-only");
+    if (tierCourses.length === 0) {
+      statusEl.remove();
+      contentEl.innerHTML = `
+        <div class="tier-empty">
+          <span class="material-symbols-outlined">hourglass_empty</span>
+          <strong>${escapeHtml(tierInfo?.displayName ?? "This tier")}: coming soon</strong>
+          <p>This tier is part of the plan but doesn't have courses yet. It'll fill in as more content is curated.</p>
+        </div>`;
       return;
     }
 
-    listEl.innerHTML = renderCourseSkeletons(courseEntries.length);
+    contentEl.innerHTML = departments
+      .map(
+        (dept) => `
+        <div class="dept">
+          <div class="skeleton line" style="width: 160px; height: 1.1rem;"></div>
+          <div class="card-grid">${renderCourseSkeletons(2)}</div>
+        </div>`
+      )
+      .join("");
 
     try {
       const [results, viewedSet] = await Promise.all([
-        Promise.allSettled(courseEntries.map(([slug]) => fetchLessonIds(slug))),
+        Promise.allSettled(tierCourses.map(([slug]) => fetchLessonIds(slug))),
         fetchViewedSet(),
       ]);
-      const idLists = results.map((r) => (r.status === "fulfilled" ? r.value : null));
+      const idsBySlug = Object.fromEntries(tierCourses.map(([slug], i) => [slug, results[i].status === "fulfilled" ? results[i].value : null]));
 
       statusEl.remove();
-      listEl.innerHTML = courseEntries
-        .map(([slug, info], i) => {
-          const ids = idLists[i];
-          const count = ids?.length ?? null;
-          const watched = viewedSet && ids ? ids.filter((id) => viewedSet.has(id)).length : null;
+
+      const sections = departments
+        .map((deptKey) => {
+          const deptInfo = window.ANCHOR_DEPARTMENTS?.[deptKey];
+          const deptCourses = tierCourses.filter(([, info]) => info.department === deptKey);
+
+          if (deptCourses.length === 0) {
+            if (tier === "extracurricular") return ""; // no fixed promise for extracurricular departments
+            return `
+              <div class="dept">
+                <div class="dept-label"><span class="material-symbols-outlined">${deptInfo?.icon ?? "folder"}</span><span>${escapeHtml(deptInfo?.displayName ?? deptKey)}</span></div>
+                <div class="locked-card"><span class="material-symbols-outlined">lock</span> No courses yet</div>
+              </div>`;
+          }
+
           return `
-          <a class="course-card" href="course.html?slug=${encodeURIComponent(slug)}">
-            <div class="title">${escapeHtml(info.displayName)}</div>
-            <p class="desc">${escapeHtml(info.description ?? "")}</p>
-            <div class="meta">
-              <span>${escapeHtml(info.source ?? "")}</span>
-              ${count != null ? `<span>· ${count} lessons</span>` : ""}
-              ${watched != null ? `<span>· ${watched}/${count} watched</span>` : ""}
-            </div>
-          </a>`;
+            <div class="dept">
+              <div class="dept-label"><span class="material-symbols-outlined">${deptInfo?.icon ?? "folder"}</span><span>${escapeHtml(deptInfo?.displayName ?? deptKey)}</span></div>
+              <div class="card-grid">
+                ${deptCourses.map(([slug, info]) => courseCard(slug, info, idsBySlug[slug], viewedSet)).join("")}
+              </div>
+            </div>`;
         })
         .join("");
+
+      contentEl.innerHTML = sections;
     } catch (err) {
-      listEl.innerHTML = "";
+      contentEl.innerHTML = "";
       statusEl.textContent = "Failed to load courses.";
       statusEl.classList.remove("sr-only");
       console.error(err);
@@ -151,6 +242,7 @@
   }
 
   mountHeader();
+  mountSidebar(currentTier());
   initThemeToggle();
   initSidebarDrawer();
   initAuthControl();
