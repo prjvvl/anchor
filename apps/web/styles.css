@@ -620,3 +620,431 @@ footer {
   height: 0.85rem;
   border-radius: 4px;
 }
+
+.section-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.play-all-btn {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.82rem;
+}
+
+/* .btn-primary's own `display: inline-flex` otherwise beats the UA [hidden]
+   rule — same gap as .video-modal-error/.video-modal-watched-toggle further
+   down — so the button was visible (and clickable, before the click
+   listener was even attached) during the initial load window. Scoped to
+   .play-all-btn rather than .btn-primary itself since no other .btn-primary
+   usage toggles `hidden`. */
+.play-all-btn[hidden] {
+  display: none;
+}
+
+/* Modal/theater video player — replaces the old inline-card iframe swap.
+   z-index sits above both .toast (100) and .auth-panel (45). */
+.video-modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.video-modal-backdrop.open {
+  display: flex;
+}
+
+.video-modal {
+  width: min(1000px, 100%);
+  max-height: calc(100vh - 3rem);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.video-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.video-modal-titles {
+  min-width: 0;
+}
+
+.video-modal-breadcrumb {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 0.15rem;
+}
+
+.video-modal-titles h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.video-modal-meta {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.video-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.video-modal-watch-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.video-modal-watch-link:hover {
+  background: var(--border);
+}
+
+.video-modal-watched-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.video-modal-watched-toggle:hover {
+  background: var(--border);
+}
+
+/* Same green as .viewed-badge / .toast.success — the site's one existing
+   "watched" color, reused here rather than introducing a new one. */
+.video-modal-watched-toggle.is-watched {
+  border-color: #1a9c5f;
+  color: #1a9c5f;
+}
+
+.video-modal-watched-toggle[hidden] {
+  display: none;
+}
+
+.video-modal-close,
+.video-modal-minimize {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.video-modal-close:hover,
+.video-modal-minimize:hover {
+  background: var(--border);
+}
+
+.video-modal-body {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.video-modal-player-area {
+  position: relative;
+  background: #000;
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+  /* Without this, the grid's default align-items: stretch forces this box
+     to match the row's height (which the auto-sized track would otherwise
+     take from whichever column is taller — i.e. a long Up Next list),
+     squashing/cropping the embedded video instead of letting aspect-ratio
+     govern its size. Sized purely from its own width; player.js then
+     measures the result and imposes it as the Up Next column's explicit
+     height (see the ResizeObserver in ensureModal), so the two columns
+     match with no leftover gap and no chance of feeding back into this
+     element's own size. */
+  align-self: start;
+}
+
+.video-modal-player-mount,
+.video-modal-player-mount iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* Same [hidden]-vs-author-display gap as .video-modal-error/.video-modal-watched-toggle
+   below — onError() sets playerMountEl.hidden to swap in the error overlay,
+   but without this the mount (and its stale last-frame iframe) kept
+   rendering underneath it. */
+.video-modal-player-mount[hidden] {
+  display: none;
+}
+
+.video-modal-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: #fff;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+/* Author `display: flex` above otherwise beats the UA [hidden] rule, so the
+   (empty, transparent) error box stayed laid out over the player even while
+   "hidden" — an invisible layer that silently ate every click meant for the
+   iframe's own play/pause/settings controls. Needs the extra specificity
+   here (class + attribute) to actually win. */
+.video-modal-error[hidden] {
+  display: none;
+}
+
+.video-modal-error .video-modal-watch-link {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+.video-modal-upnext {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--border);
+}
+
+.video-modal-upnext-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.video-modal-autoplay {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  cursor: pointer;
+}
+
+.video-modal-upnext-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.video-modal-upnext-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--ink);
+}
+
+.video-modal-upnext-item:hover {
+  background: var(--border);
+}
+
+.video-modal-upnext-item.active {
+  border-color: var(--ink);
+  background: var(--border);
+}
+
+.video-modal-upnext-item img {
+  width: 88px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background: #dfe3ea;
+}
+
+.video-modal-upnext-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.video-modal-upnext-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.video-modal-upnext-duration {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+@media (max-width: 860px) {
+  .video-modal-backdrop {
+    padding: 0;
+  }
+
+  .video-modal {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border-radius: 0;
+  }
+
+  /* Side-by-side titles + actions get cramped next to a long title at
+     narrow widths — stack them instead, actions on top. column-reverse
+     flips the visual order without reordering the DOM (titles stay first
+     for source order / screen readers). */
+  .video-modal-header {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+
+  .video-modal-actions {
+    justify-content: flex-end;
+  }
+
+  .video-modal-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    overflow-y: auto;
+  }
+
+  .video-modal-upnext {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* Minimized ("mini player") mode — the video keeps playing in a small
+   corner box while the backdrop stops dimming/blocking the rest of the
+   page, so the user can keep scrolling/browsing elsewhere. Declared after
+   the max-width: 860px block (and using the .minimized class, one level
+   more specific than .video-modal alone) so it wins at every viewport
+   width, including the mobile full-bleed layout above. */
+.video-modal-backdrop.minimized {
+  background: transparent;
+  pointer-events: none;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 1rem;
+}
+
+.video-modal.minimized {
+  width: min(320px, calc(100vw - 2rem));
+  height: auto;
+  max-height: none;
+  border-radius: 10px;
+  pointer-events: auto;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.video-modal.minimized .video-modal-header,
+.video-modal.minimized .video-modal-upnext {
+  display: none;
+}
+
+.video-modal.minimized .video-modal-body {
+  display: block;
+}
+
+.video-modal.minimized .video-modal-player-area {
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.video-modal-mini-controls {
+  display: none;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  gap: 0.3rem;
+  z-index: 1;
+}
+
+.video-modal.minimized .video-modal-mini-controls {
+  display: flex;
+}
+
+.video-modal-mini-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  cursor: pointer;
+}
+
+.video-modal-mini-controls button:hover {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.video-modal-mini-controls .material-symbols-outlined {
+  font-size: 16px;
+}

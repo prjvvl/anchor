@@ -69,32 +69,16 @@ function renderCourseSkeletons(count) {
     .join("");
 }
 
-function playInline(event) {
-  const thumb = event.target.closest(".thumb");
-  if (!thumb) return;
-
-  const videoId = thumb.dataset.videoId;
-  const badge = thumb.parentElement?.querySelector(".viewed-badge");
-  const iframe = document.createElement("iframe");
-  iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`;
-  iframe.title = thumb.getAttribute("aria-label") ?? "";
-  iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-  iframe.allowFullscreen = true;
-
-  thumb.replaceWith(iframe);
-  badge?.remove();
-  markViewed(videoId);
-}
-
 // Handles a click on a .viewed-badge (unmark) before falling through to
-// playInline. The badge sits next to .thumb rather than inside it — .thumb
-// is itself a <button>, and buttons can't nest — so this dispatcher is what
-// makes the badge clickable without needing a second, separately-bound
-// listener juggling stopPropagation against playInline's own.
+// AnchorPlayer.openFromThumb (player.js). The badge sits next to .thumb
+// rather than inside it — .thumb is itself a <button>, and buttons can't
+// nest — so this dispatcher is what makes the badge clickable without
+// needing a second, separately-bound listener juggling stopPropagation
+// against the thumb's own click.
 function onThumbGridClick(event) {
   const badge = event.target.closest(".viewed-badge");
   if (badge) return unmarkViewed(badge);
-  playInline(event);
+  window.AnchorPlayer?.openFromThumb(event, event.currentTarget);
 }
 
 function renderViewedBadge(videoId) {
@@ -303,14 +287,25 @@ function initAuthControl() {
   if (!container || !window.ANCHOR_AUTH) return;
 
   let session = null;
+  let displayName = null; // fetched separately — not part of the auth session itself
   let panelOpen = false;
   let step = "email"; // "email" | "code" — irrelevant once session is set
   let pendingEmail = "";
   let cooldownEndsAt = 0;
   let cooldownInterval;
 
-  function truncateEmail(email) {
-    return email.length > 22 ? `${email.slice(0, 19)}…` : email;
+  function truncateLabel(text) {
+    return text.length > 22 ? `${text.slice(0, 19)}…` : text;
+  }
+
+  // Fetched once per sign-in (guarded by the displayName === null check at
+  // the call site below) rather than on every auth event — onAuthStateChange
+  // also fires for token refreshes, which don't need a fresh profile fetch.
+  async function fetchDisplayName(userId) {
+    const { data, error } = await window.ANCHOR_AUTH.client.from("profiles").select("display_name").eq("user_id", userId).maybeSingle();
+    if (error || !data?.display_name) return;
+    displayName = data.display_name;
+    render();
   }
 
   function updateCooldownLabel() {
@@ -364,7 +359,7 @@ function initAuthControl() {
   }
 
   function render() {
-    const label = session ? truncateEmail(session.user.email) : "Sign in";
+    const label = session ? truncateLabel(displayName || session.user.email) : "Sign in";
     container.innerHTML = `
       <button class="auth-btn" type="button" id="auth-toggle" aria-label="Account menu"><span class="auth-btn-label">${escapeHtml(label)}</span></button>
       <div class="auth-panel${panelOpen ? " open" : ""}" id="auth-panel">${panelBody()}</div>
@@ -459,14 +454,23 @@ function initAuthControl() {
         }
         pendingEmail = email;
         step = "code";
-        startCooldown();
+        // render() must run first — it's what puts #auth-resend in the DOM.
+        // startCooldown()'s own immediate updateCooldownLabel() call bails
+        // out (and kills the interval it just started) if that button
+        // doesn't exist yet, which silently broke the whole countdown.
         render();
+        startCooldown();
       });
     }
   }
 
   window.ANCHOR_AUTH.onAuthStateChange((event, newSession) => {
     session = newSession;
+    if (!session) {
+      displayName = null;
+    } else if (displayName === null) {
+      fetchDisplayName(session.user.id);
+    }
     render();
   });
 
