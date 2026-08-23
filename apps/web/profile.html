@@ -127,16 +127,6 @@
   </main>
 </div>
 
-<footer>
-  <div class="subscribe">
-    <div class="subscribe-copy">
-      <strong>Get the daily digest</strong>
-      <p>The day's best picks, distilled into one email.</p>
-    </div>
-    <div id="footer-cta"></div>
-  </div>
-</footer>
-
 <div class="toast" id="toast">
   <span class="material-symbols-outlined" id="toast-icon"></span>
   <span id="toast-message"></span>
@@ -275,6 +265,7 @@
       return;
     }
     showToast(next ? "Subscribed to the daily digest." : "Unsubscribed from the daily digest.", "success");
+    window.dispatchEvent(new CustomEvent("anchor-newsletter-change", { detail: { optedIn: next } }));
   });
 
   document.getElementById("profile-display-name").addEventListener("input", (event) => {

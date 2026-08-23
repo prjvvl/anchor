@@ -388,14 +388,26 @@
        sibling that comes *before* .card-grid in the DOM, so without these
        the grid's cards (later in DOM, no elevated stacking otherwise) would
        paint over it as they scroll underneath rather than the reverse.
+       z-index: 10, not just an arbitrary "above" value — .card-menu-wrap
+       (the video card's "..." button) sits at z-index: 2, same as this
+       used to be, and a tie falls back to DOM order; .card-grid comes
+       *after* this row, so the tied dot menu was winning and painting over
+       the sticky bar (and its Play All button) as cards scrolled under it.
+       10 clears that with headroom, while staying well under .auth-panel
+       (45) and the video modal (200), which do need to sit above this.
+       top: -1px, not 0 — a 1-device-pixel gap otherwise appears at the very
+       top of the sticky bar on scroll (a subpixel rounding artifact common
+       to `position: sticky; top: 0`), letting a sliver of the card behind
+       it show through; nudging the stick point 1px above the viewport edge
+       closes it.
        Styled like a topbar (opaque background, bottom border, real vertical
        padding) rather than bare text sitting flush against the viewport
        edge, and forced to one line — title truncates instead of wrapping —
        so it doesn't grow taller than a normal bar while pinned. */
     .home-shelf .section-heading-row {
       position: sticky;
-      top: 0;
-      z-index: 2;
+      top: -1px;
+      z-index: 10;
       flex-wrap: nowrap;
       background: var(--bg);
       padding: 0.7rem 0;
@@ -461,18 +473,18 @@
         </section>
       </div>
     </div>
+
+    <footer>
+      <div class="subscribe">
+        <div class="subscribe-copy" id="footer-copy">
+          <strong>Get the daily digest</strong>
+          <p>The day's best picks, distilled into one email.</p>
+        </div>
+        <div id="footer-cta"></div>
+      </div>
+    </footer>
   </main>
 </div>
-
-<footer>
-  <div class="subscribe">
-    <div class="subscribe-copy">
-      <strong>Get the daily digest</strong>
-      <p>The day's best picks, distilled into one email.</p>
-    </div>
-    <div id="footer-cta"></div>
-  </div>
-</footer>
 
 <div class="toast" id="toast">
   <span class="material-symbols-outlined" id="toast-icon"></span>
@@ -621,8 +633,20 @@
     const moreBtn = document.getElementById(`${id}-more`);
     moreBtn?.addEventListener("click", () => {
       const collapsing = listEl.dataset.capState === "expanded";
+      // Collapsing removes a whole grid's worth of cards *above* wherever
+      // the user has since scrolled to, which shifts everything below it
+      // up the page — the browser doesn't compensate scroll position for
+      // that on its own, so without this the user lands somewhere
+      // unrelated a "few shelves down" from the button they just clicked.
+      // Recording the button's own on-screen position before the toggle and
+      // scrolling by the delta after keeps it (and the shelf around it)
+      // pinned to the same spot on screen either direction, expand or
+      // collapse.
+      const beforeTop = moreBtn.getBoundingClientRect().top;
       listEl.dataset.capState = collapsing ? "collapsed" : "expanded";
       moreBtn.textContent = collapsing ? "Show more" : "Show less";
+      const afterTop = moreBtn.getBoundingClientRect().top;
+      window.scrollBy(0, afterTop - beforeTop);
     });
 
     const updatedEl = document.getElementById(`${id}-updated`);

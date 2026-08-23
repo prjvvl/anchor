@@ -57,6 +57,17 @@
   box-sizing: border-box;
 }
 
+/* Native checkboxes otherwise render with the browser's default blue fill
+   regardless of theme — clashes with the site's dark palette and doesn't
+   match the monochrome --ink/--bg look everything else uses for an
+   "active" state (nav-item[aria-current], .btn-primary, ...). One shared
+   rule since checkboxes show up in three unrelated places (region/language
+   filters, the profile newsletter toggle, the video modal's autoplay
+   toggle) that shouldn't each need their own override. */
+input[type="checkbox"] {
+  accent-color: var(--ink);
+}
+
 body {
   font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
   background: var(--bg);
@@ -157,6 +168,7 @@ header p {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0 1rem;
   display: flex;
   flex-direction: column;
@@ -761,10 +773,15 @@ main {
   margin: 0.2rem 0 0.85rem;
 }
 
+/* Lives inside <main> (a direct sibling of the shelf/content stack, right
+   before </main>) precisely so it inherits main's own horizontal padding
+   and its offset past the sidebar — a plain page-level sibling of
+   .app-body instead (the old placement) spans the full viewport width,
+   including the space the sidebar column occupies, so its content doesn't
+   line up with everything above it. No max-width/centering of its own
+   needed here since main is already width-bound by .app-body. */
 footer {
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 0 1.25rem 3rem;
+  margin-top: 1.5rem;
 }
 
 .subscribe {

@@ -13,6 +13,28 @@ function escapeAttr(str) {
   return escapeHtml(str ?? "").replaceAll('"', "&quot;");
 }
 
+// Shared, reference-counted body-scroll lock. The sidebar drawer
+// (initSidebarDrawer, below) and the video modal (player.js) each need to
+// lock scroll independently, and they can be open at the same time — a
+// minimized video floats above everything (z-index 200) and stays
+// clickable even while the drawer (z-index 30) is open behind it. Two
+// separate unconditional `overflow = "hidden"` / `overflow = ""` writers
+// would let whichever one closes last clobber the other's still-active
+// lock (e.g. closing the video while the drawer is still open would
+// silently unlock page scroll). Exposed on window since player.js loads
+// after this file and has no other way to share this state with it.
+let scrollLockCount = 0;
+window.AnchorScrollLock = {
+  lock() {
+    scrollLockCount++;
+    document.body.style.overflow = "hidden";
+  },
+  unlock() {
+    scrollLockCount = Math.max(0, scrollLockCount - 1);
+    if (scrollLockCount === 0) document.body.style.overflow = "";
+  },
+};
+
 function formatDuration(totalSeconds) {
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
@@ -572,7 +594,7 @@ function initRegionLangFilter() {
   if (!window.ANCHOR_AUTH) return;
 
   // onAuthStateChange also fires on token refreshes, not just real sign-ins
-  // — same guard pattern as fetchDisplayName in initAuthControl, so this
+  // — same guard pattern as fetchProfileExtras in initAuthControl, so this
   // reconciliation only runs once per actual sign-in.
   let reconciledUserId = null;
   window.ANCHOR_AUTH.onAuthStateChange(async (event, session) => {
@@ -640,13 +662,24 @@ function initSidebarDrawer() {
   const closeBtn = document.getElementById("sidebar-close");
   if (!hamburger || !sidebar || !backdrop) return;
 
+  // Body scroll lock while the drawer is open — without it, a touch/wheel
+  // scroll starting anywhere over the fixed-position drawer or backdrop
+  // still scrolls the page underneath (position: fixed doesn't stop that on
+  // its own), which reads as the drawer's own contents behaving
+  // inconsistently on scroll even though the drawer itself never moves.
+  // Goes through AnchorScrollLock, not a direct overflow write — the video
+  // modal can be open (minimized, z-index 200) at the same time as this
+  // drawer, and two independent unconditional writers would let whichever
+  // closes last clobber the other's still-active lock.
   const open = () => {
     sidebar.classList.add("open");
     backdrop.classList.add("open");
+    window.AnchorScrollLock.lock();
   };
   const close = () => {
     sidebar.classList.remove("open");
     backdrop.classList.remove("open");
+    window.AnchorScrollLock.unlock();
   };
 
   hamburger.addEventListener("click", () => {
@@ -656,6 +689,14 @@ function initSidebarDrawer() {
   closeBtn?.addEventListener("click", close);
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && sidebar.classList.contains("open")) close();
+  });
+  // .hamburger/.drawer-backdrop are display:none above 860px (see
+  // styles.css), so a drawer left open while crossing into that width
+  // (window resize, tablet rotation) would otherwise have no visible way to
+  // close it — the scroll lock especially shouldn't be left stuck on with
+  // no click target to release it.
+  window.matchMedia("(min-width: 861px)").addEventListener("change", (event) => {
+    if (event.matches && sidebar.classList.contains("open")) close();
   });
 }
 
@@ -669,6 +710,7 @@ function initAuthControl() {
 
   let session = null;
   let displayName = null; // fetched separately — not part of the auth session itself
+  let newsletterOptIn = null; // null = not yet fetched, true/false once known — see fetchProfileExtras
   let panelOpen = false;
   let step = "email"; // "email" | "code" — irrelevant once session is set
   let pendingEmail = "";
@@ -679,13 +721,17 @@ function initAuthControl() {
     return text.length > 22 ? `${text.slice(0, 19)}…` : text;
   }
 
-  // Fetched once per sign-in (guarded by the displayName === null check at
-  // the call site below) rather than on every auth event — onAuthStateChange
-  // also fires for token refreshes, which don't need a fresh profile fetch.
-  async function fetchDisplayName(userId) {
-    const { data, error } = await window.ANCHOR_AUTH.client.from("profiles").select("display_name").eq("user_id", userId).maybeSingle();
-    if (error || !data?.display_name) return;
+  // Fetched once per sign-in (guarded by the newsletterOptIn === null check
+  // at the call site below, not displayName — a user with no display name
+  // set stays null forever, which would re-fetch on every auth event
+  // instead of just once) rather than on every auth event —
+  // onAuthStateChange also fires for token refreshes, which don't need a
+  // fresh profile fetch.
+  async function fetchProfileExtras(userId) {
+    const { data, error } = await window.ANCHOR_AUTH.client.from("profiles").select("display_name, newsletter_opt_in").eq("user_id", userId).maybeSingle();
+    if (error || !data) return;
     displayName = data.display_name;
+    newsletterOptIn = Boolean(data.newsletter_opt_in);
     render();
   }
 
@@ -757,9 +803,22 @@ function initAuthControl() {
     // Footer newsletter CTA is optional — only present on pages that have
     // it — but when present, it stays in lockstep with this same session
     // value rather than running its own separate auth-state subscription.
+    // Copy swaps three ways, not just signed-in-vs-not: a signed-in user
+    // who already opted in gets an acknowledgement instead of the same
+    // acquisition pitch every other state sees — there's no reason to keep
+    // asking someone to get the digest they're already getting.
     const footerSlot = document.getElementById("footer-cta");
     if (footerSlot) {
-      footerSlot.innerHTML = session
+      const footerCopy = document.getElementById("footer-copy");
+      const subscribed = Boolean(session) && newsletterOptIn === true;
+      if (footerCopy) {
+        footerCopy.innerHTML = subscribed
+          ? `<strong>You're subscribed</strong><p>The day's best picks land in your inbox every morning.</p>`
+          : `<strong>Get the daily digest</strong><p>The day's best picks, distilled into one email.</p>`;
+      }
+      footerSlot.innerHTML = subscribed
+        ? `<a class="btn-secondary" href="profile.html">Manage preferences</a>`
+        : session
         ? `<a class="btn-primary" href="profile.html">Manage newsletter preferences</a>`
         : `<button class="btn-primary" type="button" id="footer-cta-signin">Sign in to subscribe</button>`;
       document.getElementById("footer-cta-signin")?.addEventListener("click", (event) => {
@@ -861,8 +920,9 @@ function initAuthControl() {
     session = newSession;
     if (!session) {
       displayName = null;
-    } else if (displayName === null) {
-      fetchDisplayName(session.user.id);
+      newsletterOptIn = null;
+    } else if (newsletterOptIn === null) {
+      fetchProfileExtras(session.user.id);
     }
     render();
 
@@ -871,6 +931,15 @@ function initAuthControl() {
       window.dispatchEvent(new CustomEvent("anchor-auth-change", { detail: { session } }));
     }
     wasSignedIn = isSignedIn;
+  });
+
+  // profile.html's newsletter toggle updates the DB directly, not through
+  // this module — without this, the footer CTA on that same page keeps
+  // showing the pre-toggle copy until the next full page load, since
+  // newsletterOptIn here is otherwise only ever fetched once per sign-in.
+  window.addEventListener("anchor-newsletter-change", (event) => {
+    newsletterOptIn = Boolean(event.detail?.optedIn);
+    render();
   });
 
   // Any click inside the control (including on elements that render()

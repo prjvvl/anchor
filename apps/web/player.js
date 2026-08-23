@@ -238,7 +238,7 @@
     modalEl.classList.remove("minimized");
     backdropEl.classList.remove("minimized");
     backdropEl.classList.add("open");
-    document.body.style.overflow = "hidden";
+    window.AnchorScrollLock.lock();
     renderUpNext();
     ensureYouTubeApi().then(() => {
       if (isOpen) playAt(startIndex);
@@ -252,14 +252,17 @@
     isMinimized = true;
     modalEl.classList.add("minimized");
     backdropEl.classList.add("minimized");
-    document.body.style.overflow = "";
+    // Minimized keeps the video playing over the rest of the page (its
+    // backdrop drops pointer-events so the page underneath is interactive
+    // again) — scroll unlocks to match, same reasoning as the drawer.
+    window.AnchorScrollLock.unlock();
   }
 
   function restore() {
     isMinimized = false;
     modalEl.classList.remove("minimized");
     backdropEl.classList.remove("minimized");
-    document.body.style.overflow = "hidden";
+    window.AnchorScrollLock.lock();
   }
 
   function close() {
@@ -271,12 +274,15 @@
       ytPlayer = null;
     }
     isOpen = false;
+    // A minimized video already released its scroll lock (see minimize())
+    // — only release here if it still held one, otherwise this would steal
+    // an unlock from whatever else (the drawer) is holding the count up.
+    if (!isMinimized) window.AnchorScrollLock.unlock();
     isMinimized = false;
     currentIndex = -1;
     furthestReached = 0;
     backdropEl.classList.remove("open", "minimized");
     modalEl.classList.remove("minimized");
-    document.body.style.overflow = "";
     playerMountEl.innerHTML = "";
     playerMountEl.hidden = false;
     errorEl.hidden = true;
