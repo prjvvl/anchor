@@ -949,16 +949,24 @@
     const url = `${supabaseUrl}/rest/v1/headlines?select=*&${regionLangQueryParams(regions, languages)}&order=published_at.desc&limit=150`;
 
     // Controls display order; any category not listed here (e.g. a newly
-    // added feed) still renders, just appended after these.
+    // added feed) still renders, just appended after these. Was missing
+    // World Affairs/Health/Environment & Climate/Long-form & Culture (added
+    // in a later session than this list) — they fell through to whatever
+    // order their freshest headline happened to land in, reshuffling day to
+    // day. Slotted in next to their nearest thematic neighbor below.
     const CATEGORY_ORDER = [
       "Breaking News",
+      "World Affairs",
       "India",
       "Economics",
       "Tech & AI",
       "Science",
+      "Environment & Climate",
+      "Health",
       "Media Literacy",
       "Ideas & Thinking",
       "Self-Improvement",
+      "Long-form & Culture",
     ];
     const MAX_PER_CATEGORY = 5;
 

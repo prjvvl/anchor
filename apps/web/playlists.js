@@ -143,6 +143,18 @@ window.ANCHOR_PLAYLISTS = {
     department: "humanities",
     subject: "History",
   },
+  "lallantop-tarikh": {
+    displayName: "Tarikh: Hindi History Storytelling",
+    description: "The Lallantop's Hindi-language history storytelling series, from ancient civilizations to Mughal court intrigue to modern geopolitics.",
+    type: "course",
+    ordered: false,
+    source: "The Lallantop",
+    region: ["in", "global"],
+    language: "hi",
+    tier: "standard",
+    department: "humanities",
+    subject: "History",
+  },
   "world-history-2": {
     displayName: "World History 2",
     description: "The complete Crash Course World History 2 series, continuing where World History left off.",
@@ -250,18 +262,6 @@ window.ANCHOR_PLAYLISTS = {
     tier: "expert",
     department: "humanities",
     subject: "Philosophy",
-  },
-  "lallantop-tarikh": {
-    displayName: "Tarikh: Hindi History Storytelling",
-    description: "The Lallantop's Hindi-language history storytelling series, from ancient civilizations to Mughal court intrigue to modern geopolitics.",
-    type: "course",
-    ordered: false,
-    source: "The Lallantop",
-    region: ["in", "global"],
-    language: "hi",
-    tier: "standard",
-    department: "humanities",
-    subject: "History",
   },
 
   // --- Sciences ---
