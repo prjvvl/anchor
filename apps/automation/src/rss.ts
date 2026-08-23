@@ -16,6 +16,7 @@ interface RawItemExtras {
   enclosure?: { url?: string; type?: string };
   mediaThumbnail?: { $?: { url?: string } };
   mediaContent?: { $?: { url?: string; medium?: string } };
+  contentEncoded?: string;
 }
 
 const parser = new Parser<Record<string, never>, RawItemExtras>({
@@ -23,6 +24,7 @@ const parser = new Parser<Record<string, never>, RawItemExtras>({
     item: [
       ["media:thumbnail", "mediaThumbnail"],
       ["media:content", "mediaContent"],
+      ["content:encoded", "contentEncoded"],
     ],
   },
 });
@@ -56,6 +58,14 @@ function extractImageUrl(item: RawItemExtras): string | undefined {
   }
   if (item.mediaContent?.$?.url && (!item.mediaContent.$.medium || item.mediaContent.$.medium === "image")) {
     return item.mediaContent.$.url;
+  }
+  // Some feeds (e.g. NASA's) carry no dedicated image field at all — the
+  // only image is inline in the full-content HTML. Take the first <img>,
+  // which in practice is the article's lead image, not nav/menu chrome
+  // (that's typically inline <svg> in the feeds checked).
+  const imgMatch = item.contentEncoded?.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (imgMatch) {
+    return imgMatch[1];
   }
   return undefined;
 }
