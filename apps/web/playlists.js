@@ -101,6 +101,26 @@ window.ANCHOR_PLAYLISTS = {
     description: "Hourly picks from trusted news channels, judged for substance over sensationalism.",
     type: "rolling",
   },
+  explainers: {
+    displayName: "Explainers & Deep Dives",
+    description: "Science, tech, and engineering explainers from trusted channels, updated daily.",
+    type: "rolling",
+  },
+  business: {
+    displayName: "Founder & Business",
+    description: "Founder talks and business deep dives from trusted channels, updated daily.",
+    type: "rolling",
+  },
+  talks: {
+    displayName: "Idea Talks",
+    description: "Single-topic talks from trusted channels, updated daily.",
+    type: "rolling",
+  },
+  podcasts: {
+    displayName: "Long-form Conversations",
+    description: "Long-form interviews and conversations from trusted channels, updated daily.",
+    type: "rolling",
+  },
 
   // --- Humanities ---
   "world-history": {

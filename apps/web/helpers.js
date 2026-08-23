@@ -375,6 +375,14 @@ function renderSidebar(activeKey) {
       <a class="nav-item" href="index.html"${activeKey === "home" ? ' aria-current="page"' : ""}>
         <span class="material-symbols-outlined">today</span> Home
       </a>
+      <!-- Mobile-only (see the nav-item-headlines CSS rule) — desktop's
+           side column already shows headlines alongside the shelf stack at
+           all times, so this would be a redundant destination there. Links
+           to a real URL (not a JS click handler) so it behaves like every
+           other nav item: back button, reload, and bookmarking all work. -->
+      <a class="nav-item nav-item-headlines" href="index.html?view=headlines"${activeKey === "headlines" ? ' aria-current="page"' : ""}>
+        <span class="material-symbols-outlined">newspaper</span> Headlines
+      </a>
       ${tierItems}
       ${renderSidebarFilters()}
     </div>

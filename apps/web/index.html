@@ -26,10 +26,40 @@
     min-width: 0;
   }
 
+  /* Desktop-only: separates Continue Learning from the headlines-column
+     visible right beneath it in .side-column's flex stack. On mobile,
+     headlines-column is hidden by default (see the headlines-only-view
+     rules below) so Continue Learning is .side-column's only visible
+     child — this margin would just add dead space before the shelf stack
+     on top of .layout's own row gap, which is the mobile gap bug. */
+  @media (min-width: 861px) {
+    #continue-learning:not(:empty) {
+      margin-bottom: 1.1rem;
+    }
+  }
+
   .videos-column h2,
   .headlines-column h2 {
     font-size: 1.1rem;
     margin: 0;
+  }
+
+  .home-intro {
+    margin-bottom: 1.75rem;
+  }
+
+  .home-intro-date {
+    margin: 0 0 0.3rem;
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--ink);
+  }
+
+  .home-intro-tagline {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--muted);
   }
 
   .headline-group {
@@ -247,64 +277,140 @@
     flex-shrink: 0;
   }
 
-  /* Top News / Headlines sub-tabs, mobile only. Desktop keeps both columns visible. */
-  .subtabs {
+  /* All rolling content — Top News (split into per-region shelves),
+     Explainers, Business, and any genre added later — renders as one
+     vertical stack of .home-shelf blocks in .videos-column, in that order.
+     No tabs: everything is always visible, on every width. Headlines keeps
+     its own persistent side column (unchanged). */
+  .home-shelf {
+    margin-bottom: 2rem;
+  }
+
+  .home-shelf:last-child {
+    margin-bottom: 0;
+  }
+
+  .shelf-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  /* Sits below the grid as its own full-width row, not up in the heading
+     next to Play All — reuses styles.css's .btn-secondary shape (block,
+     full-width, subtle border) as-is, just given a distinct class so its
+     text can be swapped between "Show more"/"Show less" without touching
+     the shared button style. */
+  .show-more-line {
+    display: block;
+    width: 100%;
+    margin-top: 0.85rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  .show-more-line:hover {
+    background: var(--card-bg);
+    color: var(--ink);
+  }
+
+  /* Two-tier visual cap for a shelf's grid: "collapsed" shows the first 6
+     (desktop) or 4 (mobile) cards, "Show more" switches to "expanded" which
+     raises the cap to 12 — not unlimited, still a curated amount. Plain
+     descendant selectors, not the [hidden] attribute: an author display
+     rule always beats [hidden]'s UA default, a bug this codebase has hit
+     repeatedly (see .video-modal-error et al. in player.js's history), so
+     these are the only rules controlling these cards' display. */
+  .card-grid[data-cap-state="collapsed"] .video:nth-child(n + 7) {
     display: none;
   }
 
+  .card-grid[data-cap-state="expanded"] .video:nth-child(n + 13) {
+    display: none;
+  }
+
+  /* Headlines-only view (reached via the mobile-only sidebar nav item —
+     see helpers.js and .nav-item-headlines) swaps out the shelf stack and
+     Continue Learning entirely so headlines render full-width, instead of
+     staying squeezed into the narrow side column. Works at any width, but
+     in practice only ever reached on mobile, where the nav item lives. */
+  main[data-home-view="headlines"] .videos-column,
+  main[data-home-view="headlines"] #continue-learning {
+    display: none;
+  }
+
+  main[data-home-view="headlines"] .layout {
+    grid-template-columns: 1fr;
+  }
+
   @media (max-width: 860px) {
+    /* Desktop-only — mobile's top header bar already carries a tagline. */
+    .home-intro {
+      display: none;
+    }
+
     .layout {
       grid-template-columns: 1fr;
+      /* Default mobile view stacks Continue Learning (in .side-column,
+         reordered first below) directly above the shelf stack, with
+         headlines-column hidden — .layout's 2rem desktop gap was tuned for
+         two side-by-side columns and reads as a big dead gap here since
+         it's now a row gap between just a small card and the next section. */
+      gap: 1.25rem;
     }
 
     .side-column {
       order: -1;
     }
 
-    /* On mobile, #continue-learning is physically moved (see
-       positionContinueLearning in the script below) to sit above the
-       subtabs instead of inside .side-column — it's per-user progress, not
-       tab content, so it reads better as a "welcome back" strip ahead of
-       the Top News/Headlines picker rather than sandwiched after it. */
-    #continue-learning {
-      margin-bottom: 1.1rem;
-    }
-
-    .subtabs {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1.1rem;
-    }
-
-    .subtab {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.35rem;
-      font: inherit;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--muted);
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.55rem;
-      cursor: pointer;
-    }
-
-    .subtab.active {
-      background: var(--ink);
-      color: var(--bg);
-      border-color: var(--ink);
-    }
-
-    main[data-mobile-view="top-news"] .headlines-column {
+    /* Default mobile view is shelves-only — headlines are reachable via the
+       sidebar nav item instead (see main[data-home-view="headlines"] above),
+       so they shouldn't also take up scroll space here at the same time. */
+    main:not([data-home-view="headlines"]) .headlines-column {
       display: none;
     }
 
-    main[data-mobile-view="headlines"] .videos-column {
+    .card-grid[data-cap-state="collapsed"] .video:nth-child(n + 5) {
       display: none;
+    }
+
+    /* Sticky per-shelf heading so a user mid-scroll through a long shelf
+       (e.g. an expanded Top News · Global) can still see which shelf
+       they're in. Needs its own background + z-index: it's a normal-flow
+       sibling that comes *before* .card-grid in the DOM, so without these
+       the grid's cards (later in DOM, no elevated stacking otherwise) would
+       paint over it as they scroll underneath rather than the reverse.
+       Styled like a topbar (opaque background, bottom border, real vertical
+       padding) rather than bare text sitting flush against the viewport
+       edge, and forced to one line — title truncates instead of wrapping —
+       so it doesn't grow taller than a normal bar while pinned. */
+    .home-shelf .section-heading-row {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      flex-wrap: nowrap;
+      background: var(--bg);
+      padding: 0.7rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .home-shelf .section-heading-row h2 {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .home-shelf .section-heading-row .shelf-actions {
+      flex-shrink: 0;
     }
 
     .signin-prompt {
@@ -325,27 +431,23 @@
 <div class="app-body">
   <nav class="sidebar" id="sidebar"></nav>
 
-  <main data-mobile-view="top-news">
-    <div class="subtabs">
-      <button class="subtab active" type="button" data-hometab="top-news">
-        <span class="material-symbols-outlined">play_circle</span> Top News
-      </button>
-      <button class="subtab" type="button" data-hometab="headlines">
-        <span class="material-symbols-outlined">newspaper</span> Headlines
-      </button>
-    </div>
-
+  <main>
     <div class="layout">
       <section class="videos-column">
-        <div class="section-heading-row">
-          <h2 id="videos-heading"></h2>
-          <button class="btn-primary play-all-btn" type="button" id="play-all-videos" hidden>
-            <span class="material-symbols-outlined">play_arrow</span> Play All
-          </button>
+        <!-- Desktop-only (mobile already has its own tagline in the top
+             header bar — see renderHeader in helpers.js). A static sibling
+             of #home-shelves, not inside it: renderHomeShelves() replaces
+             that element's entire innerHTML, which would wipe this out. -->
+        <div class="home-intro">
+          <p class="home-intro-date" id="home-intro-date"></p>
+          <p class="home-intro-tagline">Curated news, explainers and more</p>
         </div>
-        <div class="last-updated" id="videos-updated"></div>
-        <div id="status" class="sr-only">Loading videos…</div>
-        <div class="card-grid" id="videos"></div>
+        <!-- Populated entirely by renderHomeShelves() below: one .home-shelf
+             per region-slice of Top News, then one per additional rolling
+             playlist (Explainers, Business, ...). No static per-shelf markup
+             here — the region split means the shelf count isn't known until
+             the data comes back. -->
+        <div id="home-shelves"></div>
       </section>
 
       <div class="side-column">
@@ -384,8 +486,6 @@
 <script src="helpers.js"></script>
 <script src="player.js"></script>
 <script>
-  const VIDEOS_PLAYLIST = "top-news";
-
   function renderHeadlineSkeletons(count) {
     return `
       <ul class="headlines">
@@ -422,97 +522,187 @@
     el?.classList.add("sr-only");
   }
 
-  // Two "anchor-filter-change" events fired close together (e.g. unchecking
-  // one region right after checking another) start two overlapping fetches
-  // — without this, whichever response happens to arrive last wins the DOM,
-  // which isn't necessarily the one for the current filter state. Each call
-  // claims the token before its own await points, and bails if a newer
-  // call has claimed it by the time this one's fetch resolves.
-  let videosRequestToken = 0;
-
-  async function loadVideos() {
-    const requestToken = ++videosRequestToken;
+  async function fetchPlaylistVideos(playlist, limit) {
     const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
-    const statusEl = document.getElementById("status");
-    const listEl = document.getElementById("videos");
+    const { regions, languages } = getRegionLangFilter();
+    const url = `${supabaseUrl}/rest/v1/videos?select=*&active=eq.true&playlist=eq.${playlist}&${regionLangQueryParams(regions, languages)}&order=idx.asc.nullslast,published_at.desc,created_at.desc&limit=${limit}`;
+    const res = await fetch(url, {
+      headers: { apikey: supabasePublishableKey, Authorization: `Bearer ${supabasePublishableKey}` },
+    });
+    if (!res.ok) throw new Error(`Supabase request failed: ${res.status}`);
+    return res.json();
+  }
 
-    const playlistInfo = window.ANCHOR_PLAYLISTS?.[VIDEOS_PLAYLIST];
-    document.getElementById("videos-heading").textContent = playlistInfo?.displayName ?? "Latest Videos";
-    listEl.dataset.contextLabel = playlistInfo?.displayName ?? "Latest Videos";
+  // Top News mixes channels of very different upload volume (e.g. WION
+  // posts far more than AP) — grouping into one shelf per region means a
+  // prolific channel only crowds its own region's shelf, not every other
+  // region's visibility. A channel's `region` is an array (e.g. WION is
+  // {in, global} — see channels.ts), so this picks its most specific tag;
+  // "global" is the leftover bucket for channels with no specific region.
+  function regionShelfKey(regionArr) {
+    if (!Array.isArray(regionArr) || regionArr.length === 0) return "global";
+    return regionArr.find((r) => r !== "global") ?? "global";
+  }
+
+  function videoCardHtml(v) {
+    return `
+      <div class="video">
+        <button class="thumb" type="button" data-video-id="${escapeAttr(v.youtube_video_id)}" data-title="${escapeAttr(v.title)}" data-channel="${escapeAttr(v.channel_name ?? "")}" data-duration="${v.duration ?? ""}" aria-label="Play ${escapeAttr(v.title)}">
+          <img src="https://img.youtube.com/vi/${escapeAttr(v.youtube_video_id)}/hqdefault.jpg" alt="" loading="lazy" />
+          <span class="play-badge"></span>
+          ${v.duration ? `<span class="duration">${formatDuration(v.duration)}</span>` : ""}
+        </button>
+        ${renderCardMenu(v.youtube_video_id)}
+        <div class="video-body">
+          <span class="title">${escapeHtml(v.title)}</span>
+          <div class="meta">
+            <span>${escapeHtml(v.channel_name ?? "")}</span>
+            ${v.views != null ? `<span>· ${formatViews(v.views)} views</span>` : ""}
+            ${v.published_at ? `<span>· ${formatMinutesAgo(new Date(v.published_at).getTime())}</span>` : ""}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Lower of the two initial caps (desktop:6, mobile:4 — see the CSS
+  // data-cap-state rules) decides whether "Show more" is worth rendering at
+  // all: a shelf with 5 videos needs it on mobile even though desktop
+  // already shows all 5 unprompted. Clicking it always goes to "expanded"
+  // (cap 12), never fully unlimited — still a curated amount, not the whole
+  // fetched batch.
+  const MOBILE_INITIAL_CAP = 4;
+
+  // Cards beyond the active cap are already in the DOM, just hidden via
+  // data-cap-state (see the .card-grid[data-cap-state] CSS rules) — "Show
+  // more" toggles that attribute rather than re-fetching, so it's instant
+  // and the scroll position doesn't jump to a loading state.
+  function shelfHtml(id, heading, videos, failed) {
+    if (videos.length === 0) {
+      const message = failed ? "Failed to load. Try refreshing the page." : "No videos yet. Check back soon.";
+      return `
+        <div class="home-shelf">
+          <div class="section-heading-row"><h2>${escapeHtml(heading)}</h2></div>
+          <p class="last-updated">${message}</p>
+        </div>`;
+    }
+
+    const capped = videos.length > MOBILE_INITIAL_CAP;
+
+    return `
+      <div class="home-shelf">
+        <div class="section-heading-row">
+          <h2>${escapeHtml(heading)}</h2>
+          <div class="shelf-actions">
+            <button class="btn-primary play-all-btn" type="button" id="${id}-play-all">
+              <span class="material-symbols-outlined">play_arrow</span> Play All
+            </button>
+          </div>
+        </div>
+        <div class="last-updated" id="${id}-updated"></div>
+        <div class="card-grid" id="${id}" data-context-label="${escapeAttr(heading)}"${capped ? ' data-cap-state="collapsed"' : ""}>
+          ${videos.map(videoCardHtml).join("")}
+        </div>
+        ${capped ? `<button class="show-more-line" type="button" id="${id}-more">Show more</button>` : ""}
+      </div>`;
+  }
+
+  function wireShelf(id, videos) {
+    if (videos.length === 0) return;
+    const listEl = document.getElementById(id);
+
+    listEl.addEventListener("click", onThumbGridClick);
+    markViewedBadges(listEl, videos.map((v) => v.youtube_video_id));
+    syncBookmarkMenuItems(listEl, videos.map((v) => v.youtube_video_id));
+    revealCardMenus(listEl);
+
+    document.getElementById(`${id}-play-all`).addEventListener("click", () => window.AnchorPlayer?.playAll(listEl));
+
+    const moreBtn = document.getElementById(`${id}-more`);
+    moreBtn?.addEventListener("click", () => {
+      const collapsing = listEl.dataset.capState === "expanded";
+      listEl.dataset.capState = collapsing ? "collapsed" : "expanded";
+      moreBtn.textContent = collapsing ? "Show more" : "Show less";
+    });
+
+    const updatedEl = document.getElementById(`${id}-updated`);
+    const lastUpdated = videos.reduce((max, v) => Math.max(max, new Date(v.created_at).getTime()), 0);
+    if (updatedEl && lastUpdated) {
+      updatedEl.textContent = `Last updated ${formatMinutesAgo(lastUpdated)}`;
+    }
+  }
+
+  // One coordinated render pass for the whole home shelf stack — Top News
+  // (split into region shelves), then every other rolling playlist in
+  // order. A single request token guards the whole pass since
+  // "anchor-filter-change" can fire again before these fetches resolve; the
+  // container's entire innerHTML is replaced on each render, which also
+  // means old shelves' listeners are discarded with their DOM rather than
+  // needing manual cleanup.
+  //
+  // Promise.allSettled, not Promise.all: these three fetches are
+  // independent playlists, not one atomic operation, so one failing (a
+  // network blip on just the business query, say) shouldn't blank Top
+  // News and Explainers too — each failed playlist renders its own
+  // "failed to load" shelf instead of taking the whole stack down with it.
+  let homeShelvesRequestToken = 0;
+
+  // Every rolling playlist below Top News — each is one shelf, in this
+  // order. Adding another genre later is just one more entry here (plus
+  // its own jobs/<name>/ folder and playlists.js registration) — no
+  // rendering/fetch code to touch.
+  const SINGLE_SHELF_PLAYLISTS = ["explainers", "business", "talks", "podcasts"];
+
+  async function renderHomeShelves() {
+    const thisToken = ++homeShelvesRequestToken;
+    const container = document.getElementById("home-shelves");
+    const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
 
     if (!supabaseUrl || !supabasePublishableKey) {
-      showStatus(statusEl, "Missing Supabase config. Fill in config.js.");
+      container.innerHTML = `<p class="last-updated">Missing Supabase config. Fill in config.js.</p>`;
       return;
     }
 
-    listEl.innerHTML = renderVideoSkeletons(6);
+    container.innerHTML = renderVideoSkeletons(6);
 
-    const { regions, languages } = getRegionLangFilter();
-    const url = `${supabaseUrl}/rest/v1/videos?select=*&active=eq.true&playlist=eq.${VIDEOS_PLAYLIST}&${regionLangQueryParams(regions, languages)}&order=idx.asc.nullslast,published_at.desc,created_at.desc&limit=24`;
+    const [topNewsResult, ...playlistResults] = await Promise.allSettled([
+      fetchPlaylistVideos("top-news", 60),
+      ...SINGLE_SHELF_PLAYLISTS.map((playlist) => fetchPlaylistVideos(playlist, 24)),
+    ]);
+    if (thisToken !== homeShelvesRequestToken) return;
 
-    try {
-      const res = await fetch(url, {
-        headers: {
-          apikey: supabasePublishableKey,
-          Authorization: `Bearer ${supabasePublishableKey}`,
-        },
-      });
+    const shelves = [];
 
-      if (!res.ok) {
-        throw new Error(`Supabase request failed: ${res.status}`);
+    if (topNewsResult.status === "fulfilled") {
+      const byRegion = new Map();
+      for (const v of topNewsResult.value) {
+        const key = regionShelfKey(v.region);
+        if (!byRegion.has(key)) byRegion.set(key, []);
+        byRegion.get(key).push(v);
       }
-
-      const videos = await res.json();
-      if (requestToken !== videosRequestToken) return;
-
-      if (videos.length === 0) {
-        listEl.innerHTML = "";
-        document.getElementById("play-all-videos").hidden = true;
-        showStatus(statusEl, "No videos yet.");
-        return;
-      }
-
-      const lastUpdated = videos.reduce((max, v) => Math.max(max, new Date(v.created_at).getTime()), 0);
-      if (lastUpdated) {
-        document.getElementById("videos-updated").textContent = `Last updated ${formatMinutesAgo(lastUpdated)}`;
-      }
-
-      hideStatus(statusEl);
-      listEl.innerHTML = videos
-        .map(
-          (v) => `
-        <div class="video">
-          <button class="thumb" type="button" data-video-id="${escapeAttr(v.youtube_video_id)}" data-title="${escapeAttr(v.title)}" data-channel="${escapeAttr(v.channel_name ?? "")}" data-duration="${v.duration ?? ""}" aria-label="Play ${escapeAttr(v.title)}">
-            <img src="https://img.youtube.com/vi/${escapeAttr(v.youtube_video_id)}/hqdefault.jpg" alt="" loading="lazy" />
-            <span class="play-badge"></span>
-            ${v.duration ? `<span class="duration">${formatDuration(v.duration)}</span>` : ""}
-          </button>
-          ${renderCardMenu(v.youtube_video_id)}
-          <div class="video-body">
-            <span class="title">${escapeHtml(v.title)}</span>
-            <div class="meta">
-              <span>${escapeHtml(v.channel_name ?? "")}</span>
-              ${v.views != null ? `<span>· ${formatViews(v.views)} views</span>` : ""}
-              ${v.published_at ? `<span>· ${formatMinutesAgo(new Date(v.published_at).getTime())}</span>` : ""}
-            </div>
-          </div>
-        </div>
-      `
-        )
-        .join("");
-
-      markViewedBadges(listEl, videos.map((v) => v.youtube_video_id));
-      syncBookmarkMenuItems(listEl, videos.map((v) => v.youtube_video_id));
-      revealCardMenus(listEl);
-
-      document.getElementById("play-all-videos").hidden = false;
-    } catch (err) {
-      if (requestToken !== videosRequestToken) return;
-      listEl.innerHTML = "";
-      document.getElementById("play-all-videos").hidden = true;
-      showStatus(statusEl, "Failed to load videos.");
-      console.error(err);
+      shelves.push(
+        ...(window.ANCHOR_REGIONS ?? [])
+          .filter((r) => byRegion.has(r.key))
+          .map((r) => ({ id: `topnews-${r.key}`, heading: `Top News · ${r.displayName}`, videos: byRegion.get(r.key) }))
+      );
+    } else {
+      console.error(topNewsResult.reason);
+      shelves.push({ id: "topnews-global", heading: "Top News", videos: [], failed: true });
     }
+
+    SINGLE_SHELF_PLAYLISTS.forEach((playlist, i) => {
+      const result = playlistResults[i];
+      const heading = window.ANCHOR_PLAYLISTS?.[playlist]?.displayName ?? playlist;
+      if (result.status === "fulfilled") {
+        shelves.push({ id: `watch-${playlist}`, heading, videos: result.value });
+      } else {
+        console.error(result.reason);
+        shelves.push({ id: `watch-${playlist}`, heading, videos: [], failed: true });
+      }
+    });
+
+    container.innerHTML = shelves.map((s) => shelfHtml(s.id, s.heading, s.videos, s.failed)).join("");
+    shelves.forEach((s) => wireShelf(s.id, s.videos));
   }
 
   let headlinesRequestToken = 0;
@@ -781,66 +971,49 @@
     slot.innerHTML = renderShelf(cards, streak);
   }
 
-  // #continue-learning lives inside .side-column in markup (so it renders
-  // in the right column on desktop), but on mobile it should sit above the
-  // subtabs instead of after them — see the comment on #continue-learning
-  // in the stylesheet above. Reparenting on a matchMedia change (rather
-  // than duplicating the shelf's markup/listeners into two slots) keeps a
-  // single element with a single set of event listeners, same pattern as
-  // player.js's positionQuickActions for the video modal.
-  const MOBILE_QUERY = window.matchMedia("(max-width: 860px)");
+  // On mobile, "Headlines" is a sidebar nav item (see renderSidebar in
+  // helpers.js) rather than inline content — clicking it links to
+  // index.html?view=headlines, which swaps the whole home screen to a
+  // headlines-only view (see the main[data-home-view="headlines"] CSS)
+  // instead of permanently taking up scroll space above the video shelves.
+  // Desktop ignores this entirely — its side column already shows headlines
+  // alongside the shelf stack at all times.
+  const homeView = new URLSearchParams(location.search).get("view") === "headlines" ? "headlines" : "home";
+  document.querySelector("main").dataset.homeView = homeView;
 
-  function positionContinueLearning() {
-    const slot = document.getElementById("continue-learning");
-    if (!slot) return;
-    if (MOBILE_QUERY.matches) {
-      document.querySelector(".subtabs")?.insertAdjacentElement("beforebegin", slot);
-    } else {
-      document.querySelector(".side-column")?.insertAdjacentElement("afterbegin", slot);
-    }
-  }
-
-  function initMobileHomeTabs() {
-    const main = document.querySelector("main");
-    document.querySelectorAll("[data-hometab]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        main.dataset.mobileView = btn.dataset.hometab;
-        document.querySelectorAll("[data-hometab]").forEach((b) => b.classList.toggle("active", b === btn));
-      });
+  // .home-intro is desktop-only (see its CSS), but harmless to always set —
+  // the element just never renders on mobile.
+  const introDateEl = document.getElementById("home-intro-date");
+  if (introDateEl) {
+    introDateEl.textContent = new Date().toLocaleDateString(undefined, {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   }
 
   mountHeader();
-  mountSidebar("home");
+  mountSidebar(homeView);
   initThemeToggle();
   initSidebarDrawer();
   initAuthControl();
   initRegionLangFilter();
-  initMobileHomeTabs();
-  positionContinueLearning();
-  MOBILE_QUERY.addEventListener("change", positionContinueLearning);
 
-  // Attached once, not inside loadVideos — that function re-runs on every
-  // "anchor-filter-change", and listEl/play-all-videos are persistent
-  // elements (only their innerHTML/hidden state changes on reload), so a
-  // listener inside loadVideos would stack a duplicate on every re-run.
-  document.getElementById("videos").addEventListener("click", onThumbGridClick);
-  document.getElementById("play-all-videos").addEventListener("click", () => window.AnchorPlayer?.playAll(document.getElementById("videos")));
-
-  loadVideos();
   loadHeadlines();
-  window.addEventListener("anchor-filter-change", () => {
-    loadVideos();
-    loadHeadlines();
-  });
-  loadContinueLearning();
-  // Completing sign-in (OTP) mid-session doesn't otherwise touch the
-  // watched badges/card menu (both computed once by loadVideos) or the
-  // Continue Learning shelf (which shows a sign-in prompt until this
-  // re-runs it) — headlines have no sign-in-dependent rendering, so no
-  // need to reload those.
-  window.addEventListener("anchor-auth-change", () => {
-    loadVideos();
+  window.addEventListener("anchor-filter-change", () => loadHeadlines());
+
+  if (homeView !== "headlines") {
+    renderHomeShelves();
     loadContinueLearning();
-  });
+    window.addEventListener("anchor-filter-change", () => renderHomeShelves());
+    // Completing sign-in (OTP) mid-session doesn't otherwise touch the
+    // watched badges/card menu (computed once per render) or the Continue
+    // Learning shelf (which shows a sign-in prompt until this re-runs it) —
+    // headlines have no sign-in-dependent rendering, so no need to reload those.
+    window.addEventListener("anchor-auth-change", () => {
+      renderHomeShelves();
+      loadContinueLearning();
+    });
+  }
 </script>

@@ -6,6 +6,10 @@
   "private": true,
   "scripts": {
     "job:top-news": "tsx src/jobs/top-news/index.ts",
+    "job:talks": "tsx src/jobs/talks/index.ts",
+    "job:podcasts": "tsx src/jobs/podcasts/index.ts",
+    "job:explainers": "tsx src/jobs/explainers/index.ts",
+    "job:business": "tsx src/jobs/business/index.ts",
     "job:rss-headlines": "tsx src/jobs/rss-headlines/index.ts",
     "job:archive-sync": "tsx src/jobs/archive/sync.ts",
     "job:archive-prune": "tsx src/jobs/archive/prune.ts",

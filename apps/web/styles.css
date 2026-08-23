@@ -150,6 +150,16 @@ header p {
   main {
     padding-top: 2rem;
   }
+
+  /* Mobile-only nav destination — desktop's side column already shows
+     headlines alongside the shelf stack at all times (see index.html),
+     so this would just be a redundant link there. `a.nav-item-headlines`
+     (not just `.nav-item-headlines`) is deliberate: the general `.nav-item`
+     rule below has equal specificity and comes later in the file, so an
+     equal-specificity override here would lose on source order alone. */
+  a.nav-item-headlines {
+    display: none;
+  }
 }
 
 .nav-item {
