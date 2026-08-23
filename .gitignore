@@ -3,3 +3,4 @@ dist/
 .env
 *.log
 supabase/.temp/
+.decrypted-archive/

@@ -33,7 +33,7 @@ async function run() {
 
     const latest = rows[rows.length - 1].created_at; // fetched ascending
     await writeWatermark(table.name, latest);
-    console.log(`[${JOB_NAME}] ${table.name}: archived to data/${folder}/${table.name}.json, watermark -> ${latest}`);
+    console.log(`[${JOB_NAME}] ${table.name}: archived to data/${folder}/${table.name}.json.enc, watermark -> ${latest}`);
   }
 }
 

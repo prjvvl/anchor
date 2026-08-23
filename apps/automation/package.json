@@ -14,7 +14,8 @@
     "job:archive-sync": "tsx src/jobs/archive/sync.ts",
     "job:archive-prune": "tsx src/jobs/archive/prune.ts",
     "job:newsletter": "tsx src/jobs/newsletter/index.ts",
-    "job:ops-report": "tsx src/jobs/ops-report/index.ts"
+    "job:ops-report": "tsx src/jobs/ops-report/index.ts",
+    "decrypt-archive": "tsx src/scripts/decryptArchive.ts"
   },
   "keywords": [],
   "author": "",
