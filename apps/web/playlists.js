@@ -56,6 +56,7 @@ window.ANCHOR_DEPARTMENTS = {
   "life-skills-making": { displayName: "Life Skills & Making", icon: "construction" },
   "money-finance": { displayName: "Money & Personal Finance", icon: "savings" },
   // Entertainment-only departments.
+  "sports-stunts": { displayName: "Sports & Stunts", icon: "sports" },
   "travel-adventure": { displayName: "Travel & Adventure", icon: "flight_takeoff" },
   documentaries: { displayName: "Documentaries", icon: "theaters" },
   "short-films": { displayName: "Short Films", icon: "movie_filter" },
@@ -78,7 +79,11 @@ window.ANCHOR_TIER_DEPARTMENTS = {
   advanced: ACADEMIC_DEPARTMENTS,
   expert: ACADEMIC_DEPARTMENTS,
   extracurricular: ["games-strategy", "tech-curiosities", "places-culture", "food-culture", "life-skills-making", "money-finance"],
-  entertainment: ["travel-adventure", "documentaries", "short-films"],
+  // sports-stunts leads: Entertainment exists purely for fun, so the
+  // purest spectacle goes first (mirrors headlines' CATEGORY_ORDER doing
+  // the opposite: fun categories trail there since that sidebar's job is
+  // staying informed, not escaping).
+  entertainment: ["sports-stunts", "travel-adventure", "documentaries", "short-films"],
   miscellaneous: ["podcasts-conversations", "storytelling", "business-startups"],
 };
 
@@ -755,6 +760,18 @@ window.ANCHOR_PLAYLISTS = {
     department: "games-strategy",
     subject: "Chess",
   },
+  "game-theory": {
+    displayName: "Game Theory: Best Of",
+    description: "MatPat's Game Theorists dig into the lore, design, and hidden logic behind your favorite video games.",
+    type: "course",
+    ordered: false,
+    source: "The Game Theorists",
+    region: ["us", "global"],
+    language: "en",
+    tier: "extracurricular",
+    department: "games-strategy",
+    subject: "Gaming Lore & Theory",
+  },
   "everyday-tech": {
     displayName: "Everyday Tech, Explained",
     description: "Technology Connections' deep dives into the mundane technology you use every day.",
@@ -766,6 +783,18 @@ window.ANCHOR_PLAYLISTS = {
     tier: "extracurricular",
     department: "tech-curiosities",
     subject: "Everyday Tech",
+  },
+  nilered: {
+    displayName: "Chemistry, But Fun",
+    description: "NileRed's real chemistry syntheses and demonstrations, done for the sheer spectacle of it.",
+    type: "course",
+    ordered: false,
+    source: "NileRed",
+    region: ["global"],
+    language: "en",
+    tier: "extracurricular",
+    department: "tech-curiosities",
+    subject: "Chemistry Demonstrations",
   },
   "countries-az": {
     displayName: "Countries A-Z",
@@ -803,6 +832,18 @@ window.ANCHOR_PLAYLISTS = {
     department: "life-skills-making",
     subject: "Craft & Metalworking",
   },
+  "colin-furze": {
+    displayName: "Mad Inventions",
+    description: "Colin Furze builds the most over-the-top, backyard-workshop inventions on the internet.",
+    type: "course",
+    ordered: false,
+    source: "Colin Furze",
+    region: ["eu", "global"],
+    language: "en",
+    tier: "extracurricular",
+    department: "life-skills-making",
+    subject: "Mad Inventions",
+  },
   "personal-finance": {
     displayName: "Money Basics",
     description: "Two Cents (PBS Digital Studios) on budgeting, saving, debt, and investing, without the hype.",
@@ -829,6 +870,18 @@ window.ANCHOR_PLAYLISTS = {
   },
 
   // --- Entertainment ---
+  "dude-perfect": {
+    displayName: "Trick Shots",
+    description: "Dude Perfect's trick-shot spectacles, pure fun and zero pretense.",
+    type: "course",
+    ordered: false,
+    source: "Dude Perfect",
+    region: ["us", "global"],
+    language: "en",
+    tier: "entertainment",
+    department: "sports-stunts",
+    subject: "Trick Shots",
+  },
   "travel-immersion": {
     displayName: "Immersive Travel",
     description: "Peter Santenello's deep, unscripted immersion in specific places and communities.",
@@ -865,6 +918,18 @@ window.ANCHOR_PLAYLISTS = {
     department: "documentaries",
     subject: "World History Documentaries",
   },
+  "great-big-story": {
+    displayName: "Amazing Humans",
+    description: "Great Big Story's short, quirky, wholehearted mini-docs on the wonderfully specific people who make the world weirder and better.",
+    type: "course",
+    ordered: false,
+    source: "Great Big Story",
+    region: ["us", "global"],
+    language: "en",
+    tier: "entertainment",
+    department: "documentaries",
+    subject: "Human Interest Stories",
+  },
   "omeleto-shorts": {
     displayName: "Award-Winning Shorts",
     description: "Omeleto's curated selection of award-recognized short films across genres.",
@@ -890,6 +955,18 @@ window.ANCHOR_PLAYLISTS = {
     tier: "miscellaneous",
     department: "podcasts-conversations",
     subject: "AI, Tech & Philosophy",
+  },
+  "conan-needs-a-friend": {
+    displayName: "Conan O'Brien Needs A Friend",
+    description: "Conan's full-episode celebrity interview podcast: genuinely funny, nothing to learn, no notes to take.",
+    type: "course",
+    ordered: false,
+    source: "Team Coco",
+    region: ["us", "global"],
+    language: "en",
+    tier: "miscellaneous",
+    department: "podcasts-conversations",
+    subject: "Comedy & Interviews",
   },
   "lemmino-mysteries": {
     displayName: "Mysteries & Investigations",

@@ -34,6 +34,9 @@ export const feeds: FeedConfig[] = [
   { name: "Quanta Magazine", url: "https://www.quantamagazine.org/feed/", category: "Science", region: ["global"], language: "en" },
   { name: "Scientific American", url: "https://www.scientificamerican.com/platform/syndication/rss/", category: "Science", region: ["global"], language: "en" },
 
+  // Space
+  { name: "Space.com", url: "https://www.space.com/feeds/all", category: "Space", region: ["global"], language: "en" },
+
   // Media Literacy
   { name: "FactCheck.org", url: "https://www.factcheck.org/feed/", category: "Media Literacy", region: ["us"], language: "en" },
   { name: "Poynter", url: "https://www.poynter.org/feed/", category: "Media Literacy", region: ["us", "global"], language: "en" },
@@ -65,4 +68,11 @@ export const feeds: FeedConfig[] = [
   // Long-form & Culture
   { name: "Longreads", url: "https://longreads.com/feed/", category: "Long-form & Culture", region: ["global"], language: "en" },
   { name: "The Atlantic", url: "https://www.theatlantic.com/feed/all/", category: "Long-form & Culture", region: ["us", "global"], language: "en" },
+
+  // Sports, Gaming & Food — deliberately lighter fare, same reasoning as
+  // playlists.js's entertainment tier ordering: these trail everything
+  // above since this sidebar's job is staying informed, not escaping.
+  { name: "ESPN", url: "https://www.espn.com/espn/rss/news", category: "Sports", region: ["us", "global"], language: "en" },
+  { name: "Kotaku", url: "https://kotaku.com/rss", category: "Gaming & Pop Culture", region: ["us", "global"], language: "en" },
+  { name: "Eater", url: "https://www.eater.com/rss/index.xml", category: "Food & Culture", region: ["us", "global"], language: "en" },
 ];
