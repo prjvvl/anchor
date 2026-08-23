@@ -7,15 +7,20 @@ const JOB_NAME = "archive-prune";
 
 async function run() {
   for (const table of tables) {
-    const { keep, groupBy, scopeToGroups } = table.retention;
-    const rows = await fetchIdsForRetention(table.name, groupBy);
-    const scopedRows = scopeToGroups ? rows.filter((r) => scopeToGroups.includes(r.group ?? "")) : rows;
-    const deleteIds = groupBy ? idsBeyondRetentionPerGroup(scopedRows, keep) : scopedRows.slice(keep).map((r) => r.id);
+    const deleteIds = new Set<string>();
 
-    const label = groupBy ? `${keep} per ${groupBy}${scopeToGroups ? ` (scoped to ${scopeToGroups.join(", ")})` : ""}` : `${keep}`;
-    console.log(`[${JOB_NAME}] ${table.name}: keeping newest ${label}, deleting ${deleteIds.length}`);
+    for (const rule of table.retentionRules) {
+      const { keep, groupBy, filterColumn, filterValues } = rule;
+      const rows = await fetchIdsForRetention(table.name, groupBy, filterColumn, filterValues);
+      const ruleDeleteIds = idsBeyondRetentionPerGroup(rows, keep);
 
-    await deleteRowsByIds(table.name, deleteIds);
+      const scope = filterValues ? ` (scoped to ${filterColumn}=${filterValues.join(",")})` : "";
+      console.log(`[${JOB_NAME}] ${table.name}: keeping newest ${keep} per ${groupBy}${scope}, deleting ${ruleDeleteIds.length}`);
+
+      ruleDeleteIds.forEach((id) => deleteIds.add(id));
+    }
+
+    await deleteRowsByIds(table.name, [...deleteIds]);
   }
 }
 

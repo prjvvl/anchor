@@ -19,20 +19,32 @@ export interface RetentionRow {
   group?: string;
 }
 
-// Newest-first, optionally with a grouping column read alongside — used to
-// decide what to keep vs. delete without pulling full row data.
-export async function fetchIdsForRetention(table: string, groupBy?: string): Promise<RetentionRow[]> {
-  const columns = groupBy ? `id, created_at, ${groupBy}` : "id, created_at";
-  const { data, error } = await supabase
+// Newest-first, grouping column read alongside — used to decide what to
+// keep vs. delete without pulling full row data. filterColumn/filterValues
+// scope which rows are even eligible (e.g. only playlist=top-news), pushed
+// server-side rather than filtered after the fetch.
+export async function fetchIdsForRetention(
+  table: string,
+  groupBy: string,
+  filterColumn?: string,
+  filterValues?: string[]
+): Promise<RetentionRow[]> {
+  let query = supabase
     .from(table)
-    .select(columns)
+    .select(`id, created_at, ${groupBy}`)
     .order("created_at", { ascending: false });
+
+  if (filterColumn && filterValues) {
+    query = query.in(filterColumn, filterValues);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
   return ((data ?? []) as unknown as Array<Record<string, string>>).map((row) => ({
     id: row.id,
     created_at: row.created_at,
-    group: groupBy ? row[groupBy] : undefined,
+    group: row[groupBy],
   }));
 }
 
