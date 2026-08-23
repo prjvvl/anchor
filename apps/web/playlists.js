@@ -102,10 +102,12 @@ window.ANCHOR_REGIONS = [
   { key: "middle-east", displayName: "Middle East" },
   { key: "asia", displayName: "Asia" },
   { key: "au", displayName: "Australia" },
+  { key: "latin-america", displayName: "Latin America" },
 ];
 window.ANCHOR_LANGUAGES = [
   { key: "en", displayName: "English" },
   { key: "hi", displayName: "Hindi" },
+  { key: "es", displayName: "Spanish" },
 ];
 
 window.ANCHOR_PLAYLISTS = {

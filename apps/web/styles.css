@@ -87,6 +87,18 @@ header {
   padding: 2rem 1.25rem 1rem;
 }
 
+/* Wraps the logo/title so the whole header, like .sidebar-brand, links home
+   — its own flex/gap reproduces what a plain sibling img+div used to give
+   header's own flex for free, since header now only has two children
+   (the hamburger and this link). */
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+}
+
 header img {
   width: 36px;
   height: 36px;
@@ -152,6 +164,8 @@ header p {
   align-items: center;
   gap: 0.5rem;
   padding: 1.5rem 1rem 1rem;
+  text-decoration: none;
+  color: inherit;
 }
 
 .sidebar-brand img {
@@ -591,6 +605,142 @@ main {
   gap: 1.25rem;
 }
 
+/* Shared "course preview" component — courses.html (one per course in a
+   department) and path.html (one per course in a path) both render a
+   course's heading/description above a capped, horizontally-scrolling row
+   of its videos, closed out by a .video-cta tile. Single row, not a
+   wrapping grid — vertical space per course stays constant regardless of
+   how many are listed on the page, no reflow needed at narrow widths. */
+.course-preview {
+  margin-bottom: 1.75rem;
+}
+
+.course-preview:last-child {
+  margin-bottom: 0;
+}
+
+.course-preview-head {
+  margin-bottom: 0.85rem;
+}
+
+.course-preview-head .title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.3rem;
+}
+
+.course-preview-head .desc {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin: 0;
+  max-width: 620px;
+}
+
+.course-preview .card-grid {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.35rem;
+}
+
+.course-preview .card-grid > .video,
+.course-preview .card-grid > .video-cta {
+  flex: 0 0 200px;
+}
+
+@media (max-width: 860px) {
+  .course-preview .card-grid > .video,
+  .course-preview .card-grid > .video-cta {
+    flex: 0 0 165px;
+  }
+}
+
+.course-preview-message {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* Closes out a course's preview row as its own tile. Deliberately not
+   styled like the video cards beside it (no thumbnail) so it reads as an
+   action, not a 6th piece of content. Uses --bg/--ink the same direction
+   the .video cards' own background does (card-bg is a step off --bg in
+   both themes), rather than .btn-primary's inverted fill — a stark
+   white-on-dark tile stood out as looking broken, not accented, once it
+   was one repeated tile among many rather than a single button. */
+.video-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.15rem;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none;
+  padding: 1rem 0.75rem;
+  transition: border-color 0.15s ease;
+}
+
+.video-cta:hover {
+  border-color: var(--muted);
+}
+
+/* --cta-pct (set inline per course, from real watched/count data) draws a
+   conic-gradient progress ring in the tile's own ink color against a
+   dimmed version of itself as the track. */
+.video-cta-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  background: conic-gradient(var(--ink) var(--cta-pct, 0%), color-mix(in srgb, var(--ink) 25%, transparent) 0);
+}
+
+.video-cta-icon-inner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-cta-icon-inner .material-symbols-outlined {
+  font-size: 1.1rem;
+}
+
+.video-cta-label {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.video-cta-more {
+  font-size: 0.72rem;
+  opacity: 0.75;
+}
+
+/* Small tier-name pill — path.html's per-step badge and paths.html's
+   tier-span badge (e.g. "Fundamental → Advanced"). */
+.tier-pill {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+}
+
 .video {
   position: relative;
   background: var(--card-bg);
@@ -617,6 +767,21 @@ main {
   background: none;
   overflow: hidden;
   border-radius: 10px 10px 0 0;
+}
+
+/* Ordered courses' episode number, shared by course.html's full lesson
+   list and courses.html's preview grid — top-left, since .duration/
+   .card-menu-wrap/.viewed-badge all live top-right. */
+.episode-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .duration {

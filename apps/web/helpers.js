@@ -91,6 +91,51 @@ function renderCourseSkeletons(count) {
     .join("");
 }
 
+// Loading placeholder for courses.html's per-course preview grid —
+// heading/description bars above a row of the same .video thumb skeletons
+// renderVideoSkeletons already produces, so it inherits .card-grid's sizing
+// for free once real content swaps in.
+function renderCoursePreviewSkeletons(count) {
+  return Array.from({ length: count })
+    .map(
+      () => `
+      <div class="course-preview">
+        <div class="skeleton line" style="width: 45%; height: 1.05rem;"></div>
+        <div class="skeleton line" style="width: 65%; margin: 0.5rem 0 0.9rem;"></div>
+        <div class="card-grid">${renderVideoSkeletons(5)}</div>
+      </div>`
+    )
+    .join("");
+}
+
+// Video card shared by course.html's full lesson list and courses.html's
+// per-course preview grid. Ordered courses (a real, fixed curriculum
+// position) get an episode-number badge instead of a view count, since
+// recency/views aren't meaningful for a fixed, complete series.
+function renderVideoCard(v, index, ordered) {
+  return `
+    <div class="video">
+      <button class="thumb" type="button" data-video-id="${escapeAttr(v.youtube_video_id)}" data-title="${escapeAttr(v.title)}" data-channel="${escapeAttr(v.channel_name ?? "")}" data-duration="${v.duration ?? ""}" aria-label="Play ${escapeAttr(v.title)}">
+        <img src="https://img.youtube.com/vi/${escapeAttr(v.youtube_video_id)}/hqdefault.jpg" alt="" loading="lazy" />
+        <span class="play-badge"></span>
+        ${ordered ? `<span class="episode-badge">EP ${index + 1}</span>` : ""}
+        ${v.duration ? `<span class="duration">${formatDuration(v.duration)}</span>` : ""}
+      </button>
+      ${renderCardMenu(v.youtube_video_id)}
+      <div class="video-body">
+        <span class="title">${escapeHtml(v.title)}</span>
+        <div class="meta">
+          <span>${escapeHtml(v.channel_name ?? "")}</span>
+          ${!ordered && v.views != null ? `<span>· ${formatViews(v.views)} views</span>` : ""}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderVideoCards(videos, ordered) {
+  return videos.map((v, i) => renderVideoCard(v, i, ordered)).join("");
+}
+
 // Handles a click on a .viewed-badge (unmark) or the grid card's "more
 // options" menu, before falling through to AnchorPlayer.openFromThumb
 // (player.js). .viewed-badge sits next to .thumb rather than inside it —
@@ -340,6 +385,97 @@ async function fetchLessonIds(slug) {
   return rows.map((r) => r.youtube_video_id);
 }
 
+// First `limit` active videos for a course playlist, full rows (for
+// thumbnails) rather than just ids. Used by courses.html's preview grid —
+// fetchLessonIds above still owns the accurate total/watched count, since a
+// preview only ever fetches a capped batch and can't derive an honest total
+// from it.
+async function fetchCoursePreview(slug, limit) {
+  const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/videos?select=*&active=eq.true&playlist=eq.${encodeURIComponent(slug)}&order=idx.asc.nullslast,published_at.desc,created_at.desc&limit=${limit}`,
+    {
+      headers: {
+        apikey: supabasePublishableKey,
+        Authorization: `Bearer ${supabasePublishableKey}`,
+      },
+    }
+  );
+  if (!res.ok) throw new Error(`Supabase request failed: ${res.status}`);
+  return res.json();
+}
+
+// The tile that closes out a course's preview row, in place of a plain
+// "View course" link. Label reflects real progress (already computed by the
+// caller, no extra fetch) rather than always saying the same thing; "+N
+// more" is what's left beyond the capped preview, not the total. Shared by
+// courses.html and path.html.
+function courseCtaHtml(slug, count, watched, shownCount) {
+  const pct = watched != null && count ? Math.round((watched / count) * 100) : 0;
+  const label = watched == null ? "View course" : count && watched >= count ? "Completed · Review" : watched > 0 ? "Continue course" : "Start course";
+  const more = count != null ? Math.max(0, count - shownCount) : 0;
+  return `
+    <a class="video-cta" href="course.html?slug=${encodeURIComponent(slug)}" style="--cta-pct: ${pct}%">
+      <span class="video-cta-icon">
+        <span class="video-cta-icon-inner">
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+        </span>
+      </span>
+      <span class="video-cta-label">${escapeHtml(label)}</span>
+      ${more > 0 ? `<span class="video-cta-more">+${more} more lesson${more === 1 ? "" : "s"}</span>` : ""}
+    </a>`;
+}
+
+// A course's heading/description above a capped row of its videos, closed
+// out by courseCtaHtml's tile. Shared by courses.html (one per course in a
+// department) and path.html (one per course in a path, wrapped in that
+// page's own step-number/tier-pill markup).
+function coursePreviewHtml(slug, info, ids, viewedSet, previewVideos, previewFailed) {
+  const count = ids?.length ?? null;
+  const watched = viewedSet && ids ? ids.filter((id) => viewedSet.has(id)).length : null;
+  const previewId = `preview-${slug}`;
+
+  let gridHtml;
+  if (previewFailed) {
+    gridHtml = `<p class="course-preview-message">Failed to load lessons.</p>`;
+  } else if (!previewVideos || previewVideos.length === 0) {
+    gridHtml = `<p class="course-preview-message">No lessons yet.</p>`;
+  } else {
+    gridHtml = `
+      <div class="card-grid" id="${previewId}" data-context-label="${escapeAttr(info.displayName)}">
+        ${renderVideoCards(previewVideos, Boolean(info.ordered))}
+        ${courseCtaHtml(slug, count, watched, previewVideos.length)}
+      </div>`;
+  }
+
+  return `
+    <div class="course-preview">
+      <div class="course-preview-head">
+        <div class="title">${escapeHtml(info.displayName)}</div>
+        <p class="desc">${escapeHtml(info.description ?? "")}</p>
+      </div>
+      ${gridHtml}
+    </div>`;
+}
+
+// Mirrors the homepage's per-shelf wireShelf: the click listener goes on
+// each course's own preview grid, not one delegated listener on the whole
+// page, so AnchorPlayer's Up Next queue (built from the listener's
+// currentTarget) only ever contains that course's own preview videos, not
+// every course on the page. The CTA tile has no .thumb, so a click on it
+// falls through onThumbGridClick harmlessly and its own <a href> just
+// navigates normally.
+function wireCoursePreview(slug, videos) {
+  if (!videos || videos.length === 0) return;
+  const gridEl = document.getElementById(`preview-${slug}`);
+  if (!gridEl) return;
+  gridEl.addEventListener("click", onThumbGridClick);
+  const ids = videos.map((v) => v.youtube_video_id);
+  markViewedBadges(gridEl, ids);
+  syncBookmarkMenuItems(gridEl, ids);
+  revealCardMenus(gridEl);
+}
+
 function formatDate(iso) {
   return new Intl.DateTimeFormat("en", { year: "numeric", month: "long", day: "numeric" }).format(new Date(iso));
 }
@@ -357,11 +493,13 @@ function renderHeader() {
       <button class="hamburger" type="button" id="hamburger" aria-label="Open menu">
         <span class="material-symbols-outlined">menu</span>
       </button>
-      <img src="favicon.svg" alt="Daily Anchor logo" />
-      <div>
-        <h1>Daily Anchor</h1>
-        <p>Curated content worth your attention.</p>
-      </div>
+      <a href="index.html" class="header-brand">
+        <img src="favicon.svg" alt="Daily Anchor logo" />
+        <div>
+          <h1>Daily Anchor</h1>
+          <p>Curated content worth your attention.</p>
+        </div>
+      </a>
     </header>
   `;
 }
@@ -386,10 +524,10 @@ function renderSidebar(activeKey) {
     .join("");
 
   return `
-    <div class="sidebar-brand">
+    <a href="index.html" class="sidebar-brand">
       <img src="favicon.svg" alt="Daily Anchor logo" />
       <h1>Daily Anchor</h1>
-    </div>
+    </a>
     <button class="sidebar-close" type="button" id="sidebar-close" aria-label="Close menu">
       <span class="material-symbols-outlined">close</span>
     </button>

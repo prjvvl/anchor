@@ -18,31 +18,32 @@
     color: var(--muted);
   }
 
-  .path-steps {
-    display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
-    max-width: 640px;
+  .path-step {
+    margin-bottom: 2.2rem;
   }
 
-  .path-step {
+  .path-step:last-child {
+    margin-bottom: 0;
+  }
+
+  .path-step-top {
     display: flex;
-    gap: 0.9rem;
-    text-decoration: none;
-    color: var(--ink);
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
   }
 
   .step-number {
     flex-shrink: 0;
-    width: 2rem;
-    height: 2rem;
+    width: 1.9rem;
+    height: 1.9rem;
     border-radius: 50%;
     background: var(--card-bg);
     border: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-weight: 700;
     color: var(--muted);
   }
@@ -51,57 +52,6 @@
     background: var(--ink);
     border-color: var(--ink);
     color: var(--bg);
-  }
-
-  .path-step-body {
-    flex: 1;
-    min-width: 0;
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.9rem 1.1rem;
-    transition: box-shadow 0.15s ease, transform 0.15s ease;
-  }
-
-  .path-step:hover .path-step-body {
-    box-shadow: 0 6px 18px rgba(22, 35, 63, 0.1);
-    transform: translateY(-2px);
-  }
-
-  .path-step-top {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.6rem;
-  }
-
-  .path-step .title {
-    font-size: 1rem;
-    font-weight: 700;
-    margin: 0;
-  }
-
-  .tier-pill {
-    flex-shrink: 0;
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: var(--muted);
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 0.1rem 0.55rem;
-  }
-
-  .path-step .desc {
-    color: var(--muted);
-    font-size: 0.83rem;
-    line-height: 1.4;
-    margin: 0.3rem 0 0.5rem;
-  }
-
-  .path-step .meta {
-    color: var(--muted);
-    font-size: 0.78rem;
   }
 </style>
 
@@ -116,7 +66,7 @@
     <h2 class="page-heading" id="path-title"></h2>
     <p class="page-sub" id="path-sub"></p>
     <div id="status" class="sr-only">Loading path…</div>
-    <div class="path-steps" id="path-steps"></div>
+    <div id="path-steps"></div>
   </main>
 </div>
 
@@ -131,6 +81,7 @@
 <script src="playlists.js"></script>
 <script src="paths.js"></script>
 <script src="helpers.js"></script>
+<script src="player.js"></script>
 <script>
   function showStatus(el, text) {
     if (!el) return;
@@ -141,25 +92,28 @@
     el?.classList.add("sr-only");
   }
 
-  function pathStep(index, courseSlug, courseInfo, watched, total) {
+  // Same cap as courses.html's own PREVIEW_LIMIT, kept as a separate copy
+  // since the two pages don't share a load function — see coursePreviewHtml
+  // in helpers.js for what consumes it.
+  const PREVIEW_LIMIT = 5;
+
+  // Wraps the shared coursePreviewHtml (helpers.js) with this page's own
+  // step-number/tier-pill header — a path is an ordered sequence of
+  // courses, so that ordering needs to survive even though each step is now
+  // a full video row rather than a plain text line.
+  function pathStepHtml(index, courseSlug, courseInfo, ids, viewedSet, previewVideos, previewFailed) {
     const tierInfo = (window.ANCHOR_TIERS ?? []).find((t) => t.key === courseInfo?.tier);
-    const complete = total != null && total > 0 && watched === total;
-    // watched is null when signed out (see fetchViewedSet) — omit the
-    // watched count rather than falsely reporting 0/total, same as
-    // courses.html's courseCard.
-    const countLabel = total == null ? "" : total === 0 ? "No lessons yet" : watched != null ? `${watched}/${total} watched` : `${total} lesson${total === 1 ? "" : "s"}`;
+    const count = ids?.length ?? null;
+    const watched = viewedSet && ids ? ids.filter((id) => viewedSet.has(id)).length : null;
+    const complete = count != null && count > 0 && watched === count;
     return `
-      <a class="path-step" href="course.html?slug=${encodeURIComponent(courseSlug)}" data-complete="${complete}">
-        <span class="step-number">${complete ? '<span class="material-symbols-outlined" style="font-size:1.1rem;">check</span>' : index + 1}</span>
-        <div class="path-step-body">
-          <div class="path-step-top">
-            <p class="title">${escapeHtml(courseInfo?.displayName ?? courseSlug)}</p>
-            ${tierInfo ? `<span class="tier-pill">${escapeHtml(tierInfo.displayName)}</span>` : ""}
-          </div>
-          <p class="desc">${escapeHtml(courseInfo?.description ?? "")}</p>
-          <div class="meta">${escapeHtml(countLabel)}</div>
+      <div class="path-step" data-complete="${complete}">
+        <div class="path-step-top">
+          <span class="step-number">${complete ? '<span class="material-symbols-outlined" style="font-size:1.1rem;">check</span>' : index + 1}</span>
+          ${tierInfo ? `<span class="tier-pill">${escapeHtml(tierInfo.displayName)}</span>` : ""}
         </div>
-      </a>`;
+        ${coursePreviewHtml(courseSlug, courseInfo, ids, viewedSet, previewVideos, previewFailed)}
+      </div>`;
   }
 
   // mountSidebar() replaces #sidebar's innerHTML wholesale, including
@@ -198,24 +152,26 @@
       return;
     }
 
-    stepsEl.innerHTML = renderCourseSkeletons(info.courses.length);
+    stepsEl.innerHTML = renderCoursePreviewSkeletons(info.courses.length);
 
     try {
-      const [idResults, viewedSet] = await Promise.all([
-        Promise.allSettled(info.courses.map((slug) => fetchLessonIds(slug))),
+      const [idResults, previewResults, viewedSet] = await Promise.all([
+        Promise.allSettled(info.courses.map((courseSlug) => fetchLessonIds(courseSlug))),
+        Promise.allSettled(info.courses.map((courseSlug) => fetchCoursePreview(courseSlug, PREVIEW_LIMIT))),
         fetchViewedSet(),
       ]);
 
       hideStatus(statusEl);
+      const previewsBySlug = info.courses.map((courseSlug, i) => (previewResults[i].status === "fulfilled" ? previewResults[i].value : null));
       stepsEl.innerHTML = info.courses
         .map((courseSlug, i) => {
           const courseInfo = window.ANCHOR_PLAYLISTS?.[courseSlug];
           const ids = idResults[i].status === "fulfilled" ? idResults[i].value : null;
-          const total = ids?.length ?? null;
-          const watched = viewedSet && ids ? ids.filter((id) => viewedSet.has(id)).length : null;
-          return pathStep(i, courseSlug, courseInfo, watched, total);
+          const previewFailed = previewResults[i].status !== "fulfilled";
+          return pathStepHtml(i, courseSlug, courseInfo, ids, viewedSet, previewsBySlug[i], previewFailed);
         })
         .join("");
+      info.courses.forEach((courseSlug, i) => wireCoursePreview(courseSlug, previewsBySlug[i]));
     } catch (err) {
       stepsEl.innerHTML = "";
       showStatus(statusEl, "Failed to load path.");

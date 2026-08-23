@@ -18,18 +18,6 @@
     color: var(--muted);
   }
 
-  .episode-badge {
-    position: absolute;
-    top: 6px;
-    left: 6px;
-    background: rgba(0, 0, 0, 0.75);
-    color: #fff;
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 1px 6px;
-    border-radius: 4px;
-  }
-
   .resume-btn {
     margin: 0 0 1.4rem;
   }
@@ -68,33 +56,6 @@
 <script src="helpers.js"></script>
 <script src="player.js"></script>
 <script>
-  // Same card as the homepage video grid. Ordered courses (real idx) get an
-  // episode number badge instead of a view count, since recency/views aren't
-  // meaningful for a fixed, complete series.
-  function renderLessons(videos, ordered) {
-    return videos
-      .map(
-        (v, i) => `
-        <div class="video">
-          <button class="thumb" type="button" data-video-id="${escapeAttr(v.youtube_video_id)}" data-title="${escapeAttr(v.title)}" data-channel="${escapeAttr(v.channel_name ?? "")}" data-duration="${v.duration ?? ""}" aria-label="Play ${escapeAttr(v.title)}">
-            <img src="https://img.youtube.com/vi/${escapeAttr(v.youtube_video_id)}/hqdefault.jpg" alt="" loading="lazy" />
-            <span class="play-badge"></span>
-            ${ordered ? `<span class="episode-badge">EP ${i + 1}</span>` : ""}
-            ${v.duration ? `<span class="duration">${formatDuration(v.duration)}</span>` : ""}
-          </button>
-          ${renderCardMenu(v.youtube_video_id)}
-          <div class="video-body">
-            <span class="title">${escapeHtml(v.title)}</span>
-            <div class="meta">
-              <span>${escapeHtml(v.channel_name ?? "")}</span>
-              ${!ordered && v.views != null ? `<span>· ${formatViews(v.views)} views</span>` : ""}
-            </div>
-          </div>
-        </div>`
-      )
-      .join("");
-  }
-
   function showStatus(el, text) {
     if (!el) return;
     el.textContent = text;
@@ -176,7 +137,7 @@
       }
 
       hideStatus(statusEl);
-      lessonsEl.innerHTML = renderLessons(videos, Boolean(info.ordered));
+      lessonsEl.innerHTML = renderVideoCards(videos, Boolean(info.ordered));
       syncBookmarkMenuItems(lessonsEl, videos.map((v) => v.youtube_video_id));
       revealCardMenus(lessonsEl);
 

@@ -23,7 +23,18 @@ export interface ChannelSource {
 //
 // All channels here were credibility-checked against Media Bias/Fact Check
 // (or equivalent) before adding, not just verified as real/active — see
-// flo/2608-anchor session notes for the full audit.
+// flo/2608-anchor session notes for the full audit. teleSUR English was
+// researched and rejected as a Latin America candidate on these grounds
+// (MBFC: "Questionable", Venezuela state-funded); CNN en Español passed.
+//
+// Adding a channel here also grows the live per-channel retention pool
+// (archive/tables.ts keeps 12 rows per channel for this playlist) that
+// apps/web/index.html pools into ONE query before splitting by region —
+// that fetch's limit is sized off this array's length and must be bumped
+// in lockstep (see the comment at its call site) or the newest rows from
+// whichever region is least-recently-updated get silently truncated before
+// they're even grouped — this happened once already, see the tables.ts
+// comment on this same retention rule.
 export const channels: ChannelSource[] = [
   { id: "UC52X5wxOL_s5yw0dQk7NtgA", region: ["global"], language: "en" }, // Associated Press — global wire service
   { id: "UCNye-wNBqNL5ZzHSJj3l8Bg", region: ["global", "middle-east"], language: "en" }, // Al Jazeera English — alt-perspective international, also covers Middle East
@@ -36,4 +47,7 @@ export const channels: ChannelSource[] = [
   { id: "UC83jt4dlz1Gjl58fzQrrKZg", region: ["asia", "global"], language: "en" }, // CNA (Channel News Asia), Singapore — high-credibility Asia coverage
   { id: "UCSPEjw8F2nQDtmUKPFNF7_A", region: ["asia", "global"], language: "en" }, // NHK World Japan — Japan's public broadcaster, high-credibility
   { id: "UCVgO39Bk5sMo66-6o6Spn6Q", region: ["au", "global"], language: "en" }, // ABC News (Australia) — Australia's public broadcaster, high-credibility
+  { id: "UChqUTb7kYRX8-EiaN3XFrSQ", region: ["global"], language: "en" }, // Reuters — second global wire service alongside AP, same top-tier credibility class
+  { id: "UCQfwfsi5VrQ8yKZ-UWmAEFg", region: ["eu", "global"], language: "en" }, // FRANCE 24 English — French public broadcaster, international remit, same tier as DW
+  { id: "UC_lEiu6917IJz03TnntWUaQ", region: ["latin-america", "global"], language: "es" }, // CNN en Español — Latin America coverage, no prior candidate had passed a credibility check
 ];

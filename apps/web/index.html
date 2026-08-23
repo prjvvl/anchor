@@ -938,17 +938,19 @@
     container.innerHTML = renderVideoSkeletons(6);
 
     const [topNewsResult, ...playlistResults] = await Promise.allSettled([
-      // 150, not 60: this fetch is a single global "newest N" query, split
+      // 200, not 60: this fetch is a single global "newest N" query, split
       // into per-region shelves only after the fact (see regionShelfKey
       // below) — so the limit has to cover the whole live retained pool,
       // not just what's shown. Archive retention (tables.ts) keeps up to 12
       // rows per CHANNEL, not per region, and India alone has 3 channels
-      // (NDTV/WION/BBC News Hindi) — worst case is 11 channels * 12 = 132
+      // (NDTV/WION/BBC News Hindi) — worst case is 14 channels * 12 = 168
       // rows live at once. 60 (or even the region-shelf-cap-based 96) could
       // still truncate the oldest rows platform-wide before grouping,
       // silently under-filling whichever region's channels are currently
-      // least-recently-updated. 150 covers the true max pool with headroom.
-      fetchPlaylistVideos("top-news", 150),
+      // least-recently-updated. 200 covers the true max pool with headroom —
+      // bump this again in lockstep with channels.ts if more channels are
+      // added (see that file's own retention-vs-fetch-limit coupling note).
+      fetchPlaylistVideos("top-news", 200),
       ...SINGLE_SHELF_PLAYLISTS.map((playlist) => fetchPlaylistVideos(playlist, 24)),
     ]);
     if (thisToken !== homeShelvesRequestToken) return;
