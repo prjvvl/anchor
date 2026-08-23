@@ -54,6 +54,7 @@ window.ANCHOR_DEPARTMENTS = {
   "places-culture": { displayName: "Places & Culture", icon: "public" },
   "food-culture": { displayName: "Food & Culture", icon: "restaurant" },
   "life-skills-making": { displayName: "Life Skills & Making", icon: "construction" },
+  "money-finance": { displayName: "Money & Personal Finance", icon: "savings" },
   // Entertainment-only departments.
   "travel-adventure": { displayName: "Travel & Adventure", icon: "flight_takeoff" },
   documentaries: { displayName: "Documentaries", icon: "theaters" },
@@ -76,7 +77,7 @@ window.ANCHOR_TIER_DEPARTMENTS = {
   standard: ACADEMIC_DEPARTMENTS,
   advanced: ACADEMIC_DEPARTMENTS,
   expert: ACADEMIC_DEPARTMENTS,
-  extracurricular: ["games-strategy", "tech-curiosities", "places-culture", "food-culture", "life-skills-making"],
+  extracurricular: ["games-strategy", "tech-curiosities", "places-culture", "food-culture", "life-skills-making", "money-finance"],
   entertainment: ["travel-adventure", "documentaries", "short-films"],
   miscellaneous: ["podcasts-conversations", "storytelling", "business-startups"],
 };
@@ -92,6 +93,8 @@ window.ANCHOR_REGIONS = [
   { key: "in", displayName: "India" },
   { key: "us", displayName: "United States" },
   { key: "gb", displayName: "United Kingdom" },
+  { key: "eu", displayName: "Europe" },
+  { key: "africa", displayName: "Africa" },
 ];
 window.ANCHOR_LANGUAGES = [{ key: "en", displayName: "English" }];
 
@@ -422,6 +425,18 @@ window.ANCHOR_PLAYLISTS = {
     tier: "extracurricular",
     department: "life-skills-making",
     subject: "Craft & Metalworking",
+  },
+  "personal-finance": {
+    displayName: "Money Basics",
+    description: "Two Cents (PBS Digital Studios) on budgeting, saving, debt, and investing, without the hype.",
+    type: "course",
+    ordered: false,
+    source: "Two Cents",
+    region: ["us", "global"],
+    language: "en",
+    tier: "extracurricular",
+    department: "money-finance",
+    subject: "Personal Finance",
   },
 
   // --- Entertainment ---

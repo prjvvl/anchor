@@ -10,4 +10,5 @@ export const channels: ChannelSource[] = [
   { id: "UCGq-a57w-aPwyi3pW7XLiHw", region: ["global"], language: "en" }, // The Diary Of A CEO
   { id: "UC_AnpBvnhXTcipgGEHLWoOg", region: ["global"], language: "en" }, // Conversations with Tyler
   { id: "UCpjlh0e319ksmoOD7bQFSiw", region: ["us", "global"], language: "en" }, // Rich Roll
+  { id: "UCnC8SAZzQiBGYVSKZ_S3y4Q", region: ["in", "global"], language: "en" }, // Nikhil Kamath — "WTF is", India-based founder/investor conversations
 ];
