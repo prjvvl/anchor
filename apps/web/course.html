@@ -105,36 +105,60 @@
       .join("");
   }
 
+  function showStatus(el, text) {
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove("sr-only");
+  }
+  function hideStatus(el) {
+    el?.classList.add("sr-only");
+  }
+
+  // Re-run on "anchor-auth-change" (completing OTP without a reload), not
+  // just once at page load — same overlapping-call hazard as index.html's
+  // loadVideos, same request-token fix.
+  let courseRequestToken = 0;
+  // mountSidebar() replaces #sidebar's innerHTML, including #sidebar-close
+  // — initSidebarDrawer captures that button once at page init, so a
+  // second mountSidebar() call (on a re-run) would leave the *new*
+  // close button with no click handler, silently breaking the mobile
+  // drawer. Title/breadcrumb/sidebar don't depend on auth or the video
+  // list anyway, so they only need to run once regardless.
+  let courseSetupDone = false;
+
   async function loadCourse() {
+    const requestToken = ++courseRequestToken;
     const slug = new URLSearchParams(location.search).get("slug");
     const statusEl = document.getElementById("status");
     const lessonsEl = document.getElementById("lessons");
     const info = window.ANCHOR_PLAYLISTS?.[slug];
 
     if (!slug || !info || info.type !== "course") {
-      statusEl.textContent = "Course not found.";
-      statusEl.classList.remove("sr-only");
+      showStatus(statusEl, "Course not found.");
       document.getElementById("course-title").textContent = "Course not found";
-      mountSidebar(null);
+      if (!courseSetupDone) mountSidebar(null);
+      courseSetupDone = true;
       return;
     }
 
-    document.title = `Daily Anchor - ${info.displayName}`;
-    document.getElementById("course-crumb").textContent = info.displayName;
-    document.getElementById("course-title").textContent = info.displayName;
-    document.getElementById("course-sub").textContent = info.description ?? "";
-    lessonsEl.dataset.contextLabel = info.displayName;
+    if (!courseSetupDone) {
+      document.title = `Daily Anchor - ${info.displayName}`;
+      document.getElementById("course-crumb").textContent = info.displayName;
+      document.getElementById("course-title").textContent = info.displayName;
+      document.getElementById("course-sub").textContent = info.description ?? "";
+      lessonsEl.dataset.contextLabel = info.displayName;
 
-    const tierInfo = (window.ANCHOR_TIERS ?? []).find((t) => t.key === info.tier);
-    const crumbTier = document.getElementById("course-crumb-tier");
-    crumbTier.textContent = tierInfo?.displayName ?? "Courses";
-    crumbTier.href = info.tier ? `courses.html?tier=${encodeURIComponent(info.tier)}` : "courses.html";
-    mountSidebar(info.tier ?? null);
+      const tierInfo = (window.ANCHOR_TIERS ?? []).find((t) => t.key === info.tier);
+      const crumbTier = document.getElementById("course-crumb-tier");
+      crumbTier.textContent = tierInfo?.displayName ?? "Courses";
+      crumbTier.href = info.tier ? `courses.html?tier=${encodeURIComponent(info.tier)}` : "courses.html";
+      mountSidebar(info.tier ?? null);
+      courseSetupDone = true;
+    }
 
     const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
     if (!supabaseUrl || !supabasePublishableKey) {
-      statusEl.textContent = "Missing Supabase config. Fill in config.js.";
-      statusEl.classList.remove("sr-only");
+      showStatus(statusEl, "Missing Supabase config. Fill in config.js.");
       return;
     }
 
@@ -153,29 +177,31 @@
       if (!res.ok) throw new Error(`Supabase request failed: ${res.status}`);
 
       const videos = await res.json();
+      if (requestToken !== courseRequestToken) return;
 
       if (videos.length === 0) {
         lessonsEl.innerHTML = "";
-        statusEl.textContent = "No lessons yet.";
-        statusEl.classList.remove("sr-only");
+        showStatus(statusEl, "No lessons yet.");
         return;
       }
 
-      statusEl.remove();
+      hideStatus(statusEl);
       lessonsEl.innerHTML = renderLessons(videos, Boolean(info.ordered));
-      lessonsEl.addEventListener("click", onThumbGridClick);
       syncBookmarkMenuItems(lessonsEl, videos.map((v) => v.youtube_video_id));
       revealCardMenus(lessonsEl);
 
-      const playAllBtn = document.getElementById("play-all-lessons");
-      playAllBtn.hidden = false;
-      playAllBtn.addEventListener("click", () => window.AnchorPlayer?.playAll(lessonsEl));
+      document.getElementById("play-all-lessons").hidden = false;
 
       // Only worth a "Resume" CTA when there's real partial progress —
       // signed out (viewedSet is null), zero watched, or fully watched all
-      // render nothing here rather than a misleading/empty button.
-      const viewedSet = await markViewedBadges(lessonsEl, videos.map((v) => v.youtube_video_id));
+      // render nothing here rather than a misleading/empty button. Cleared
+      // up front (not just conditionally set) so a stale button doesn't
+      // survive a re-run that no longer qualifies (e.g. the user signed
+      // out since the last run).
       const resumeSlot = document.getElementById("resume-slot");
+      resumeSlot.innerHTML = "";
+      const viewedSet = await markViewedBadges(lessonsEl, videos.map((v) => v.youtube_video_id));
+      if (requestToken !== courseRequestToken) return;
       if (viewedSet) {
         const watchedCount = videos.filter((v) => viewedSet.has(v.youtube_video_id)).length;
         const next = videos.find((v) => !viewedSet.has(v.youtube_video_id));
@@ -198,9 +224,9 @@
         }
       }
     } catch (err) {
+      if (requestToken !== courseRequestToken) return;
       lessonsEl.innerHTML = "";
-      statusEl.textContent = "Failed to load lessons.";
-      statusEl.classList.remove("sr-only");
+      showStatus(statusEl, "Failed to load lessons.");
       console.error(err);
     }
   }
@@ -208,10 +234,21 @@
   mountHeader();
   initThemeToggle();
   initAuthControl();
-  // loadCourse() calls mountSidebar() synchronously (before its first
-  // await), so it must run before initSidebarDrawer() binds the close
-  // button's listener — otherwise #sidebar-close doesn't exist yet and the
-  // click handler never gets attached.
+
+  // Attached once, not inside loadCourse — that function re-runs on
+  // "anchor-auth-change", and #lessons/#play-all-lessons are persistent
+  // elements (only their innerHTML/hidden state changes on reload), so a
+  // listener inside loadCourse would stack a duplicate on every re-run.
+  document.getElementById("lessons").addEventListener("click", onThumbGridClick);
+  document.getElementById("play-all-lessons").addEventListener("click", () => window.AnchorPlayer?.playAll(document.getElementById("lessons")));
+
+  // loadCourse() calls mountSidebar() synchronously on its first call
+  // (before its first await), so it must run before
+  // initSidebarDrawer()/initRegionLangFilter() — both need elements
+  // mountSidebar renders (#sidebar-close, the filter checkboxes) to
+  // already exist.
   loadCourse();
   initSidebarDrawer();
+  initRegionLangFilter();
+  window.addEventListener("anchor-auth-change", loadCourse);
 </script>

@@ -6,6 +6,8 @@ export interface FeedItem {
   link: string;
   source: string;
   category: string;
+  region: string[];
+  language: string;
   publishedAt: string;
   imageUrl?: string;
 }
@@ -25,7 +27,7 @@ const parser = new Parser<Record<string, never>, RawItemExtras>({
   },
 });
 
-export async function fetchFeed(feedUrl: string, source: string, category: string): Promise<FeedItem[]> {
+export async function fetchFeed(feedUrl: string, source: string, category: string, region: string[], language: string): Promise<FeedItem[]> {
   const feed = await parser.parseURL(feedUrl);
 
   return (feed.items ?? [])
@@ -35,6 +37,8 @@ export async function fetchFeed(feedUrl: string, source: string, category: strin
       link: item.link ?? "",
       source,
       category,
+      region,
+      language,
       publishedAt: item.isoDate ?? item.pubDate ?? "",
       imageUrl: extractImageUrl(item),
     }))

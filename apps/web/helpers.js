@@ -322,6 +322,13 @@ function formatDate(iso) {
   return new Intl.DateTimeFormat("en", { year: "numeric", month: "long", day: "numeric" }).format(new Date(iso));
 }
 
+// auth-control and theme-toggle live in the sidebar footer (renderSidebar),
+// not here — see the note there for why. This <header> only renders at
+// mobile widths (hidden on desktop via CSS) — .sidebar-brand in
+// renderSidebar is its desktop equivalent, sized for the sidebar's ~190px
+// column instead of the full page width. Kept as two separate renders
+// (rather than one element relocated by JS, like the video modal's quick
+// actions) since both are just branding markup, not stateful.
 function renderHeader() {
   return `
     <header>
@@ -333,10 +340,6 @@ function renderHeader() {
         <h1>Daily Anchor</h1>
         <p>Curated content worth your attention.</p>
       </div>
-      <div class="auth-control" id="auth-control"></div>
-      <button class="theme-toggle" type="button" id="theme-toggle" aria-label="Toggle dark mode">
-        <span class="material-symbols-outlined" id="theme-icon"></span>
-      </button>
     </header>
   `;
 }
@@ -361,13 +364,26 @@ function renderSidebar(activeKey) {
     .join("");
 
   return `
+    <div class="sidebar-brand">
+      <img src="favicon.svg" alt="Daily Anchor logo" />
+      <h1>Daily Anchor</h1>
+    </div>
     <button class="sidebar-close" type="button" id="sidebar-close" aria-label="Close menu">
       <span class="material-symbols-outlined">close</span>
     </button>
-    <a class="nav-item" href="index.html"${activeKey === "home" ? ' aria-current="page"' : ""}>
-      <span class="material-symbols-outlined">today</span> Home
-    </a>
-    ${tierItems}
+    <div class="sidebar-scroll">
+      <a class="nav-item" href="index.html"${activeKey === "home" ? ' aria-current="page"' : ""}>
+        <span class="material-symbols-outlined">today</span> Home
+      </a>
+      ${tierItems}
+      ${renderSidebarFilters()}
+    </div>
+    <div class="sidebar-footer">
+      <div class="auth-control" id="auth-control"></div>
+      <button class="theme-toggle" type="button" id="theme-toggle" aria-label="Toggle dark mode">
+        <span class="material-symbols-outlined" id="theme-icon"></span>
+      </button>
+    </div>
   `;
 }
 
@@ -375,6 +391,201 @@ function mountSidebar(activeKey) {
   const el = document.getElementById("sidebar");
   if (!el) return;
   el.innerHTML = renderSidebar(activeKey);
+}
+
+// --- Sitewide region/language filter ---
+// Anonymous-first (localStorage), reconciled into profiles.preferred_regions
+// /preferred_languages on sign-in — see initRegionLangFilter. Lives in the
+// sidebar (mounted on every page via mountSidebar) alongside auth-control
+// and theme-toggle (also moved here, out of the header — see renderHeader)
+// rather than the header: the header was flagged as cramped at mobile
+// widths even before this existed, and consolidating everything
+// account/preferences-related into one place (the sidebar, always visible
+// on desktop, one tap away via the hamburger on mobile) is more coherent
+// than splitting it across header and sidebar.
+const REGION_LANG_STORAGE_KEY = "anchor-region-lang";
+const DEFAULT_REGIONS = ["global"];
+const DEFAULT_LANGUAGES = ["en"];
+
+function arraysEqual(a, b) {
+  return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+
+function getRegionLangFilter() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(REGION_LANG_STORAGE_KEY));
+    const regions = Array.isArray(parsed?.regions) && parsed.regions.length > 0 ? parsed.regions : DEFAULT_REGIONS;
+    const languages = Array.isArray(parsed?.languages) && parsed.languages.length > 0 ? parsed.languages : DEFAULT_LANGUAGES;
+    return { regions, languages };
+  } catch {
+    return { regions: DEFAULT_REGIONS, languages: DEFAULT_LANGUAGES };
+  }
+}
+
+// Best-effort on both writes — a page must keep working with an in-memory
+// selection even if localStorage is unavailable (private mode, quota) or
+// the profile update fails (signed in but offline, RLS hiccup, etc.).
+function saveRegionLangFilter(regions, languages) {
+  try {
+    localStorage.setItem(REGION_LANG_STORAGE_KEY, JSON.stringify({ regions, languages }));
+  } catch (err) {
+    console.error(err);
+  }
+  if (!window.ANCHOR_AUTH) return;
+  window.ANCHOR_AUTH.getSession().then(({ session }) => {
+    if (!session) return;
+    window.ANCHOR_AUTH.client
+      .from("profiles")
+      .update({ preferred_regions: regions, preferred_languages: languages })
+      .eq("user_id", session.user.id)
+      .then(({ error }) => {
+        if (error) console.error(error);
+      });
+  });
+}
+
+// Collapsed by default — plain checkboxes are still the right widget even
+// at a half-dozen regions and a couple of languages, but a full always-
+// expanded list at that size would compete with the nav items above it for
+// space in a ~190px column. Region and language are two independent
+// dropdowns (not one combined "Filters" menu) so each can be opened and
+// scanned on its own — each toggle reads a fixed word (Region/Language),
+// not a live-updating summary of the current selection.
+function renderSidebarFilters() {
+  const { regions, languages } = getRegionLangFilter();
+
+  const renderGroup = (options, group, selected) =>
+    (options ?? [])
+      .map(
+        (o) => `
+      <label class="filter-option">
+        <input type="checkbox" data-filter-group="${group}" value="${escapeAttr(o.key)}"${selected.includes(o.key) ? " checked" : ""} />
+        ${escapeHtml(o.displayName)}
+      </label>`
+      )
+      .join("");
+
+  const renderDropdown = (group, icon, label, options, selected) => `
+    <div class="filter-dropdown">
+      <button class="filters-toggle" type="button" data-filter-toggle="${group}" aria-expanded="false" aria-controls="filters-body-${group}">
+        <span class="material-symbols-outlined">${icon}</span>
+        <span class="filters-summary">${label}</span>
+        <span class="material-symbols-outlined filters-chevron">expand_more</span>
+      </button>
+      <div class="filters-body" id="filters-body-${group}" hidden>
+        ${renderGroup(options, group, selected)}
+      </div>
+    </div>`;
+
+  return `
+    <div class="sidebar-filters" id="sidebar-filters">
+      ${renderDropdown("region", "public", "Region", window.ANCHOR_REGIONS, regions)}
+      ${renderDropdown("language", "translate", "Language", window.ANCHOR_LANGUAGES, languages)}
+    </div>
+  `;
+}
+
+function applyRegionLangCheckboxes(regions, languages) {
+  document.querySelectorAll('input[data-filter-group="region"]').forEach((el) => (el.checked = regions.includes(el.value)));
+  document.querySelectorAll('input[data-filter-group="language"]').forEach((el) => (el.checked = languages.includes(el.value)));
+}
+
+// Builds the region/language portion of a hand-built videos/headlines REST
+// query. `ov` (overlap) on the region array column, `in` on the scalar
+// language column — OR within each facet (any selected value matches),
+// AND across the two params (PostgREST ANDs separate query params
+// together), matching how the filter was scoped: a video/headline shows if
+// its region overlaps the selection AND its language is in the selection.
+function regionLangQueryParams(regions, languages) {
+  return `region=ov.{${regions.join(",")}}&language=in.(${languages.join(",")})`;
+}
+
+// Same AND/OR semantics as regionLangQueryParams, for client-side
+// filtering (courses.html filters its static ANCHOR_PLAYLISTS list rather
+// than querying the DB — see that page for why).
+function matchesRegionLangFilter(entryRegions, entryLanguage, regions, languages) {
+  return (entryRegions ?? []).some((r) => regions.includes(r)) && languages.includes(entryLanguage);
+}
+
+// Wires the sidebar checkboxes (present on every page via renderSidebar)
+// and, if signed in, reconciles localStorage with the account's stored
+// preference. Call once per page, alongside initAuthControl.
+function initRegionLangFilter() {
+  const sidebar = document.getElementById("sidebar");
+  if (!sidebar) return;
+
+  sidebar.querySelectorAll("[data-filter-toggle]").forEach((toggle) => {
+    const body = document.getElementById(toggle.getAttribute("aria-controls"));
+    toggle.addEventListener("click", () => {
+      const expanded = toggle.getAttribute("aria-expanded") === "true";
+      toggle.setAttribute("aria-expanded", String(!expanded));
+      body.hidden = expanded;
+    });
+  });
+
+  sidebar.addEventListener("change", (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || !input.dataset.filterGroup) return;
+
+    const group = input.dataset.filterGroup;
+    const checked = [...sidebar.querySelectorAll(`input[data-filter-group="${group}"]`)].filter((el) => el.checked).map((el) => el.value);
+
+    // Never let a facet go empty — re-check the box that would have been
+    // the last one unchecked instead of applying an all-excluding filter.
+    if (checked.length === 0) {
+      input.checked = true;
+      return;
+    }
+
+    const current = getRegionLangFilter();
+    const regions = group === "region" ? checked : current.regions;
+    const languages = group === "language" ? checked : current.languages;
+    saveRegionLangFilter(regions, languages);
+    window.dispatchEvent(new CustomEvent("anchor-filter-change", { detail: { regions, languages } }));
+  });
+
+  if (!window.ANCHOR_AUTH) return;
+
+  // onAuthStateChange also fires on token refreshes, not just real sign-ins
+  // — same guard pattern as fetchDisplayName in initAuthControl, so this
+  // reconciliation only runs once per actual sign-in.
+  let reconciledUserId = null;
+  window.ANCHOR_AUTH.onAuthStateChange(async (event, session) => {
+    if (!session || session.user.id === reconciledUserId) return;
+    reconciledUserId = session.user.id;
+
+    const { data, error } = await window.ANCHOR_AUTH.client
+      .from("profiles")
+      .select("preferred_regions, preferred_languages")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+    if (error || !data) return;
+
+    // profiles.preferred_regions/languages are NOT NULL with a default of
+    // {global}/{en} — there's no way to tell "never touched" apart from
+    // "explicitly re-picked the default" at the DB level, so both are
+    // treated the same way: not customized. Whichever side (account vs.
+    // local) actually differs from the default wins; if neither does,
+    // there's nothing to reconcile.
+    const accountRegions = data.preferred_regions?.length ? data.preferred_regions : DEFAULT_REGIONS;
+    const accountLanguages = data.preferred_languages?.length ? data.preferred_languages : DEFAULT_LANGUAGES;
+    const accountCustomized = !arraysEqual(accountRegions, DEFAULT_REGIONS) || !arraysEqual(accountLanguages, DEFAULT_LANGUAGES);
+
+    const local = getRegionLangFilter();
+    const localCustomized = !arraysEqual(local.regions, DEFAULT_REGIONS) || !arraysEqual(local.languages, DEFAULT_LANGUAGES);
+
+    if (accountCustomized) {
+      localStorage.setItem(REGION_LANG_STORAGE_KEY, JSON.stringify({ regions: accountRegions, languages: accountLanguages }));
+      applyRegionLangCheckboxes(accountRegions, accountLanguages);
+      window.dispatchEvent(new CustomEvent("anchor-filter-change", { detail: { regions: accountRegions, languages: accountLanguages } }));
+    } else if (localCustomized) {
+      const { error: updateError } = await window.ANCHOR_AUTH.client
+        .from("profiles")
+        .update({ preferred_regions: local.regions, preferred_languages: local.languages })
+        .eq("user_id", session.user.id);
+      if (updateError) console.error(updateError);
+    }
+  });
 }
 
 function initThemeToggle() {
@@ -505,7 +716,10 @@ function initAuthControl() {
   function render() {
     const label = session ? truncateLabel(displayName || session.user.email) : "Sign in";
     container.innerHTML = `
-      <button class="auth-btn" type="button" id="auth-toggle" aria-label="Account menu"><span class="auth-btn-label">${escapeHtml(label)}</span></button>
+      <button class="auth-btn" type="button" id="auth-toggle" aria-label="Account menu">
+        <span class="material-symbols-outlined" aria-hidden="true">account_circle</span>
+        <span class="auth-btn-label">${escapeHtml(label)}</span>
+      </button>
       <div class="auth-panel${panelOpen ? " open" : ""}" id="auth-panel">${panelBody()}</div>
     `;
 
@@ -608,6 +822,15 @@ function initAuthControl() {
     }
   }
 
+  // Pages have their own sign-in-optional content (Continue Learning,
+  // watched badges, the card menu's reveal, resume buttons, ...) computed
+  // once from a single getSession() check at load time — completing OTP
+  // mid-session doesn't re-run any of that on its own. Broadcasting a real
+  // sign-in/out transition here (not every fire — onAuthStateChange also
+  // fires on token refreshes) lets each page listen for "anchor-auth-change"
+  // and re-run just the parts that need it, same pattern as
+  // "anchor-filter-change" for the region/language filter.
+  let wasSignedIn = null;
   window.ANCHOR_AUTH.onAuthStateChange((event, newSession) => {
     session = newSession;
     if (!session) {
@@ -616,6 +839,12 @@ function initAuthControl() {
       fetchDisplayName(session.user.id);
     }
     render();
+
+    const isSignedIn = Boolean(session);
+    if (wasSignedIn !== null && wasSignedIn !== isSignedIn) {
+      window.dispatchEvent(new CustomEvent("anchor-auth-change", { detail: { session } }));
+    }
+    wasSignedIn = isSignedIn;
   });
 
   // Any click inside the control (including on elements that render()

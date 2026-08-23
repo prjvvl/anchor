@@ -14,7 +14,7 @@ async function run() {
   const items: FeedItem[] = [];
   for (const feed of feeds) {
     try {
-      const feedItems = await fetchFeed(feed.url, feed.name, feed.category);
+      const feedItems = await fetchFeed(feed.url, feed.name, feed.category, feed.region, feed.language);
       items.push(...feedItems.filter((item) => withinLookback(item.publishedAt, LOOKBACK_MINUTES)));
     } catch (err) {
       // One broken/unreachable feed shouldn't take down the other 13.

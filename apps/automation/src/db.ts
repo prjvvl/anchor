@@ -33,6 +33,8 @@ export async function insertChannelVideos(videos: JudgedChannelVideo[], category
     published_at: v.publishedAt,
     views: v.viewCount,
     active: true,
+    region: v.region,
+    language: v.language,
     metadata: {
       ai_reasoning: v.reasoning,
     },
@@ -56,6 +58,8 @@ export async function upsertHeadlines(items: FeedItem[]): Promise<void> {
     category: h.category,
     published_at: h.publishedAt || null,
     image_url: h.imageUrl ?? null,
+    region: h.region,
+    language: h.language,
   }));
 
   const { error } = await supabase.from("headlines").upsert(rows, { onConflict: "guid", ignoreDuplicates: true });

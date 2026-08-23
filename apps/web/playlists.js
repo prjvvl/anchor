@@ -8,6 +8,14 @@
 // ordered: true means the playlist has a meaningful idx (episode order),
 //   so course.html shows an episode number badge on each card instead of
 //   a view count.
+// region/language: unlike tier/department/subject below, these mirror real
+//   columns on the videos table (see migration 0011/0012) — every course's
+//   videos were already seeded with the {global}/"en" default, which is
+//   accurate for all of them (no current course is region-specific
+//   content). Listed here anyway as reference for whoever seeds a new
+//   course later, so its rows get tagged consistently with its source.
+//   Omitted for "top-news" — that playlist's region genuinely varies by
+//   channel (see top-news/channels.ts), so no single value belongs here.
 // tier/department/subject: the Anchor Academy taxonomy (see
 //   flo/2608-anchor/docs/260822-course-taxonomy-playlist-candidates.md).
 //   Config-layer only, no DB schema involved — `category` on the videos
@@ -41,6 +49,20 @@ window.ANCHOR_DEPARTMENTS = {
   "life-skills-making": { displayName: "Life Skills & Making", icon: "construction" },
 };
 
+// The sitewide region/language filter's option list (see the sidebar
+// filter in helpers.js). Hardcoded rather than derived from distinct
+// values in the DB — only a handful of codes are in real use across all
+// sources (top-news/channels.ts, rss-headlines/feeds.ts, the course
+// entries below), so a fixed list is simpler than a live query. Add a new
+// entry here whenever a source using a new code gets added.
+window.ANCHOR_REGIONS = [
+  { key: "global", displayName: "Global" },
+  { key: "in", displayName: "India" },
+  { key: "us", displayName: "United States" },
+  { key: "gb", displayName: "United Kingdom" },
+];
+window.ANCHOR_LANGUAGES = [{ key: "en", displayName: "English" }];
+
 window.ANCHOR_PLAYLISTS = {
   "top-news": {
     displayName: "Top News",
@@ -55,6 +77,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "CrashCourse",
+    region: ["global"],
+    language: "en",
     tier: "standard",
     department: "humanities",
     subject: "History",
@@ -65,6 +89,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "CrashCourse",
+    region: ["global"],
+    language: "en",
     tier: "standard",
     department: "humanities",
     subject: "Philosophy",
@@ -75,6 +101,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "CrashCourse",
+    region: ["global"],
+    language: "en",
     tier: "standard",
     department: "humanities",
     subject: "Literature",
@@ -85,6 +113,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "CrashCourse",
+    region: ["global"],
+    language: "en",
     tier: "standard",
     department: "humanities",
     subject: "Religion & Mythology",
@@ -97,6 +127,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "CrashCourse",
+    region: ["global"],
+    language: "en",
     tier: "standard",
     department: "sciences",
     subject: "Physics",
@@ -107,6 +139,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "Amoeba Sisters",
+    region: ["global"],
+    language: "en",
     tier: "fundamental",
     department: "sciences",
     subject: "Biology",
@@ -117,6 +151,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "CrashCourse",
+    region: ["global"],
+    language: "en",
     tier: "standard",
     department: "sciences",
     subject: "Chemistry",
@@ -127,6 +163,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "CrashCourse",
+    region: ["global"],
+    language: "en",
     tier: "standard",
     department: "sciences",
     subject: "Earth & Space",
@@ -139,6 +177,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: false,
     source: "Branch Education",
+    region: ["global"],
+    language: "en",
     tier: "advanced",
     department: "stem",
     subject: "Engineering",
@@ -149,6 +189,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "CrashCourse",
+    region: ["global"],
+    language: "en",
     tier: "standard",
     department: "stem",
     subject: "Computer Science",
@@ -159,6 +201,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "3Blue1Brown",
+    region: ["global"],
+    language: "en",
     tier: "advanced",
     department: "stem",
     subject: "Mathematics",
@@ -171,6 +215,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "CrashCourse",
+    region: ["global"],
+    language: "en",
     tier: "standard",
     department: "society-civics",
     subject: "Economics",
@@ -181,6 +227,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "CrashCourse",
+    region: ["us"],
+    language: "en",
     tier: "standard",
     department: "society-civics",
     subject: "Government & Law",
@@ -191,6 +239,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "CrashCourse",
+    region: ["global"],
+    language: "en",
     tier: "standard",
     department: "society-civics",
     subject: "Geography",
@@ -201,6 +251,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "Stanford",
+    region: ["global"],
+    language: "en",
     tier: "expert",
     department: "society-civics",
     subject: "Psychology",
@@ -213,6 +265,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "CrashCourse",
+    region: ["global"],
+    language: "en",
     tier: "standard",
     department: "arts-culture",
     subject: "Art History",
@@ -223,6 +277,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "CrashCourse",
+    region: ["global"],
+    language: "en",
     tier: "standard",
     department: "arts-culture",
     subject: "Film",
@@ -233,6 +289,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: false,
     source: "12tone",
+    region: ["global"],
+    language: "en",
     tier: "advanced",
     department: "arts-culture",
     subject: "Music",
@@ -245,6 +303,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "CrashCourse",
+    region: ["global"],
+    language: "en",
     tier: "standard",
     department: "media-literacy",
     subject: "Critical Thinking",
@@ -257,6 +317,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: false,
     source: "GothamChess",
+    region: ["global"],
+    language: "en",
     tier: "extracurricular",
     department: "games-strategy",
     subject: "Chess",
@@ -267,6 +329,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: false,
     source: "Technology Connections",
+    region: ["us", "global"],
+    language: "en",
     tier: "extracurricular",
     department: "tech-curiosities",
     subject: "Everyday Tech",
@@ -277,6 +341,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: true,
     source: "Geography Now",
+    region: ["global"],
+    language: "en",
     tier: "extracurricular",
     department: "places-culture",
     subject: "World Geography",
@@ -287,6 +353,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: false,
     source: "Joshua Weissman",
+    region: ["us", "global"],
+    language: "en",
     tier: "extracurricular",
     department: "food-culture",
     subject: "Home Cooking",
@@ -297,6 +365,8 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: false,
     source: "Alec Steele",
+    region: ["gb", "global"],
+    language: "en",
     tier: "extracurricular",
     department: "life-skills-making",
     subject: "Craft & Metalworking",

@@ -34,6 +34,9 @@ body {
   margin: 0;
 }
 
+/* Mobile-only branding bar (hidden at desktop widths further down) —
+   .sidebar-brand is the desktop equivalent, sized for the sidebar's ~190px
+   column instead of the full page width. */
 header {
   display: flex;
   align-items: center;
@@ -80,15 +83,73 @@ header p {
   margin: 0 auto;
 }
 
+/* Full viewport height + sticky, not just "grows with content" — that's
+   what lets .sidebar-footer sit pinned at the bottom (via .sidebar-scroll
+   taking the remaining flex:1 space above it) instead of just being last
+   in the document flow, which wouldn't reach the bottom on a short page.
+   z-index matters here too: position: sticky always creates a stacking
+   context, so without an explicit z-index .auth-panel's own z-index (45)
+   only ever competes against its siblings *inside* that context — never
+   against main's content. A hovered .video card gets its own stacking
+   context too (via transform), and since main comes after .sidebar in the
+   DOM, it would win the paint order and cover the panel regardless of the
+   panel's own z-index. Below 200 (.video-modal-backdrop) — this only needs
+   to beat auto-level main content, not the video modal. */
 .sidebar {
   width: 190px;
   flex-shrink: 0;
-  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.sidebar-brand {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem 1rem;
+}
+
+.sidebar-brand img {
+  width: 28px;
+  height: 28px;
+}
+
+.sidebar-brand h1 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  position: sticky;
-  top: 0;
+}
+
+/* The full-width mobile <header> and .sidebar-brand are two separate
+   renders of the same branding (see the comment on renderHeader) — only
+   one is ever visible at a time. Hiding the header here also removes the
+   gap it used to leave above main on desktop; main now starts at the true
+   top of the page (see main's own padding-top override below). */
+@media (min-width: 861px) {
+  header {
+    display: none;
+  }
+
+  .sidebar-brand {
+    display: flex;
+  }
+
+  main {
+    padding-top: 2rem;
+  }
 }
 
 .nav-item {
@@ -112,6 +173,92 @@ header p {
   color: var(--bg);
 }
 
+.sidebar-filters {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.filters-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.4rem 0.7rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.filters-toggle:hover {
+  background: var(--card-bg);
+}
+
+.filters-summary {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filters-chevron {
+  flex-shrink: 0;
+  font-size: 18px;
+  transition: transform 0.15s ease;
+}
+
+.filters-toggle[aria-expanded="true"] .filters-chevron {
+  transform: rotate(180deg);
+}
+
+.filters-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+}
+
+/* Author `display: flex` above otherwise beats the UA [hidden] rule — same
+   recurring gap this project has hit before (see .quick-action-btn etc.). */
+.filters-body[hidden] {
+  display: none;
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.filter-option input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sidebar-footer {
+  flex-shrink: 0;
+  margin: 1rem 1rem 0;
+  padding: 1rem 0 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .drawer-backdrop {
   display: none;
 }
@@ -125,17 +272,13 @@ header p {
     display: inline-flex;
   }
 
-  /* At mobile widths, hamburger + logo + title + auth pill + theme toggle
-     all competing in one row leaves too little space for "Daily Anchor" —
-     it wraps mid-word against the subtitle wrapping too, reading as a
-     cramped stack instead of a header. Drop the decorative subtitle and
-     tighten the auth pill so the title fits on one line. */
+  /* At mobile widths, hamburger + logo + title still leaves too little
+     room for the subtitle on one line next to "Daily Anchor" — drop it
+     rather than let it wrap into a cramped stack. (auth-btn/theme-toggle
+     used to compete for this same space too, before they moved into the
+     sidebar footer — see renderSidebar.) */
   header p {
     display: none;
-  }
-
-  .auth-btn {
-    max-width: 110px;
   }
 
   .sidebar-close {
@@ -164,12 +307,19 @@ header p {
     bottom: 0;
     left: 0;
     width: 230px;
+    height: auto;
     background: var(--bg);
     border-right: 1px solid var(--border);
-    padding-top: 5rem;
     transform: translateX(-100%);
     transition: transform 0.2s ease;
     z-index: 30;
+  }
+
+  /* .sidebar-brand is desktop-only (see the base rule) — on mobile the top
+     header already shows branding, so .sidebar-scroll needs its own top
+     padding here instead of getting it for free below .sidebar-brand. */
+  .sidebar-scroll {
+    padding-top: 5rem;
   }
 
   .sidebar.open {
@@ -193,16 +343,24 @@ header p {
   }
 }
 
+/* display: flex + flex:1 on .auth-btn below is what lets the button fill
+   the sidebar-footer row (sized by .theme-toggle's fixed 36px + the row's
+   own width) — .auth-panel is position: absolute so it doesn't
+   participate in this and isn't affected. */
 .auth-control {
   position: relative;
-  margin-left: auto;
+  flex: 1;
+  min-width: 0;
+  display: flex;
 }
 
 .auth-btn {
   display: inline-flex;
   align-items: center;
+  gap: 0.4rem;
   height: 36px;
-  max-width: 160px;
+  flex: 1;
+  min-width: 0;
   padding: 0 0.85rem;
   border-radius: 18px;
   border: 1px solid var(--border);
@@ -211,6 +369,11 @@ header p {
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+.auth-btn .material-symbols-outlined {
+  flex-shrink: 0;
+  font-size: 20px;
 }
 
 /* text-overflow: ellipsis doesn't reliably render on native <button>
@@ -229,11 +392,22 @@ header p {
   background: var(--border);
 }
 
+/* left: 0, not right: 0 — .auth-control now lives in the ~190px sidebar
+   near the viewport's left edge. Anchoring the panel's right edge to
+   auth-control's right edge (the old header-era positioning) would push
+   most of this 260px-wide panel off-screen to the left; anchoring its left
+   edge instead expands it rightward into the main content area, which has
+   room.
+   bottom, not top — .auth-control now sits at the very bottom of the
+   sidebar footer, so opening downward (the old header-era positioning,
+   where there was a whole page below it) pushed the panel past the
+   viewport's bottom edge. Opening upward has the sidebar's full height
+   available instead. */
 .auth-panel {
   display: none;
   position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
+  bottom: calc(100% + 8px);
+  left: 0;
   width: 260px;
   background: var(--card-bg);
   border: 1px solid var(--border);

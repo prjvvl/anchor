@@ -133,6 +133,18 @@
   const ACADEMIC_DEPARTMENTS = ["humanities", "sciences", "stem", "society-civics", "arts-culture", "media-literacy"];
   const EXTRACURRICULAR_DEPARTMENTS = ["games-strategy", "tech-curiosities", "places-culture", "food-culture", "life-skills-making"];
 
+  // loadCourses re-runs on "anchor-filter-change" (see below), not just
+  // once at page load — same #status re-run hazard as index.html's
+  // loadVideos/loadHeadlines, same fix.
+  function showStatus(el, text) {
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove("sr-only");
+  }
+  function hideStatus(el) {
+    el?.classList.add("sr-only");
+  }
+
   function currentTier() {
     const requested = new URLSearchParams(location.search).get("tier");
     const known = (window.ANCHOR_TIERS ?? []).some((t) => t.key === requested);
@@ -154,7 +166,13 @@
       </a>`;
   }
 
+  // Guards against two overlapping loadCourses() calls (e.g. two rapid
+  // filter changes) resolving out of order and the stale one winning the
+  // DOM — same hazard and same fix as index.html's loadVideos/loadHeadlines.
+  let coursesRequestToken = 0;
+
   async function loadCourses() {
+    const requestToken = ++coursesRequestToken;
     const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
     const statusEl = document.getElementById("status");
     const contentEl = document.getElementById("tier-content");
@@ -169,8 +187,7 @@
     document.title = `Daily Anchor - ${tierInfo?.displayName ?? "Courses"}`;
 
     if (!supabaseUrl || !supabasePublishableKey) {
-      statusEl.textContent = "Missing Supabase config. Fill in config.js.";
-      statusEl.classList.remove("sr-only");
+      showStatus(statusEl, "Missing Supabase config. Fill in config.js.");
       return;
     }
 
@@ -179,12 +196,29 @@
     const departments = tier === "extracurricular" ? EXTRACURRICULAR_DEPARTMENTS : ACADEMIC_DEPARTMENTS;
 
     if (tierCourses.length === 0) {
-      statusEl.remove();
+      hideStatus(statusEl);
       contentEl.innerHTML = `
         <div class="tier-empty">
           <span class="material-symbols-outlined">hourglass_empty</span>
           <strong>${escapeHtml(tierInfo?.displayName ?? "This tier")}: coming soon</strong>
           <p>This tier is part of the plan but doesn't have courses yet. It'll fill in as more content is curated.</p>
+        </div>`;
+      return;
+    }
+
+    // Distinct from the "coming soon" empty state above — these courses
+    // exist, just none match the current sidebar filter. Different message
+    // since "coming soon" would wrongly imply nothing's been curated yet.
+    const { regions, languages } = getRegionLangFilter();
+    const filteredCourses = tierCourses.filter(([, info]) => matchesRegionLangFilter(info.region, info.language, regions, languages));
+
+    if (filteredCourses.length === 0) {
+      hideStatus(statusEl);
+      contentEl.innerHTML = `
+        <div class="tier-empty">
+          <span class="material-symbols-outlined">filter_alt_off</span>
+          <strong>No courses match your region/language filter</strong>
+          <p>Try adding more regions or languages from the sidebar filter.</p>
         </div>`;
       return;
     }
@@ -201,17 +235,18 @@
 
     try {
       const [results, viewedSet] = await Promise.all([
-        Promise.allSettled(tierCourses.map(([slug]) => fetchLessonIds(slug))),
+        Promise.allSettled(filteredCourses.map(([slug]) => fetchLessonIds(slug))),
         fetchViewedSet(),
       ]);
-      const idsBySlug = Object.fromEntries(tierCourses.map(([slug], i) => [slug, results[i].status === "fulfilled" ? results[i].value : null]));
+      if (requestToken !== coursesRequestToken) return;
+      const idsBySlug = Object.fromEntries(filteredCourses.map(([slug], i) => [slug, results[i].status === "fulfilled" ? results[i].value : null]));
 
-      statusEl.remove();
+      hideStatus(statusEl);
 
       const sections = departments
         .map((deptKey) => {
           const deptInfo = window.ANCHOR_DEPARTMENTS?.[deptKey];
-          const deptCourses = tierCourses.filter(([, info]) => info.department === deptKey);
+          const deptCourses = filteredCourses.filter(([, info]) => info.department === deptKey);
 
           if (deptCourses.length === 0) {
             if (tier === "extracurricular") return ""; // no fixed promise for extracurricular departments
@@ -234,9 +269,9 @@
 
       contentEl.innerHTML = sections;
     } catch (err) {
+      if (requestToken !== coursesRequestToken) return;
       contentEl.innerHTML = "";
-      statusEl.textContent = "Failed to load courses.";
-      statusEl.classList.remove("sr-only");
+      showStatus(statusEl, "Failed to load courses.");
       console.error(err);
     }
   }
@@ -246,5 +281,11 @@
   initThemeToggle();
   initSidebarDrawer();
   initAuthControl();
+  initRegionLangFilter();
   loadCourses();
+  window.addEventListener("anchor-filter-change", loadCourses);
+  // Completing sign-in (OTP) mid-session doesn't otherwise touch the
+  // watched-progress counts on each course card (fetchViewedSet, checked
+  // once per load) — this re-runs the whole load, same as a filter change.
+  window.addEventListener("anchor-auth-change", loadCourses);
 </script>

@@ -12,6 +12,10 @@ export interface VideoCandidate {
   publishedAt: string;
   durationSeconds: number;
   viewCount: number;
+  // Set by runChannelJob after this candidate is fetched — youtube.ts has
+  // no notion of region/language itself, only the per-channel config does.
+  region?: string[];
+  language?: string;
 }
 
 // Cheap call (1 quota unit) — resolves a channel's "uploads" playlist ID.
