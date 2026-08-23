@@ -370,7 +370,6 @@ main {
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 10px;
-  overflow: hidden;
   transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 
@@ -379,6 +378,9 @@ main {
   transform: translateY(-2px);
 }
 
+/* Clipping lives here (not on .video) so the card's own rounded corners
+   still clip the thumbnail image, without also clipping the card-menu
+   dropdown below — that needs to extend past the card's box when open. */
 .video .thumb {
   display: block;
   position: relative;
@@ -387,6 +389,8 @@ main {
   padding: 0;
   width: 100%;
   background: none;
+  overflow: hidden;
+  border-radius: 10px 10px 0 0;
 }
 
 .duration {
@@ -401,10 +405,14 @@ main {
   border-radius: 4px;
 }
 
+/* Top-right, alongside .card-menu-wrap (also top-right, further out at
+   right:6px) — sits just to that button's left, "before" it in reading
+   order. Both only ever show for a signed-in user, so there's no case
+   where this renders without the button also being present. */
 .viewed-badge {
   position: absolute;
   top: 6px;
-  right: 6px;
+  right: 34px;
   width: 22px;
   height: 22px;
   border-radius: 50%;
@@ -427,6 +435,50 @@ main {
 
 .viewed-badge:hover {
   background: #157f45;
+}
+
+/* Grid-card "more options" menu — top-right corner, outermost, with
+   .viewed-badge sitting just to its left (see that rule) when present.
+   Positioned relative to .video (not .thumb, which clips — see the
+   comment on .video .thumb) even though it's a sibling of .thumb, same
+   reasoning as .viewed-badge's placement. course.html's .episode-badge
+   (defined there) uses the top-left corner instead, so no collision. */
+.card-menu-wrap {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+}
+
+.card-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  cursor: pointer;
+}
+
+.card-menu-btn.visible {
+  display: flex;
+}
+
+.card-menu-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.card-menu-btn .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.card-menu {
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 170px;
 }
 
 .video img,
@@ -635,7 +687,7 @@ footer {
 }
 
 /* .btn-primary's own `display: inline-flex` otherwise beats the UA [hidden]
-   rule — same gap as .video-modal-error/.video-modal-watched-toggle further
+   rule — same gap as .video-modal-error/.quick-action-btn further
    down — so the button was visible (and clickable, before the click
    listener was even attached) during the initial load window. Scoped to
    .play-all-btn rather than .btn-primary itself since no other .btn-primary
@@ -704,6 +756,126 @@ footer {
   color: var(--muted);
 }
 
+/* Right side of the header: window chrome (watch-link/minimize/close) on
+   line 1, watched/bookmark quick actions on line 2, both right-aligned.
+   Deliberately plain buttons rather than a menu so both states are visible
+   and clickable without an extra tap. On mobile, .video-modal-quick-actions
+   is moved out of here entirely (see positionQuickActions in player.js) —
+   this wrapper just falls back to holding .video-modal-actions alone. */
+.video-modal-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.video-modal-quick-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Mobile position: a row of its own between the player and Up Next,
+   skewed right rather than stretched full-width. */
+@media (max-width: 860px) {
+  .video-modal-body > .video-modal-quick-actions {
+    padding: 0.6rem 1.1rem 0;
+  }
+}
+
+.quick-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.quick-action-btn:hover {
+  background: var(--border);
+}
+
+/* Same green as .viewed-badge / .toast.success — reused for any "on" state
+   (watched, bookmarked) rather than introducing a new color. */
+.quick-action-btn.is-active {
+  border-color: #1a9c5f;
+  color: #1a9c5f;
+}
+
+.quick-action-btn[hidden] {
+  display: none;
+}
+
+/* Smaller on desktop, where these sit stacked under the header's actions
+   row rather than getting a full-width row to themselves like on mobile.
+   .video-modal-watch-link matches so the two rows read as one size scale. */
+@media (min-width: 861px) {
+  .quick-action-btn,
+  .video-modal-watch-link {
+    padding: 0.3rem 0.55rem;
+    gap: 0.25rem;
+    font-size: 0.72rem;
+  }
+
+  .quick-action-btn .material-symbols-outlined,
+  .video-modal-watch-link .material-symbols-outlined {
+    font-size: 16px;
+  }
+}
+
+/* Shared by the grid card's overflow ("more options") menu — see
+   .card-menu-wrap further down. Same anchored-dropdown convention as
+   .auth-panel: toggled via a class, not the hidden attribute, so it
+   doesn't need a defensive [hidden] rule. */
+.menu-panel {
+  display: none;
+  position: absolute;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.35rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  z-index: 20;
+}
+
+.menu-panel.open {
+  display: block;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.menu-item:hover {
+  background: var(--border);
+}
+
+.menu-item.is-active {
+  color: #1a9c5f;
+}
+
 .video-modal-actions {
   display: flex;
   align-items: center;
@@ -727,36 +899,6 @@ footer {
 
 .video-modal-watch-link:hover {
   background: var(--border);
-}
-
-.video-modal-watched-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.4rem 0.7rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--ink);
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.video-modal-watched-toggle:hover {
-  background: var(--border);
-}
-
-/* Same green as .viewed-badge / .toast.success — the site's one existing
-   "watched" color, reused here rather than introducing a new one. */
-.video-modal-watched-toggle.is-watched {
-  border-color: #1a9c5f;
-  color: #1a9c5f;
-}
-
-.video-modal-watched-toggle[hidden] {
-  display: none;
 }
 
 .video-modal-close,
@@ -811,8 +953,8 @@ footer {
   display: block;
 }
 
-/* Same [hidden]-vs-author-display gap as .video-modal-error/.video-modal-watched-toggle
-   below — onError() sets playerMountEl.hidden to swap in the error overlay,
+/* Same [hidden]-vs-author-display gap as .video-modal-error/.quick-action-btn
+   above — onError() sets playerMountEl.hidden to swap in the error overlay,
    but without this the mount (and its stale last-frame iframe) kept
    rendering underneath it. */
 .video-modal-player-mount[hidden] {
@@ -965,9 +1107,13 @@ footer {
     justify-content: flex-end;
   }
 
+  /* 3 rows, not 2 — player.js's positionQuickActions() reparents
+     .video-modal-quick-actions in here (between player-area and upnext)
+     at this same breakpoint, since CSS alone can't move it out of the
+     header. */
   .video-modal-body {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
+    grid-template-rows: auto auto auto;
     overflow-y: auto;
   }
 

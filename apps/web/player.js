@@ -40,9 +40,14 @@
     breadcrumbEl,
     metaEl,
     watchLinkEl,
+    headerRightEl,
+    quickActionsEl,
     watchedToggleEl,
     watchedIconEl,
     watchedLabelEl,
+    bookmarkToggleEl,
+    bookmarkIconEl,
+    bookmarkLabelEl,
     upnextEl,
     upNextListEl,
     autoplayCheckboxEl;
@@ -69,20 +74,28 @@
             <h3 id="vm-title"></h3>
             <div class="video-modal-meta" id="vm-meta"></div>
           </div>
-          <div class="video-modal-actions">
-            <button class="video-modal-watched-toggle" type="button" id="vm-watched-toggle" hidden>
-              <span class="material-symbols-outlined" id="vm-watched-icon">check_circle</span>
-              <span id="vm-watched-label">Mark watched</span>
-            </button>
-            <a class="video-modal-watch-link" id="vm-watch-link" href="#" target="_blank" rel="noopener">
-              <span class="material-symbols-outlined">open_in_new</span> Watch on YouTube
-            </a>
-            <button class="video-modal-minimize" type="button" id="vm-minimize" aria-label="Minimize player">
-              <span class="material-symbols-outlined">picture_in_picture_alt</span>
-            </button>
-            <button class="video-modal-close" type="button" id="vm-close" aria-label="Close player">
-              <span class="material-symbols-outlined">close</span>
-            </button>
+          <div class="video-modal-header-right">
+            <div class="video-modal-actions">
+              <a class="video-modal-watch-link" id="vm-watch-link" href="#" target="_blank" rel="noopener">
+                <span class="material-symbols-outlined">open_in_new</span> Watch on YouTube
+              </a>
+              <button class="video-modal-minimize" type="button" id="vm-minimize" aria-label="Minimize player">
+                <span class="material-symbols-outlined">picture_in_picture_alt</span>
+              </button>
+              <button class="video-modal-close" type="button" id="vm-close" aria-label="Close player">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div class="video-modal-quick-actions" id="vm-quick-actions">
+              <button class="quick-action-btn" type="button" id="vm-watched-toggle" hidden>
+                <span class="material-symbols-outlined" id="vm-watched-icon">check_circle</span>
+                <span id="vm-watched-label">Mark watched</span>
+              </button>
+              <button class="quick-action-btn" type="button" id="vm-bookmark-toggle" hidden>
+                <span class="material-symbols-outlined" id="vm-bookmark-icon">bookmark_border</span>
+                <span id="vm-bookmark-label">Bookmark</span>
+              </button>
+            </div>
           </div>
         </div>
         <div class="video-modal-body">
@@ -120,9 +133,14 @@
     breadcrumbEl = backdropEl.querySelector("#vm-breadcrumb");
     metaEl = backdropEl.querySelector("#vm-meta");
     watchLinkEl = backdropEl.querySelector("#vm-watch-link");
+    headerRightEl = backdropEl.querySelector(".video-modal-header-right");
+    quickActionsEl = backdropEl.querySelector("#vm-quick-actions");
     watchedToggleEl = backdropEl.querySelector("#vm-watched-toggle");
     watchedIconEl = backdropEl.querySelector("#vm-watched-icon");
     watchedLabelEl = backdropEl.querySelector("#vm-watched-label");
+    bookmarkToggleEl = backdropEl.querySelector("#vm-bookmark-toggle");
+    bookmarkIconEl = backdropEl.querySelector("#vm-bookmark-icon");
+    bookmarkLabelEl = backdropEl.querySelector("#vm-bookmark-label");
     upnextEl = backdropEl.querySelector(".video-modal-upnext");
     upNextListEl = backdropEl.querySelector("#vm-upnext-list");
     autoplayCheckboxEl = backdropEl.querySelector("#vm-autoplay");
@@ -140,6 +158,7 @@
       if (item) playAt(Number(item.dataset.queueIndex));
     });
     watchedToggleEl.addEventListener("click", toggleWatched);
+    bookmarkToggleEl.addEventListener("click", toggleBookmark);
     backdropEl.querySelector("#vm-minimize").addEventListener("click", minimize);
     backdropEl.querySelector("#vm-mini-expand").addEventListener("click", restore);
     backdropEl.querySelector("#vm-mini-close").addEventListener("click", close);
@@ -158,6 +177,22 @@
     });
     resizeObserver.observe(playerAreaEl);
     window.addEventListener("resize", () => syncUpNextHeight(playerAreaEl.getBoundingClientRect().height));
+
+    // CSS alone can't move an element between two different parents (the
+    // header's right column on desktop vs. between player-area and upnext
+    // on mobile — see the CSS comment on .video-modal-header-right), so
+    // this reparents the one real element on breakpoint change instead of
+    // keeping two copies in sync.
+    positionQuickActions();
+    MOBILE_QUERY.addEventListener("change", positionQuickActions);
+  }
+
+  function positionQuickActions() {
+    if (MOBILE_QUERY.matches) {
+      playerAreaEl.insertAdjacentElement("afterend", quickActionsEl);
+    } else {
+      headerRightEl.appendChild(quickActionsEl);
+    }
   }
 
   function syncUpNextHeight(playerHeight) {
@@ -263,7 +298,7 @@
     metaEl.textContent = [item.channel, item.duration ? formatDuration(item.duration) : null].filter(Boolean).join(" · ");
     watchLinkEl.href = `https://www.youtube.com/watch?v=${item.videoId}`;
     renderUpNext();
-    updateWatchedToggle();
+    updateQuickActions();
 
     if (ytPlayer) {
       ytPlayer.loadVideoById(item.videoId);
@@ -352,6 +387,7 @@
     if (thumb && !thumb.parentElement.querySelector(".viewed-badge")) {
       thumb.insertAdjacentHTML("afterend", renderViewedBadge(item.videoId));
     }
+    syncCardMenuItem(thumb, "watched", true);
     // Re-checked rather than assumed: the await above is a real yield point
     // now, so currentIndex may have moved on to a different video by the
     // time this resolves.
@@ -363,28 +399,44 @@
   }
 
   function renderWatchedToggle(watched) {
-    watchedToggleEl.classList.toggle("is-watched", watched);
+    watchedToggleEl.classList.toggle("is-active", watched);
     watchedLabelEl.textContent = watched ? "Watched" : "Mark watched";
   }
 
-  // Reflects true server-side state, not just this-session's markedIds —
-  // checked via the source card's badge (populated at page load by
-  // markViewedBadges in helpers.js) so a video watched in an earlier
-  // session shows correctly the first time it's reopened here.
-  async function updateWatchedToggle() {
+  function renderBookmarkToggle(bookmarked) {
+    bookmarkToggleEl.classList.toggle("is-active", bookmarked);
+    bookmarkIconEl.textContent = bookmarked ? "bookmark" : "bookmark_border";
+    bookmarkLabelEl.textContent = bookmarked ? "Saved" : "Bookmark";
+  }
+
+  // Both require sign-in, so the session check is shared. Both reflect true
+  // server-side state via the source card — populated at page load by
+  // markViewedBadges/syncBookmarkMenuItems in helpers.js — rather than a
+  // fresh query, so a video watched/bookmarked in an earlier session (or via
+  // the grid card's own menu, same page, no reload) shows correctly here.
+  // Watched reads off .viewed-badge (still a real badge); bookmark has no
+  // grid badge (removed — the card menu is the only place that shows it),
+  // so it reads the card menu's own "Bookmark"/"Remove bookmark" item state.
+  async function updateQuickActions() {
     if (!window.ANCHOR_AUTH) {
       watchedToggleEl.hidden = true;
+      bookmarkToggleEl.hidden = true;
       return;
     }
     const { session } = await window.ANCHOR_AUTH.getSession();
     const item = queue[currentIndex];
     if (!session || !item) {
       watchedToggleEl.hidden = true;
+      bookmarkToggleEl.hidden = true;
       return;
     }
     watchedToggleEl.hidden = false;
+    bookmarkToggleEl.hidden = false;
+
     const thumb = findThumbFor(item);
     renderWatchedToggle(markedIds.has(item.videoId) || Boolean(thumb?.parentElement.querySelector(".viewed-badge")));
+    const bookmarkMenuItem = thumb?.parentElement?.querySelector('.menu-item[data-action="bookmark"]');
+    renderBookmarkToggle(Boolean(bookmarkMenuItem?.classList.contains("is-active")));
   }
 
   // Manual override alongside the automatic 90%-threshold tracking. Note:
@@ -395,7 +447,7 @@
     const item = queue[currentIndex];
     if (!item || !window.ANCHOR_AUTH) return;
 
-    const nowWatched = !watchedToggleEl.classList.contains("is-watched");
+    const nowWatched = !watchedToggleEl.classList.contains("is-active");
     renderWatchedToggle(nowWatched);
     const thumb = findThumbFor(item);
 
@@ -414,6 +466,45 @@
       }
       thumb?.parentElement.querySelector(".viewed-badge")?.remove();
     }
+    syncCardMenuItem(thumb, "watched", nowWatched);
+  }
+
+  // Keeps the source grid card's own "more options" menu (helpers.js) in
+  // sync when watched/bookmark state changes from inside the modal instead
+  // of from that menu directly.
+  function syncCardMenuItem(thumb, action, active) {
+    const menuItem = thumb?.parentElement?.querySelector(`.menu-item[data-action="${action}"]`);
+    if (menuItem) renderCardMenuItemState(menuItem, active);
+  }
+
+  async function toggleBookmark() {
+    const item = queue[currentIndex];
+    if (!item || !window.ANCHOR_AUTH) return;
+    const { session } = await window.ANCHOR_AUTH.getSession();
+    if (!session) return;
+
+    const nowBookmarked = !bookmarkToggleEl.classList.contains("is-active");
+    renderBookmarkToggle(nowBookmarked);
+    const thumb = findThumbFor(item);
+
+    if (nowBookmarked) {
+      const { error } = await window.ANCHOR_AUTH.client
+        .from("bookmarks")
+        .upsert({ youtube_video_id: item.videoId }, { onConflict: "user_id,youtube_video_id", ignoreDuplicates: true });
+      if (error) {
+        console.error(error);
+        renderBookmarkToggle(false);
+        return;
+      }
+    } else {
+      const { error } = await window.ANCHOR_AUTH.client.from("bookmarks").delete().eq("youtube_video_id", item.videoId);
+      if (error) {
+        console.error(error);
+        renderBookmarkToggle(true);
+        return;
+      }
+    }
+    syncCardMenuItem(thumb, "bookmark", nowBookmarked);
   }
 
   // Catches a close (or queue-advance) that happens shortly after crossing

@@ -421,6 +421,7 @@
             <span class="play-badge"></span>
             ${v.duration ? `<span class="duration">${formatDuration(v.duration)}</span>` : ""}
           </button>
+          ${renderCardMenu(v.youtube_video_id)}
           <div class="video-body">
             <span class="title">${escapeHtml(v.title)}</span>
             <div class="meta">
@@ -436,6 +437,8 @@
 
       listEl.addEventListener("click", onThumbGridClick);
       markViewedBadges(listEl, videos.map((v) => v.youtube_video_id));
+      syncBookmarkMenuItems(listEl, videos.map((v) => v.youtube_video_id));
+      revealCardMenus(listEl);
 
       const playAllBtn = document.getElementById("play-all-videos");
       playAllBtn.hidden = false;

@@ -69,15 +69,25 @@ function renderCourseSkeletons(count) {
     .join("");
 }
 
-// Handles a click on a .viewed-badge (unmark) before falling through to
-// AnchorPlayer.openFromThumb (player.js). The badge sits next to .thumb
-// rather than inside it — .thumb is itself a <button>, and buttons can't
-// nest — so this dispatcher is what makes the badge clickable without
-// needing a second, separately-bound listener juggling stopPropagation
-// against the thumb's own click.
+// Handles a click on a .viewed-badge (unmark) or the grid card's "more
+// options" menu, before falling through to AnchorPlayer.openFromThumb
+// (player.js). .viewed-badge sits next to .thumb rather than inside it —
+// .thumb is itself a <button>, and buttons can't nest — so this dispatcher
+// is what makes it clickable without needing a second, separately-bound
+// listener juggling stopPropagation against the thumb's own click.
 function onThumbGridClick(event) {
-  const badge = event.target.closest(".viewed-badge");
-  if (badge) return unmarkViewed(badge);
+  const menuBtn = event.target.closest(".card-menu-btn");
+  if (menuBtn) {
+    event.stopPropagation();
+    return toggleCardMenu(menuBtn);
+  }
+  const menuItem = event.target.closest(".card-menu .menu-item");
+  if (menuItem) {
+    event.stopPropagation();
+    return handleCardMenuAction(menuItem);
+  }
+  const viewedBadge = event.target.closest(".viewed-badge");
+  if (viewedBadge) return unmarkViewed(viewedBadge);
   window.AnchorPlayer?.openFromThumb(event, event.currentTarget);
 }
 
@@ -85,6 +95,29 @@ function renderViewedBadge(videoId) {
   return `<button class="viewed-badge" type="button" data-video-id="${escapeAttr(videoId)}" aria-label="Mark as not viewed">
     <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
   </button>`;
+}
+
+// The grid card's "more options" button + dropdown (mirrors the video
+// modal's quick actions, but as a menu since a card has less room). Starts
+// hidden — revealCardMenus un-hides it once sign-in is confirmed, same
+// sign-in-optional principle as the badges above.
+function renderCardMenu(videoId) {
+  return `
+    <div class="card-menu-wrap">
+      <button class="card-menu-btn" type="button" data-video-id="${escapeAttr(videoId)}" aria-label="More options" aria-haspopup="true" aria-expanded="false">
+        <span class="material-symbols-outlined">more_vert</span>
+      </button>
+      <div class="card-menu menu-panel">
+        <button class="menu-item" type="button" data-action="watched" data-video-id="${escapeAttr(videoId)}">
+          <span class="material-symbols-outlined">check_circle</span>
+          <span>Mark watched</span>
+        </button>
+        <button class="menu-item" type="button" data-action="bookmark" data-video-id="${escapeAttr(videoId)}">
+          <span class="material-symbols-outlined">bookmark_border</span>
+          <span>Bookmark</span>
+        </button>
+      </div>
+    </div>`;
 }
 
 // Best-effort — never blocks playback. No-op if signed out (nothing to
@@ -104,13 +137,17 @@ async function unmarkViewed(badge) {
   // .thumb is a sibling of the badge, not an ancestor (see the comment on
   // renderViewedBadge's insertion point) — capture it via the shared parent
   // before removing the badge, so a failed delete below can restore it.
-  const thumb = badge.parentElement?.querySelector(".thumb");
+  const cardEl = badge.closest(".video");
+  const thumb = cardEl?.querySelector(".thumb");
   badge.remove();
   const { error } = await window.ANCHOR_AUTH.client.from("user_progress").delete().eq("youtube_video_id", videoId);
   if (error) {
     console.error(error);
     thumb?.insertAdjacentHTML("afterend", renderViewedBadge(videoId));
+    return;
   }
+  const menuItem = cardEl?.querySelector('.menu-item[data-action="watched"]');
+  if (menuItem) renderCardMenuItemState(menuItem, false);
 }
 
 // Patches .viewed-badge onto already-rendered video cards for whichever of
@@ -132,11 +169,118 @@ async function markViewedBadges(containerEl, youtubeVideoIds) {
 
   const viewed = new Set((data ?? []).map((row) => row.youtube_video_id));
   containerEl.querySelectorAll(".thumb").forEach((thumb) => {
-    if (viewed.has(thumb.dataset.videoId)) {
-      thumb.insertAdjacentHTML("afterend", renderViewedBadge(thumb.dataset.videoId));
-    }
+    if (!viewed.has(thumb.dataset.videoId)) return;
+    thumb.insertAdjacentHTML("afterend", renderViewedBadge(thumb.dataset.videoId));
+    const menuItem = thumb.closest(".video")?.querySelector('.menu-item[data-action="watched"]');
+    if (menuItem) renderCardMenuItemState(menuItem, true);
   });
   return viewed;
+}
+
+// Same idea as markViewedBadges, but bookmarks have no grid badge to
+// insert — the card menu (renderCardMenu) is the only place bookmark state
+// shows on a grid, so this only needs to sync each card's menu item.
+async function syncBookmarkMenuItems(containerEl, youtubeVideoIds) {
+  if (!containerEl || !window.ANCHOR_AUTH || youtubeVideoIds.length === 0) return null;
+  const { session } = await window.ANCHOR_AUTH.getSession();
+  if (!session) return null;
+
+  const { data, error } = await window.ANCHOR_AUTH.client.from("bookmarks").select("youtube_video_id").in("youtube_video_id", youtubeVideoIds);
+  if (error) {
+    console.error(error);
+    return null;
+  }
+
+  const bookmarked = new Set((data ?? []).map((row) => row.youtube_video_id));
+  containerEl.querySelectorAll(".thumb").forEach((thumb) => {
+    if (!bookmarked.has(thumb.dataset.videoId)) return;
+    const menuItem = thumb.closest(".video")?.querySelector('.menu-item[data-action="bookmark"]');
+    if (menuItem) renderCardMenuItemState(menuItem, true);
+  });
+  return bookmarked;
+}
+
+// Un-hides every .card-menu-btn in containerEl once sign-in is confirmed —
+// the menu itself needs no server data (unlike the badges above, which
+// need to know which videos are already watched/bookmarked), so this only
+// needs a session check, not a query.
+async function revealCardMenus(containerEl) {
+  if (!containerEl || !window.ANCHOR_AUTH) return;
+  const { session } = await window.ANCHOR_AUTH.getSession();
+  if (!session) return;
+  containerEl.querySelectorAll(".card-menu-btn").forEach((btn) => btn.classList.add("visible"));
+}
+
+function renderCardMenuItemState(menuItem, active) {
+  const icon = menuItem.querySelector(".material-symbols-outlined");
+  const label = menuItem.querySelector("span:last-child");
+  menuItem.classList.toggle("is-active", active);
+  if (menuItem.dataset.action === "watched") {
+    label.textContent = active ? "Mark unwatched" : "Mark watched";
+  } else {
+    icon.textContent = active ? "bookmark" : "bookmark_border";
+    label.textContent = active ? "Remove bookmark" : "Bookmark";
+  }
+}
+
+// Only one card menu open at a time — opening a new one (or any click
+// outside) closes whichever was open. The opening click itself reaches
+// here via onThumbGridClick's own stopPropagation, so it doesn't
+// immediately re-close what it just opened (same trick as initAuthControl).
+let openCardMenu = null;
+function closeCardMenu() {
+  if (!openCardMenu) return;
+  openCardMenu.menuEl.classList.remove("open");
+  openCardMenu.btnEl.setAttribute("aria-expanded", "false");
+  openCardMenu = null;
+}
+function toggleCardMenu(btnEl) {
+  const menuEl = btnEl.closest(".card-menu-wrap").querySelector(".card-menu");
+  if (openCardMenu?.menuEl === menuEl) {
+    closeCardMenu();
+    return;
+  }
+  closeCardMenu();
+  menuEl.classList.add("open");
+  btnEl.setAttribute("aria-expanded", "true");
+  openCardMenu = { btnEl, menuEl };
+}
+document.addEventListener("click", closeCardMenu);
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeCardMenu();
+});
+
+async function handleCardMenuAction(menuItem) {
+  const videoId = menuItem.dataset.videoId;
+  const action = menuItem.dataset.action;
+  const cardEl = menuItem.closest(".video");
+  const thumb = cardEl.querySelector(".thumb");
+  closeCardMenu();
+  if (!window.ANCHOR_AUTH) return;
+  const { session } = await window.ANCHOR_AUTH.getSession();
+  if (!session) return;
+
+  if (action === "watched") {
+    const badge = cardEl.querySelector(".viewed-badge");
+    if (badge) return unmarkViewed(badge);
+    await markViewed(videoId);
+    if (!cardEl.querySelector(".viewed-badge")) thumb.insertAdjacentHTML("afterend", renderViewedBadge(videoId));
+    renderCardMenuItemState(menuItem, true);
+  } else if (action === "bookmark") {
+    // No badge to check for existing state (see syncBookmarkMenuItems) —
+    // the menu item's own is-active class is the source of truth here.
+    const nowBookmarked = !menuItem.classList.contains("is-active");
+    renderCardMenuItemState(menuItem, nowBookmarked);
+    const { error } = nowBookmarked
+      ? await window.ANCHOR_AUTH.client
+          .from("bookmarks")
+          .upsert({ youtube_video_id: videoId }, { onConflict: "user_id,youtube_video_id", ignoreDuplicates: true })
+      : await window.ANCHOR_AUTH.client.from("bookmarks").delete().eq("youtube_video_id", videoId);
+    if (error) {
+      console.error(error);
+      renderCardMenuItemState(menuItem, !nowBookmarked);
+    }
+  }
 }
 
 // Returns the signed-in user's full watch history as a Set of

@@ -92,6 +92,7 @@
             ${ordered ? `<span class="episode-badge">EP ${i + 1}</span>` : ""}
             ${v.duration ? `<span class="duration">${formatDuration(v.duration)}</span>` : ""}
           </button>
+          ${renderCardMenu(v.youtube_video_id)}
           <div class="video-body">
             <span class="title">${escapeHtml(v.title)}</span>
             <div class="meta">
@@ -163,6 +164,8 @@
       statusEl.remove();
       lessonsEl.innerHTML = renderLessons(videos, Boolean(info.ordered));
       lessonsEl.addEventListener("click", onThumbGridClick);
+      syncBookmarkMenuItems(lessonsEl, videos.map((v) => v.youtube_video_id));
+      revealCardMenus(lessonsEl);
 
       const playAllBtn = document.getElementById("play-all-lessons");
       playAllBtn.hidden = false;

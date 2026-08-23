@@ -76,6 +76,15 @@
     width: auto;
     margin-top: 0;
   }
+
+  .saved-section {
+    margin-top: 2rem;
+  }
+
+  #saved-empty {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
 </style>
 
 <div id="app-header"></div>
@@ -108,6 +117,13 @@
       </label>
       <button class="btn-secondary" type="button" id="profile-signout">Sign out</button>
     </div>
+
+    <section class="saved-section" id="saved-section" hidden>
+      <h2 class="page-heading">Saved</h2>
+      <div id="saved-status" class="sr-only">Loading saved videos…</div>
+      <p id="saved-empty" hidden>Nothing saved yet — use the bookmark option in the video player to save something for later.</p>
+      <div class="card-grid" id="saved-videos"></div>
+    </section>
   </main>
 </div>
 
@@ -131,12 +147,16 @@
 <script src="auth.js"></script>
 <script src="playlists.js"></script>
 <script src="helpers.js"></script>
+<script src="player.js"></script>
 <script>
   function renderProfile(session) {
     document.getElementById("status")?.remove();
     document.getElementById("profile-signed-out").hidden = Boolean(session);
     document.getElementById("profile-content").hidden = !session;
+    document.getElementById("saved-section").hidden = !session;
     if (!session) return;
+
+    loadSavedVideos();
 
     document.getElementById("profile-email").textContent = session.user.email;
 
@@ -160,6 +180,84 @@
         nameInput.dataset.saved = data.display_name ?? "";
         nameInput.disabled = false;
       });
+  }
+
+  async function loadSavedVideos() {
+    const statusEl = document.getElementById("saved-status");
+    const emptyEl = document.getElementById("saved-empty");
+    const gridEl = document.getElementById("saved-videos");
+    emptyEl.hidden = true;
+    gridEl.innerHTML = "";
+
+    const { data: bookmarks, error: bookmarksError } = await window.ANCHOR_AUTH.client
+      .from("bookmarks")
+      .select("youtube_video_id")
+      .order("created_at", { ascending: false });
+    if (bookmarksError) {
+      console.error(bookmarksError);
+      statusEl.remove();
+      return;
+    }
+    if (bookmarks.length === 0) {
+      statusEl.remove();
+      emptyEl.hidden = false;
+      return;
+    }
+
+    const ids = bookmarks.map((b) => b.youtube_video_id);
+    const { data: videos, error: videosError } = await window.ANCHOR_AUTH.client
+      .from("videos")
+      .select("youtube_video_id, title, channel_name, duration")
+      .in("youtube_video_id", ids);
+    if (videosError) {
+      console.error(videosError);
+      statusEl.remove();
+      return;
+    }
+
+    // A video can exist as more than one playlist row (see migration 0007)
+    // — any row carries the same title/channel/duration, so the first
+    // match found is enough.
+    const byId = new Map();
+    for (const v of videos) {
+      if (!byId.has(v.youtube_video_id)) byId.set(v.youtube_video_id, v);
+    }
+
+    statusEl.remove();
+    gridEl.innerHTML = ids
+      .map((id) => byId.get(id))
+      .filter(Boolean)
+      .map(
+        (v) => `
+      <div class="video">
+        <button class="thumb" type="button" data-video-id="${escapeAttr(v.youtube_video_id)}" data-title="${escapeAttr(v.title)}" data-channel="${escapeAttr(v.channel_name ?? "")}" data-duration="${v.duration ?? ""}" aria-label="Play ${escapeAttr(v.title)}">
+          <img src="https://img.youtube.com/vi/${escapeAttr(v.youtube_video_id)}/hqdefault.jpg" alt="" loading="lazy" />
+          <span class="play-badge"></span>
+          ${v.duration ? `<span class="duration">${formatDuration(v.duration)}</span>` : ""}
+        </button>
+        ${renderCardMenu(v.youtube_video_id)}
+        <div class="video-body">
+          <span class="title">${escapeHtml(v.title)}</span>
+          <div class="meta"><span>${escapeHtml(v.channel_name ?? "")}</span></div>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+
+    // Every card here is already known-bookmarked (that's what makes it
+    // "Saved") — stamp the menu item directly instead of re-querying via
+    // syncBookmarkMenuItems, which exists for grids that don't already know.
+    ids.forEach((id) => {
+      const thumb = gridEl.querySelector(`.thumb[data-video-id="${CSS.escape(id)}"]`);
+      const menuItem = thumb?.closest(".video")?.querySelector('.menu-item[data-action="bookmark"]');
+      if (menuItem) renderCardMenuItemState(menuItem, true);
+    });
+
+    gridEl.dataset.contextLabel = "Saved";
+    gridEl.addEventListener("click", onThumbGridClick);
+    markViewedBadges(gridEl, ids);
+    revealCardMenus(gridEl);
   }
 
   document.getElementById("profile-newsletter-toggle").addEventListener("change", async (event) => {
