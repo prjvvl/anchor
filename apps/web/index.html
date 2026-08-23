@@ -36,6 +36,31 @@
     #continue-learning:not(:empty) {
       margin-bottom: 1.1rem;
     }
+
+    /* Keeps Continue Learning + Headlines in view while the (usually much
+       taller, especially with shelves expanded via "Show more") video
+       column scrolls past. Sticky alone isn't enough here — headlines
+       across every category easily add up to several viewports' worth
+       (measured ~4000px against a ~800px viewport in testing), so with no
+       height cap .side-column's containing block ends up roughly as tall
+       as .side-column itself, leaving no slack for anything to visibly
+       stick. Bounding it to the viewport (max-height) and letting the
+       headlines list scroll internally (flex: 1 + its own overflow-y,
+       not .side-column's) is what actually keeps it in view — Continue
+       Learning, above the scrollable part, stays fully visible throughout
+       rather than also scrolling away. top matches main's own desktop
+       padding-top just above. */
+    .side-column {
+      position: sticky;
+      top: 2rem;
+      max-height: calc(100vh - 4rem);
+    }
+
+    .headlines-column {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
   }
 
   .videos-column h2,
@@ -277,12 +302,120 @@
     flex-shrink: 0;
   }
 
-  /* Sits below the shelf stack, full-width like <footer> (a sibling of
-     .layout, not inside it) — visible to everyone so its existence is
-     discoverable, per the same reasoning as .signin-prompt above, which
-     the signed-out state reuses directly. */
-  .feedback-section {
+  /* Wraps #home-feedback + <footer> (a sibling of .layout, not inside it)
+     — stacked full-width on mobile, side by side on desktop, so the two
+     end-of-page cards don't leave one looking lonely next to a big empty
+     gap. Owns the top spacing from the shelf stack above and zeroes out
+     both children's own margin-top (.feedback-section's own 1.75rem,
+     footer's sitewide 1.5rem from styles.css) so `gap` is the only thing
+     spacing them apart, in both the stacked and side-by-side layouts. */
+  .home-footer-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
     margin-top: 1.75rem;
+  }
+
+  /* Overrides footer's sitewide margin-top (styles.css) — this wrapper's
+     own gap handles the spacing here instead. */
+  .home-footer-row footer {
+    margin-top: 0;
+  }
+
+  @media (min-width: 861px) {
+    .home-footer-row {
+      flex-direction: row;
+      /* stretch (the flex default), not flex-start — the two cards read as
+         a deliberate pair sized to match, not one arbitrarily taller than
+         the other. Both cards' internal layout is adjusted below (height:
+         100% + column flex + margin-top: auto on the action) so the extra
+         height actually gets used instead of just padding out empty space
+         at the bottom of whichever card is naturally shorter. */
+      align-items: stretch;
+    }
+
+    .home-footer-row > * {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* height: 100% goes on .feedback-section — the descendant one level
+       below the actual flex item (#home-feedback) — not on #home-feedback
+       itself. An explicit height on a flex item can override align-items:
+       stretch instead of just relying on it (a definite height "wins" over
+       stretch per the flex spec), so #home-feedback is left alone to
+       stretch naturally; .feedback-section just inherits that resulting
+       height via percentage. */
+    .home-footer-row .feedback-section {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* loadFeedbackCard() renders exactly one of two different components
+       here depending on sign-in state — .signin-prompt (signed out) or
+       .feedback-card (signed in) — and this needs to stretch to match
+       .subscribe's height either way. flex: 1 (grow to fill) on "whichever
+       single child .feedback-section has" does that generically, rather
+       than a height: 100% rule naming .feedback-card specifically, which
+       would silently stop working the moment a different variant renders
+       (as it already did for the signed-out state, which needed the same
+       treatment but wasn't covered). Deliberately not also forcing
+       display/flex-direction here — .signin-prompt already declares its
+       own row layout (icon, text, button side by side) and just needs to
+       grow taller so that layout's own align-items: center vertically
+       centers it in the extra space; overriding it to a column would
+       stack the icon/text/button instead. */
+    .home-footer-row .feedback-section > * {
+      flex: 1;
+      box-sizing: border-box;
+    }
+
+    /* Unlike .signin-prompt (see above), .feedback-card's base rule
+       (defined further down) has no display/direction of its own — it
+       does need the column treatment, so it's given one here explicitly,
+       scoped to this layout rather than changed globally. */
+    .home-footer-row .feedback-card {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .home-footer-row .subscribe {
+      height: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .home-footer-row .feedback-form {
+      flex: 1;
+    }
+
+    .home-footer-row .feedback-form textarea {
+      flex: 1;
+    }
+
+    /* .subscribe's base rule (styles.css) lays it out as one centered row
+       (copy left, button right) — sized for its old spot as a short,
+       standalone strip. Restructured to a column here so it mirrors
+       .feedback-card's shape (copy on top, action pinned to the bottom via
+       margin-top: auto), which is what makes the stretched height actually
+       look intentional instead of just a big box with a centered row
+       floating in the middle of it. */
+    .home-footer-row .subscribe {
+      align-items: flex-start;
+    }
+
+    .home-footer-row #footer-cta {
+      margin-top: auto;
+      align-self: flex-end;
+    }
+  }
+
+  /* Visible to everyone so its existence is discoverable, same reasoning
+     as .signin-prompt above, which the signed-out state reuses directly. */
+  .feedback-section {
+    margin-top: 0;
   }
 
   .feedback-card {
@@ -523,19 +656,21 @@
       </div>
     </div>
 
-    <!-- Visible to everyone (so its existence is discoverable), but the
-         actual form only renders once signed in — see loadFeedbackCard(). -->
-    <div id="home-feedback"></div>
+    <div class="home-footer-row">
+      <!-- Visible to everyone (so its existence is discoverable), but the
+           actual form only renders once signed in — see loadFeedbackCard(). -->
+      <div id="home-feedback"></div>
 
-    <footer>
-      <div class="subscribe">
-        <div class="subscribe-copy" id="footer-copy">
-          <strong>Get the daily digest</strong>
-          <p>The day's best picks, distilled into one email.</p>
+      <footer>
+        <div class="subscribe">
+          <div class="subscribe-copy" id="footer-copy">
+            <strong>Get the daily digest</strong>
+            <p>The day's best picks, distilled into one email.</p>
+          </div>
+          <div id="footer-cta"></div>
         </div>
-        <div id="footer-cta"></div>
-      </div>
-    </footer>
+      </footer>
+    </div>
   </main>
 </div>
 
