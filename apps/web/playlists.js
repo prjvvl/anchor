@@ -92,11 +92,16 @@ window.ANCHOR_REGIONS = [
   { key: "global", displayName: "Global" },
   { key: "in", displayName: "India" },
   { key: "us", displayName: "United States" },
-  { key: "gb", displayName: "United Kingdom" },
   { key: "eu", displayName: "Europe" },
   { key: "africa", displayName: "Africa" },
+  { key: "middle-east", displayName: "Middle East" },
+  { key: "asia", displayName: "Asia" },
+  { key: "au", displayName: "Australia" },
 ];
-window.ANCHOR_LANGUAGES = [{ key: "en", displayName: "English" }];
+window.ANCHOR_LANGUAGES = [
+  { key: "en", displayName: "English" },
+  { key: "hi", displayName: "Hindi" },
+];
 
 window.ANCHOR_PLAYLISTS = {
   "top-news": {
@@ -648,7 +653,7 @@ window.ANCHOR_PLAYLISTS = {
     type: "course",
     ordered: false,
     source: "Alec Steele",
-    region: ["gb", "global"],
+    region: ["eu", "global"],
     language: "en",
     tier: "extracurricular",
     department: "life-skills-making",

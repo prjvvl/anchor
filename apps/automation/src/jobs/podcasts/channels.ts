@@ -11,4 +11,6 @@ export const channels: ChannelSource[] = [
   { id: "UC_AnpBvnhXTcipgGEHLWoOg", region: ["global"], language: "en" }, // Conversations with Tyler
   { id: "UCpjlh0e319ksmoOD7bQFSiw", region: ["us", "global"], language: "en" }, // Rich Roll
   { id: "UCnC8SAZzQiBGYVSKZ_S3y4Q", region: ["in", "global"], language: "en" }, // Nikhil Kamath's "WTF is", India-based founder/investor conversations
+  { id: "UCzwCEE_PchiBULMnAJqhGVg", region: ["in"], language: "hi" }, // Raj Shamani (Figuring Out) — Hindi-forward business/success interviews, Hinglish in practice
+  { id: "UCPxMZIFE856tbTfdkdjzTSQ", region: ["in"], language: "hi" }, // BeerBiceps (The Ranveer Show) — long-form interviews, Hinglish in practice
 ];

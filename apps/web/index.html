@@ -650,7 +650,10 @@
   // Every rolling playlist below Top News — each is one shelf, in this
   // order. Adding another genre later is just one more entry here (plus
   // its own jobs/<name>/ folder and playlists.js registration) — no
-  // rendering/fetch code to touch.
+  // rendering/fetch code to touch. Also update the matching filterValues
+  // list in apps/automation/src/jobs/archive/tables.ts (retention rule for
+  // these playlists) — the two lists aren't shared, so they only stay in
+  // sync manually.
   const SINGLE_SHELF_PLAYLISTS = ["explainers", "business", "talks", "podcasts"];
 
   async function renderHomeShelves() {
@@ -666,7 +669,17 @@
     container.innerHTML = renderVideoSkeletons(6);
 
     const [topNewsResult, ...playlistResults] = await Promise.allSettled([
-      fetchPlaylistVideos("top-news", 60),
+      // 150, not 60: this fetch is a single global "newest N" query, split
+      // into per-region shelves only after the fact (see regionShelfKey
+      // below) — so the limit has to cover the whole live retained pool,
+      // not just what's shown. Archive retention (tables.ts) keeps up to 12
+      // rows per CHANNEL, not per region, and India alone has 3 channels
+      // (NDTV/WION/BBC News Hindi) — worst case is 11 channels * 12 = 132
+      // rows live at once. 60 (or even the region-shelf-cap-based 96) could
+      // still truncate the oldest rows platform-wide before grouping,
+      // silently under-filling whichever region's channels are currently
+      // least-recently-updated. 150 covers the true max pool with headroom.
+      fetchPlaylistVideos("top-news", 150),
       ...SINGLE_SHELF_PLAYLISTS.map((playlist) => fetchPlaylistVideos(playlist, 24)),
     ]);
     if (thisToken !== homeShelvesRequestToken) return;

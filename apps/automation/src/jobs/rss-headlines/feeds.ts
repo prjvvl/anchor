@@ -13,7 +13,7 @@ export interface FeedConfig {
 // array-region reasoning — same logic applies here).
 export const feeds: FeedConfig[] = [
   // Breaking News — Google News dropped, coverage mostly overlapped with BBC
-  { name: "BBC News", url: "https://feeds.bbci.co.uk/news/rss.xml", category: "Breaking News", region: ["gb", "global"], language: "en" },
+  { name: "BBC News", url: "https://feeds.bbci.co.uk/news/rss.xml", category: "Breaking News", region: ["eu", "global"], language: "en" },
 
   // Ideas & Thinking
   { name: "Aeon", url: "https://aeon.co/feed.rss", category: "Ideas & Thinking", region: ["global"], language: "en" },

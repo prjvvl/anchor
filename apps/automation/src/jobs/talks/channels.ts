@@ -8,5 +8,6 @@ export const channels: ChannelSource[] = [
   { id: "UCAuUUnT6oDeKwE6v1NGQxug", region: ["global"], language: "en" }, // TED
   { id: "UCsooa4yRKGN_zEE8iknghZA", region: ["global"], language: "en" }, // TED-Ed
   { id: "UCvQECJukTDE2i6aCoMnS-Vg", region: ["global"], language: "en" }, // Big Think
-  { id: "UCvhsiQGy_zcNCiSbeXEjhLg", region: ["gb", "global"], language: "en" }, // The RSA, UK institutional talks, RSA Animate pedigree
+  { id: "UCvhsiQGy_zcNCiSbeXEjhLg", region: ["eu", "global"], language: "en" }, // The RSA, UK institutional talks, RSA Animate pedigree
+  { id: "UC5MaEdGrolKRJXFdXgD7RAA", region: ["in"], language: "hi" }, // Josh Talks — Hindi equivalent of TED/TED-Ed in tone and format
 ];

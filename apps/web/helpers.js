@@ -419,12 +419,29 @@ function arraysEqual(a, b) {
   return a.length === b.length && a.every((v, i) => v === b[i]);
 }
 
+// Drops any stored region/language key that's no longer registered (e.g. a
+// region renamed or removed, like "gb" folding into "eu") — without this, a
+// returning user with a now-unknown key stuck in localStorage/their profile
+// would see every sidebar checkbox unchecked (nothing to render a "gb" box
+// for) while the underlying query still silently filtered on it, with no UI
+// path to fix it. Falls back to defaults if filtering empties the list.
+function sanitizeRegionLangSelection(regions, languages) {
+  const validRegions = new Set((window.ANCHOR_REGIONS ?? []).map((r) => r.key));
+  const validLanguages = new Set((window.ANCHOR_LANGUAGES ?? []).map((l) => l.key));
+  const cleanRegions = regions.filter((r) => validRegions.has(r));
+  const cleanLanguages = languages.filter((l) => validLanguages.has(l));
+  return {
+    regions: cleanRegions.length > 0 ? cleanRegions : DEFAULT_REGIONS,
+    languages: cleanLanguages.length > 0 ? cleanLanguages : DEFAULT_LANGUAGES,
+  };
+}
+
 function getRegionLangFilter() {
   try {
     const parsed = JSON.parse(localStorage.getItem(REGION_LANG_STORAGE_KEY));
     const regions = Array.isArray(parsed?.regions) && parsed.regions.length > 0 ? parsed.regions : DEFAULT_REGIONS;
     const languages = Array.isArray(parsed?.languages) && parsed.languages.length > 0 ? parsed.languages : DEFAULT_LANGUAGES;
-    return { regions, languages };
+    return sanitizeRegionLangSelection(regions, languages);
   } catch {
     return { regions: DEFAULT_REGIONS, languages: DEFAULT_LANGUAGES };
   }
@@ -575,8 +592,9 @@ function initRegionLangFilter() {
     // treated the same way: not customized. Whichever side (account vs.
     // local) actually differs from the default wins; if neither does,
     // there's nothing to reconcile.
-    const accountRegions = data.preferred_regions?.length ? data.preferred_regions : DEFAULT_REGIONS;
-    const accountLanguages = data.preferred_languages?.length ? data.preferred_languages : DEFAULT_LANGUAGES;
+    const rawAccountRegions = data.preferred_regions?.length ? data.preferred_regions : DEFAULT_REGIONS;
+    const rawAccountLanguages = data.preferred_languages?.length ? data.preferred_languages : DEFAULT_LANGUAGES;
+    const { regions: accountRegions, languages: accountLanguages } = sanitizeRegionLangSelection(rawAccountRegions, rawAccountLanguages);
     const accountCustomized = !arraysEqual(accountRegions, DEFAULT_REGIONS) || !arraysEqual(accountLanguages, DEFAULT_LANGUAGES);
 
     const local = getRegionLangFilter();

@@ -12,4 +12,5 @@ export const channels: ChannelSource[] = [
   { id: "UC7_gcs09iThXybpVgjHZ_7g", region: ["us", "global"], language: "en" }, // PBS Space Time
   { id: "UCR1IuLEqb6UEA_zQ81kwXfg", region: ["global"], language: "en" }, // Real Engineering
   { id: "UC1yNl2E66ZzKApQdRuTQ4tw", region: ["eu", "global"], language: "en" }, // Sabine Hossenfelder, skeptical/contrarian physics commentary, Germany
+  { id: "UC-CSyyi47VX1lD9zyeABW3w", region: ["in"], language: "hi" }, // Dhruv Rathee — Hindi explainer/documentary channel, covers science, politics, and social issues
 ];
