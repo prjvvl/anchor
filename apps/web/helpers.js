@@ -372,8 +372,8 @@ function mountHeader() {
   placeholder.outerHTML = renderHeader();
 }
 
-// activeKey is "home" or a tier key (see window.ANCHOR_TIERS in playlists.js).
-// Sourcing the tier items from ANCHOR_TIERS instead of a separate hardcoded
+// activeKey is "home", "paths", or a tier key (see window.ANCHOR_TIERS in
+// playlists.js). Sourcing the tier items from ANCHOR_TIERS instead of a separate hardcoded
 // list means a new tier only needs adding in one place to show up in nav.
 function renderSidebar(activeKey) {
   const tierItems = (window.ANCHOR_TIERS ?? [])
@@ -396,6 +396,9 @@ function renderSidebar(activeKey) {
     <div class="sidebar-scroll">
       <a class="nav-item" href="index.html"${activeKey === "home" ? ' aria-current="page"' : ""}>
         <span class="material-symbols-outlined">today</span> Home
+      </a>
+      <a class="nav-item" href="paths.html"${activeKey === "paths" ? ' aria-current="page"' : ""}>
+        <span class="material-symbols-outlined">route</span> Learning Paths
       </a>
       <!-- Mobile-only (see the nav-item-headlines CSS rule) — desktop's
            side column already shows headlines alongside the shelf stack at

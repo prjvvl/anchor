@@ -1,0 +1,206 @@
+<title>Daily Anchor - Learning Paths</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=block" />
+<script src="theme-init.js"></script>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  .path-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem 1.3rem;
+    text-decoration: none;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  .path-card:hover {
+    box-shadow: 0 6px 18px rgba(22, 35, 63, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .path-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+  }
+
+  .path-card-top .material-symbols-outlined {
+    font-size: 1.4rem;
+    color: var(--muted);
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .path-card .title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0 0 0.3rem;
+  }
+
+  .path-card .desc {
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  .path-card .meta {
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .path-mini-progress {
+    height: 5px;
+    border-radius: 3px;
+    background: var(--border);
+    overflow: hidden;
+  }
+
+  .path-mini-progress > span {
+    display: block;
+    height: 100%;
+    background: var(--ink);
+  }
+
+  /* Matches courses.html's .tier-empty: same "nothing here yet" treatment
+     for consistency, even though ANCHOR_PATHS is never actually empty
+     today (see paths.js). */
+  .paths-empty {
+    text-align: center;
+    padding: 3.5rem 1rem;
+    color: var(--muted);
+  }
+
+  .paths-empty .material-symbols-outlined {
+    font-size: 2.2rem;
+    display: block;
+    margin: 0 auto 0.75rem;
+  }
+
+  .paths-empty p {
+    max-width: 340px;
+    margin: 0.35rem auto 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+</style>
+
+<div id="app-header"></div>
+
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<div class="app-body">
+  <nav class="sidebar" id="sidebar"></nav>
+
+  <main>
+    <h2 class="page-heading">Learning Paths</h2>
+    <p class="page-sub">Curated course sequences for a goal: pick one and go step by step. Not sure where to start? These are a good first stop.</p>
+    <div id="status" class="sr-only">Loading paths…</div>
+    <div class="card-grid" id="paths-content"></div>
+  </main>
+</div>
+
+<div class="toast" id="toast">
+  <span class="material-symbols-outlined" id="toast-icon"></span>
+  <span id="toast-message"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script src="playlists.js"></script>
+<script src="paths.js"></script>
+<script src="helpers.js"></script>
+<script>
+  function showStatus(el, text) {
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove("sr-only");
+  }
+  function hideStatus(el) {
+    el?.classList.add("sr-only");
+  }
+
+  function pathCard(slug, info, watched, total) {
+    const hasProgress = watched != null && total != null && total > 0;
+    const pct = hasProgress ? Math.round((watched / total) * 100) : 0;
+    return `
+      <a class="path-card" href="path.html?slug=${encodeURIComponent(slug)}">
+        <div class="path-card-top">
+          <span class="material-symbols-outlined">${info.icon ?? "route"}</span>
+          <div>
+            <div class="title">${escapeHtml(info.displayName)}</div>
+            <p class="desc">${escapeHtml(info.description ?? "")}</p>
+          </div>
+        </div>
+        <div class="meta">${info.courses.length} course${info.courses.length === 1 ? "" : "s"}${hasProgress ? ` · ${watched}/${total} lessons watched` : ""}</div>
+        ${hasProgress ? `<div class="path-mini-progress"><span style="width:${pct}%"></span></div>` : ""}
+      </a>`;
+  }
+
+  // Aggregate watched/total lessons across every course in a path, so the
+  // card can show one combined progress bar rather than per-course detail
+  // (that belongs on path.html). Best-effort: a course whose lesson fetch
+  // fails is simply excluded from the total rather than failing the whole
+  // card, same spirit as courses.html's Promise.allSettled use.
+  async function loadPaths() {
+    const statusEl = document.getElementById("status");
+    const contentEl = document.getElementById("paths-content");
+    const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
+
+    if (!supabaseUrl || !supabasePublishableKey) {
+      showStatus(statusEl, "Missing Supabase config. Fill in config.js.");
+      return;
+    }
+
+    const entries = Object.entries(window.ANCHOR_PATHS ?? {});
+    if (entries.length === 0) {
+      hideStatus(statusEl);
+      contentEl.innerHTML = `
+        <div class="paths-empty">
+          <span class="material-symbols-outlined">hourglass_empty</span>
+          <strong>No paths yet</strong>
+          <p>Learning paths are still being curated. Check back soon, or browse courses directly from the sidebar.</p>
+        </div>`;
+      return;
+    }
+
+    contentEl.innerHTML = renderCourseSkeletons(entries.length);
+
+    try {
+      const allSlugs = [...new Set(entries.flatMap(([, info]) => info.courses))];
+      const [idResults, viewedSet] = await Promise.all([Promise.allSettled(allSlugs.map((slug) => fetchLessonIds(slug))), fetchViewedSet()]);
+      const idsBySlug = Object.fromEntries(allSlugs.map((slug, i) => [slug, idResults[i].status === "fulfilled" ? idResults[i].value : []]));
+
+      hideStatus(statusEl);
+      contentEl.innerHTML = entries
+        .map(([slug, info]) => {
+          const ids = info.courses.flatMap((c) => idsBySlug[c] ?? []);
+          const total = ids.length;
+          const watched = viewedSet ? ids.filter((id) => viewedSet.has(id)).length : null;
+          return pathCard(slug, info, watched, total);
+        })
+        .join("");
+    } catch (err) {
+      contentEl.innerHTML = "";
+      showStatus(statusEl, "Failed to load paths.");
+      console.error(err);
+    }
+  }
+
+  mountHeader();
+  mountSidebar("paths");
+  initThemeToggle();
+  initSidebarDrawer();
+  initAuthControl();
+  initRegionLangFilter();
+  loadPaths();
+  window.addEventListener("anchor-auth-change", loadPaths);
+</script>

@@ -302,6 +302,63 @@
     flex-shrink: 0;
   }
 
+  /* Continue Learning slot's teaser row (see renderTeaserRow): sign-in
+     prompt and/or paths teaser as fixed-shape cards that sit side by side
+     when there's room and wrap to stacked, full-width cards when there
+     isn't (a narrow desktop side column, or mobile). Plain flex-wrap
+     rather than a viewport media query, so the same rule handles both;
+     what matters is the container's actual width, not the breakpoint. */
+  .shelf-compact {
+    margin-bottom: 0.6rem;
+  }
+
+  .teaser-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .teaser-card {
+    flex: 1 1 170px;
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .teaser-card .material-symbols-outlined {
+    font-size: 1.25rem;
+    color: var(--muted);
+  }
+
+  .teaser-card strong {
+    display: block;
+    font-size: 0.8rem;
+    line-height: 1.25;
+    margin: 0.4rem 0 0.25rem;
+  }
+
+  .teaser-card p {
+    flex: 1;
+    margin: 0;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    color: var(--muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .teaser-card .btn-primary {
+    margin-top: 0.55rem;
+    align-self: flex-start;
+    font-size: 0.76rem;
+    padding: 0.35rem 0.7rem;
+  }
+
   /* Wraps #home-feedback + <footer> (a sibling of .layout, not inside it)
      — stacked full-width on mobile, side by side on desktop, so the two
      end-of-page cards don't leave one looking lonely next to a big empty
@@ -1068,17 +1125,53 @@
     return streak;
   }
 
-  function renderSignInPrompt() {
+  // Fixed-size cards for the Continue Learning slot's teaser row (see
+  // renderTeaserRow): sign-in prompt and paths teaser today, room to add
+  // more later since the row wraps instead of growing taller. All cards
+  // share one shape (icon/title/desc/cta) so they stay the same
+  // dimensions regardless of copy length (.teaser-card p clamps to 3
+  // lines, see CSS).
+  function teaserCard(icon, title, desc, ctaHtml) {
     return `
-      <div class="shelf">
-        <div class="signin-prompt">
-          <span class="material-symbols-outlined">local_fire_department</span>
-          <div>
-            <strong>Track your progress and build a streak</strong>
-            <p>Sign in to pick up where you left off across every course.</p>
-          </div>
-          <button class="btn-primary" type="button" id="continue-signin">Sign in</button>
-        </div>
+      <div class="teaser-card">
+        <span class="material-symbols-outlined">${icon}</span>
+        <strong>${escapeHtml(title)}</strong>
+        <p>${escapeHtml(desc)}</p>
+        ${ctaHtml}
+      </div>`;
+  }
+
+  function renderSignInPrompt() {
+    return teaserCard(
+      "local_fire_department",
+      "Track your progress and build a streak",
+      "Sign in to pick up where you left off across every course.",
+      `<button class="btn-primary" type="button" id="continue-signin">Sign in</button>`
+    );
+  }
+
+  // Shown alongside renderSignInPrompt() (signed out) or in place of an
+  // empty renderShelf() (signed in, zero course progress yet): anyone with
+  // no Continue Learning shelf to show has no obvious entry point into the
+  // course catalog otherwise. Dropped once real progress exists so it
+  // doesn't keep competing with the shelf it was standing in for.
+  function renderPathsTeaser() {
+    return teaserCard(
+      "route",
+      "New here? Start with a Learning Path",
+      "Curated course sequences for a goal, pick one and go step by step.",
+      `<a class="btn-primary" href="paths.html">Browse paths</a>`
+    );
+  }
+
+  // Wraps one or more teaserCard()s in a flex row that wraps (see
+  // .teaser-row): cards sit side by side when the container has room,
+  // stack full-width when it doesn't, so this slot can't keep squeezing
+  // Latest Headlines below it as more teasers get added over time.
+  function renderTeaserRow(cardsHtml) {
+    return `
+      <div class="shelf shelf-compact">
+        <div class="teaser-row">${cardsHtml.join("")}</div>
       </div>`;
   }
 
@@ -1138,7 +1231,7 @@
     const { session } = await window.ANCHOR_AUTH.getSession();
     if (requestToken !== continueLearningRequestToken) return;
     if (!session) {
-      slot.innerHTML = renderSignInPrompt();
+      slot.innerHTML = renderTeaserRow([renderSignInPrompt(), renderPathsTeaser()]);
       slot.querySelector("#continue-signin").addEventListener("click", (event) => {
         // Same bubbling trap as the footer sign-in CTA in initAuthControl:
         // this button lives outside #auth-control, so without stopping
@@ -1164,6 +1257,7 @@
     if (requestToken !== continueLearningRequestToken) return;
     if (error || !progressRows || progressRows.length === 0) {
       if (error) console.error(error);
+      else slot.innerHTML = renderTeaserRow([renderPathsTeaser()]); // signed in, no watch history at all yet
       return;
     }
 
@@ -1192,7 +1286,7 @@
     }
 
     if (byCourse.size === 0) {
-      slot.innerHTML = renderShelf([], streak);
+      slot.innerHTML = renderShelf([], streak) + renderTeaserRow([renderPathsTeaser()]);
       return;
     }
 

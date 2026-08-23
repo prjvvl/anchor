@@ -1,0 +1,238 @@
+<title>Daily Anchor - Learning Path</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=block" />
+<script src="theme-init.js"></script>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  .breadcrumb {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin: 0 0 0.9rem;
+  }
+
+  .breadcrumb a {
+    color: var(--muted);
+  }
+
+  .path-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    max-width: 640px;
+  }
+
+  .path-step {
+    display: flex;
+    gap: 0.9rem;
+    text-decoration: none;
+    color: var(--ink);
+  }
+
+  .step-number {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .path-step[data-complete="true"] .step-number {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--bg);
+  }
+
+  .path-step-body {
+    flex: 1;
+    min-width: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.9rem 1.1rem;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  .path-step:hover .path-step-body {
+    box-shadow: 0 6px 18px rgba(22, 35, 63, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .path-step-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .path-step .title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .tier-pill {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
+  }
+
+  .path-step .desc {
+    color: var(--muted);
+    font-size: 0.83rem;
+    line-height: 1.4;
+    margin: 0.3rem 0 0.5rem;
+  }
+
+  .path-step .meta {
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+</style>
+
+<div id="app-header"></div>
+
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<div class="app-body">
+  <nav class="sidebar" id="sidebar"></nav>
+
+  <main>
+    <p class="breadcrumb"><a href="paths.html">Learning Paths</a> / <span id="path-crumb"></span></p>
+    <h2 class="page-heading" id="path-title"></h2>
+    <p class="page-sub" id="path-sub"></p>
+    <div id="status" class="sr-only">Loading path…</div>
+    <div class="path-steps" id="path-steps"></div>
+  </main>
+</div>
+
+<div class="toast" id="toast">
+  <span class="material-symbols-outlined" id="toast-icon"></span>
+  <span id="toast-message"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script src="playlists.js"></script>
+<script src="paths.js"></script>
+<script src="helpers.js"></script>
+<script>
+  function showStatus(el, text) {
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove("sr-only");
+  }
+  function hideStatus(el) {
+    el?.classList.add("sr-only");
+  }
+
+  function pathStep(index, courseSlug, courseInfo, watched, total) {
+    const tierInfo = (window.ANCHOR_TIERS ?? []).find((t) => t.key === courseInfo?.tier);
+    const complete = total != null && total > 0 && watched === total;
+    // watched is null when signed out (see fetchViewedSet) — omit the
+    // watched count rather than falsely reporting 0/total, same as
+    // courses.html's courseCard.
+    const countLabel = total == null ? "" : total === 0 ? "No lessons yet" : watched != null ? `${watched}/${total} watched` : `${total} lesson${total === 1 ? "" : "s"}`;
+    return `
+      <a class="path-step" href="course.html?slug=${encodeURIComponent(courseSlug)}" data-complete="${complete}">
+        <span class="step-number">${complete ? '<span class="material-symbols-outlined" style="font-size:1.1rem;">check</span>' : index + 1}</span>
+        <div class="path-step-body">
+          <div class="path-step-top">
+            <p class="title">${escapeHtml(courseInfo?.displayName ?? courseSlug)}</p>
+            ${tierInfo ? `<span class="tier-pill">${escapeHtml(tierInfo.displayName)}</span>` : ""}
+          </div>
+          <p class="desc">${escapeHtml(courseInfo?.description ?? "")}</p>
+          <div class="meta">${escapeHtml(countLabel)}</div>
+        </div>
+      </a>`;
+  }
+
+  // mountSidebar() replaces #sidebar's innerHTML wholesale, including
+  // #sidebar-close, so a second call on a re-run (loadPath() re-runs on
+  // "anchor-auth-change") would leave the *new* close button with no click
+  // handler, silently breaking the mobile drawer. Same hazard/fix as
+  // course.html's courseSetupDone.
+  let pathSetupDone = false;
+
+  async function loadPath() {
+    const slug = new URLSearchParams(location.search).get("slug");
+    const statusEl = document.getElementById("status");
+    const stepsEl = document.getElementById("path-steps");
+    const info = window.ANCHOR_PATHS?.[slug];
+
+    if (!slug || !info) {
+      showStatus(statusEl, "Path not found.");
+      document.getElementById("path-title").textContent = "Path not found";
+      if (!pathSetupDone) mountSidebar(null);
+      pathSetupDone = true;
+      return;
+    }
+
+    if (!pathSetupDone) {
+      document.title = `Daily Anchor - ${info.displayName}`;
+      document.getElementById("path-crumb").textContent = info.displayName;
+      document.getElementById("path-title").textContent = info.displayName;
+      document.getElementById("path-sub").textContent = info.description ?? "";
+      mountSidebar("paths");
+      pathSetupDone = true;
+    }
+
+    const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
+    if (!supabaseUrl || !supabasePublishableKey) {
+      showStatus(statusEl, "Missing Supabase config. Fill in config.js.");
+      return;
+    }
+
+    stepsEl.innerHTML = renderCourseSkeletons(info.courses.length);
+
+    try {
+      const [idResults, viewedSet] = await Promise.all([
+        Promise.allSettled(info.courses.map((slug) => fetchLessonIds(slug))),
+        fetchViewedSet(),
+      ]);
+
+      hideStatus(statusEl);
+      stepsEl.innerHTML = info.courses
+        .map((courseSlug, i) => {
+          const courseInfo = window.ANCHOR_PLAYLISTS?.[courseSlug];
+          const ids = idResults[i].status === "fulfilled" ? idResults[i].value : null;
+          const total = ids?.length ?? null;
+          const watched = viewedSet && ids ? ids.filter((id) => viewedSet.has(id)).length : null;
+          return pathStep(i, courseSlug, courseInfo, watched, total);
+        })
+        .join("");
+    } catch (err) {
+      stepsEl.innerHTML = "";
+      showStatus(statusEl, "Failed to load path.");
+      console.error(err);
+    }
+  }
+
+  mountHeader();
+
+  // loadPath() calls mountSidebar() synchronously on its first call (before
+  // its first await), so it must run before initThemeToggle()/
+  // initAuthControl()/initSidebarDrawer()/initRegionLangFilter(), same
+  // ordering requirement as course.html's loadCourse().
+  loadPath();
+  initThemeToggle();
+  initAuthControl();
+  initSidebarDrawer();
+  initRegionLangFilter();
+  window.addEventListener("anchor-auth-change", loadPath);
+</script>
