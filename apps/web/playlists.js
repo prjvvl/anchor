@@ -596,10 +596,6 @@ window.ANCHOR_PLAYLISTS = {
   },
 
   // --- Entertainment ---
-  // DUMMY SEED DATA — hand-picked from each channel's recent uploads, not a
-  // curated final selection. Tagged "entertainment-misc-seed" in the videos
-  // table for easy identification/deletion once the real picks are made
-  // (see flo/2608-anchor/docs/260823-entertainment-misc-seed-dataset.json).
   "travel-immersion": {
     displayName: "Immersive Travel",
     description: "Peter Santenello's deep, unscripted immersion in specific places and communities.",
@@ -623,6 +619,18 @@ window.ANCHOR_PLAYLISTS = {
     tier: "entertainment",
     department: "documentaries",
     subject: "Biography",
+  },
+  "timeline-documentaries": {
+    displayName: "World History Documentaries",
+    description: "Timeline's licensed, full-length history documentaries — ancient civilizations to the Cold War.",
+    type: "course",
+    ordered: false,
+    source: "Timeline",
+    region: ["global"],
+    language: "en",
+    tier: "entertainment",
+    department: "documentaries",
+    subject: "World History Documentaries",
   },
   "omeleto-shorts": {
     displayName: "Award-Winning Shorts",
@@ -661,6 +669,18 @@ window.ANCHOR_PLAYLISTS = {
     tier: "miscellaneous",
     department: "storytelling",
     subject: "Mysteries & Investigations",
+  },
+  esoterica: {
+    displayName: "Esoterica",
+    description: "Dr. Justin Sledge's deep-dives into ancient religion, Gnosticism, and the history of magic and alchemy.",
+    type: "course",
+    ordered: false,
+    source: "Esoterica",
+    region: ["global"],
+    language: "en",
+    tier: "miscellaneous",
+    department: "storytelling",
+    subject: "History, Philosophy & Religion",
   },
   "yc-startup-talks": {
     displayName: "Startup Lessons",
