@@ -126,12 +126,14 @@
 <script src="playlists.js"></script>
 <script src="helpers.js"></script>
 <script>
-  // Departments shown (locked, if empty) under every academic tier, in
-  // display order. Extracurricular has its own informal department set and
-  // doesn't use the locked-placeholder treatment — that promise ("more
-  // coming") only makes sense for the fixed academic ladder.
-  const ACADEMIC_DEPARTMENTS = ["humanities", "sciences", "stem", "society-civics", "arts-culture", "media-literacy"];
-  const EXTRACURRICULAR_DEPARTMENTS = ["games-strategy", "tech-curiosities", "places-culture", "food-culture", "life-skills-making"];
+  // Subtitle shown under the tier heading. Informal tiers (see
+  // window.ANCHOR_INFORMAL_TIERS in playlists.js) get their own blurb;
+  // everything else falls back to the default academic-ladder copy.
+  const TIER_SUBTITLES = {
+    extracurricular: "Skills and curiosities outside the academic ladder. Not a rigor progression, just genuinely good content.",
+    entertainment: "Travel, documentaries, and short films worth your time — not a rigor progression, just genuinely good watching.",
+    miscellaneous: "Podcasts, storytelling, and business content that doesn't fit anywhere else on the ladder.",
+  };
 
   // loadCourses re-runs on "anchor-filter-change" (see below), not just
   // once at page load — same #status re-run hazard as index.html's
@@ -181,9 +183,7 @@
 
     document.getElementById("tier-heading").textContent = tierInfo?.displayName ?? "Courses";
     document.getElementById("tier-sub").textContent =
-      tier === "extracurricular"
-        ? "Skills and curiosities outside the academic ladder. Not a rigor progression, just genuinely good content."
-        : "Complete series and curated playlists. Browse at your own pace, no daily rotation.";
+      TIER_SUBTITLES[tier] ?? "Complete series and curated playlists. Browse at your own pace, no daily rotation.";
     document.title = `Daily Anchor - ${tierInfo?.displayName ?? "Courses"}`;
 
     if (!supabaseUrl || !supabasePublishableKey) {
@@ -193,7 +193,8 @@
 
     const allCourses = Object.entries(window.ANCHOR_PLAYLISTS ?? {}).filter(([, info]) => info.type === "course");
     const tierCourses = allCourses.filter(([, info]) => info.tier === tier);
-    const departments = tier === "extracurricular" ? EXTRACURRICULAR_DEPARTMENTS : ACADEMIC_DEPARTMENTS;
+    const departments = window.ANCHOR_TIER_DEPARTMENTS?.[tier] ?? [];
+    const isInformalTier = (window.ANCHOR_INFORMAL_TIERS ?? []).includes(tier);
 
     if (tierCourses.length === 0) {
       hideStatus(statusEl);
@@ -249,7 +250,7 @@
           const deptCourses = filteredCourses.filter(([, info]) => info.department === deptKey);
 
           if (deptCourses.length === 0) {
-            if (tier === "extracurricular") return ""; // no fixed promise for extracurricular departments
+            if (isInformalTier) return ""; // no fixed promise for informal tiers
             return `
               <div class="dept">
                 <div class="dept-label"><span class="material-symbols-outlined">${deptInfo?.icon ?? "folder"}</span><span>${escapeHtml(deptInfo?.displayName ?? deptKey)}</span></div>

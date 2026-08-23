@@ -31,7 +31,14 @@ window.ANCHOR_TIERS = [
   { key: "advanced", displayName: "Advanced", icon: "engineering" },
   { key: "expert", displayName: "Expert", icon: "workspace_premium" },
   { key: "extracurricular", displayName: "Extracurricular", icon: "sports_esports" },
+  { key: "entertainment", displayName: "Entertainment", icon: "movie" },
+  { key: "miscellaneous", displayName: "Miscellaneous", icon: "apps" },
 ];
+
+// Tiers with no fixed academic promise — courses.html skips the
+// locked/"coming soon" placeholder treatment for these (see INFORMAL_TIERS
+// there), same as extracurricular already did before this list existed.
+window.ANCHOR_INFORMAL_TIERS = ["extracurricular", "entertainment", "miscellaneous"];
 
 // Departments, keyed for lookup from a course entry's `department` field.
 window.ANCHOR_DEPARTMENTS = {
@@ -47,6 +54,31 @@ window.ANCHOR_DEPARTMENTS = {
   "places-culture": { displayName: "Places & Culture", icon: "public" },
   "food-culture": { displayName: "Food & Culture", icon: "restaurant" },
   "life-skills-making": { displayName: "Life Skills & Making", icon: "construction" },
+  // Entertainment-only departments.
+  "travel-adventure": { displayName: "Travel & Adventure", icon: "flight_takeoff" },
+  documentaries: { displayName: "Documentaries", icon: "theaters" },
+  "short-films": { displayName: "Short Films", icon: "movie_filter" },
+  // Miscellaneous-only departments.
+  "podcasts-conversations": { displayName: "Podcasts & Conversations", icon: "podcasts" },
+  storytelling: { displayName: "Storytelling", icon: "auto_stories" },
+  "business-startups": { displayName: "Business & Startups", icon: "rocket_launch" },
+};
+
+// Departments shown under each tier, in display order. The academic ladder
+// (fundamental/standard/advanced/expert) all share ACADEMIC_DEPARTMENTS and
+// get the "locked, coming soon" placeholder for empty ones (see courses.html)
+// since that's a fixed curriculum promise; informal tiers (see
+// ANCHOR_INFORMAL_TIERS above) each get their own department list and skip
+// that placeholder — a department just doesn't render if it has no courses.
+const ACADEMIC_DEPARTMENTS = ["humanities", "sciences", "stem", "society-civics", "arts-culture", "media-literacy"];
+window.ANCHOR_TIER_DEPARTMENTS = {
+  fundamental: ACADEMIC_DEPARTMENTS,
+  standard: ACADEMIC_DEPARTMENTS,
+  advanced: ACADEMIC_DEPARTMENTS,
+  expert: ACADEMIC_DEPARTMENTS,
+  extracurricular: ["games-strategy", "tech-curiosities", "places-culture", "food-culture", "life-skills-making"],
+  entertainment: ["travel-adventure", "documentaries", "short-films"],
+  miscellaneous: ["podcasts-conversations", "storytelling", "business-startups"],
 };
 
 // The sitewide region/language filter's option list (see the sidebar
@@ -370,5 +402,85 @@ window.ANCHOR_PLAYLISTS = {
     tier: "extracurricular",
     department: "life-skills-making",
     subject: "Craft & Metalworking",
+  },
+
+  // --- Entertainment ---
+  // DUMMY SEED DATA — hand-picked from each channel's recent uploads, not a
+  // curated final selection. Tagged "entertainment-misc-seed" in the videos
+  // table for easy identification/deletion once the real picks are made
+  // (see flo/2608-anchor/docs/260823-entertainment-misc-seed-dataset.json).
+  "travel-immersion": {
+    displayName: "Immersive Travel",
+    description: "Peter Santenello's deep, unscripted immersion in specific places and communities.",
+    type: "course",
+    ordered: false,
+    source: "Peter Santenello",
+    region: ["global"],
+    language: "en",
+    tier: "entertainment",
+    department: "travel-adventure",
+    subject: "Immersive Travel",
+  },
+  "people-profiles-bios": {
+    displayName: "Biographies",
+    description: "The People Profiles' historian-scripted biographical documentaries.",
+    type: "course",
+    ordered: false,
+    source: "The People Profiles",
+    region: ["global"],
+    language: "en",
+    tier: "entertainment",
+    department: "documentaries",
+    subject: "Biography",
+  },
+  "omeleto-shorts": {
+    displayName: "Award-Winning Shorts",
+    description: "Omeleto's curated selection of award-recognized short films across genres.",
+    type: "course",
+    ordered: false,
+    source: "Omeleto",
+    region: ["global"],
+    language: "en",
+    tier: "entertainment",
+    department: "short-films",
+    subject: "Short Films",
+  },
+
+  // --- Miscellaneous ---
+  "lex-fridman-podcast": {
+    displayName: "Lex Fridman Podcast",
+    description: "Long-form conversations on AI, technology, philosophy, and science.",
+    type: "course",
+    ordered: false,
+    source: "Lex Fridman",
+    region: ["global"],
+    language: "en",
+    tier: "miscellaneous",
+    department: "podcasts-conversations",
+    subject: "AI, Tech & Philosophy",
+  },
+  "lemmino-mysteries": {
+    displayName: "Mysteries & Investigations",
+    description: "LEMMiNO's meticulously researched long-form video essays on unsolved cases and hidden history.",
+    type: "course",
+    ordered: false,
+    source: "LEMMiNO",
+    region: ["global"],
+    language: "en",
+    tier: "miscellaneous",
+    department: "storytelling",
+    subject: "Mysteries & Investigations",
+  },
+  "yc-startup-talks": {
+    displayName: "Startup Lessons",
+    description: "Y Combinator's founder talks, fundraising guidance, and scaling frameworks.",
+    type: "course",
+    ordered: false,
+    source: "Y Combinator",
+    region: ["global"],
+    language: "en",
+    tier: "miscellaneous",
+    department: "business-startups",
+    subject: "Startup Lessons",
   },
 };
