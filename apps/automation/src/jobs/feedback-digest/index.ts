@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { fetchUnnotifiedFeedback, markNotified } from "./feedbackDigestDb.js";
-import { notifyAdmin, notifyFailure } from "../../alert.js";
+import { notifyAdmin } from "../../alert.js";
+import { runJob } from "../../runJob.js";
 
 const JOB_NAME = "feedback-digest";
 
@@ -36,8 +37,4 @@ async function run() {
   console.log(`[${JOB_NAME}] Sent digest for ${rows.length} submission(s)`);
 }
 
-run().catch(async (err) => {
-  console.error(err);
-  await notifyFailure(JOB_NAME, err);
-  process.exit(1);
-});
+runJob(JOB_NAME, run);

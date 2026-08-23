@@ -2,7 +2,7 @@ import "dotenv/config";
 import { fetchFeed, withinLookback, type FeedItem } from "../../rss.js";
 import { upsertHeadlines } from "../../db.js";
 import { feeds } from "./feeds.js";
-import { notifyFailure } from "../../alert.js";
+import { runJob } from "../../runJob.js";
 
 const JOB_NAME = "rss-headlines";
 // Job runs every 90 minutes — a 100-minute lookback gives a buffer against
@@ -33,8 +33,4 @@ async function run() {
   }
 }
 
-run().catch(async (err) => {
-  console.error(err);
-  await notifyFailure("rss-headlines", err);
-  process.exit(1);
-});
+runJob("rss-headlines", run);

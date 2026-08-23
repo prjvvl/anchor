@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { fetchOpsSnapshot } from "./opsReportDb.js";
-import { notifyAdmin, notifyFailure } from "../../alert.js";
+import { notifyAdmin } from "../../alert.js";
+import { runJob } from "../../runJob.js";
 
 const JOB_NAME = "ops-report";
 // Weekly, not daily — a stream of daily internal-metrics email would be the
@@ -22,8 +23,4 @@ Current subscribers: ${snapshot.subscriberCount}`;
   console.log(`[${JOB_NAME}] Sent weekly report`);
 }
 
-run().catch(async (err) => {
-  console.error(err);
-  await notifyFailure(JOB_NAME, err);
-  process.exit(1);
-});
+runJob(JOB_NAME, run);

@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { tables } from "./tables.js";
 import { fetchIdsForRetention, deleteRowsByIds, type RetentionRow } from "./archiveDb.js";
-import { notifyFailure } from "../../alert.js";
+import { runJob } from "../../runJob.js";
 
 const JOB_NAME = "archive-prune";
 
@@ -37,8 +37,4 @@ function idsBeyondRetentionPerGroup(rows: RetentionRow[], keep: number): string[
   return [...byGroup.values()].flatMap((groupRows) => groupRows.slice(keep).map((r) => r.id));
 }
 
-run().catch(async (err) => {
-  console.error(err);
-  await notifyFailure("archive-prune", err);
-  process.exit(1);
-});
+runJob("archive-prune", run);

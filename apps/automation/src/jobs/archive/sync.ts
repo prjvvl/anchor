@@ -3,7 +3,7 @@ import { tables } from "./tables.js";
 import { fetchRowsSince } from "./archiveDb.js";
 import { readWatermark, writeWatermark } from "./state.js";
 import { appendRows } from "../../fileStore.js";
-import { notifyFailure } from "../../alert.js";
+import { runJob } from "../../runJob.js";
 
 const JOB_NAME = "archive-sync";
 
@@ -37,8 +37,4 @@ async function run() {
   }
 }
 
-run().catch(async (err) => {
-  console.error(err);
-  await notifyFailure("archive-sync", err);
-  process.exit(1);
-});
+runJob("archive-sync", run);

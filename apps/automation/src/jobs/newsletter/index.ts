@@ -3,7 +3,7 @@ import { curateDigest } from "../../gemini.js";
 import { fetchDigestPool, fetchSubscribers, hasSentToday, logSend } from "./newsletterDb.js";
 import { resolvePicks, renderDigestEmail } from "./template.js";
 import { sendBatch } from "./resend.js";
-import { notifyFailure } from "../../alert.js";
+import { runJob } from "../../runJob.js";
 
 const JOB_NAME = "newsletter";
 
@@ -62,8 +62,4 @@ function istDateString(): string {
   return nowIst.toISOString().slice(0, 10);
 }
 
-run().catch(async (err) => {
-  console.error(err);
-  await notifyFailure("newsletter", err);
-  process.exit(1);
-});
+runJob("newsletter", run);
