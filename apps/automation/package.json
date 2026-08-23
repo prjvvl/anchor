@@ -15,6 +15,7 @@
     "job:archive-prune": "tsx src/jobs/archive/prune.ts",
     "job:newsletter": "tsx src/jobs/newsletter/index.ts",
     "job:ops-report": "tsx src/jobs/ops-report/index.ts",
+    "job:feedback-digest": "tsx src/jobs/feedback-digest/index.ts",
     "decrypt-archive": "tsx src/scripts/decryptArchive.ts"
   },
   "keywords": [],

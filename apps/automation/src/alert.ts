@@ -2,7 +2,13 @@
 // reports) — separate from the reader-facing newsletter, but reuses the
 // same Resend account/verified sender since there's no reason to stand up
 // a second one for internal mail.
-export async function notifyAdmin(subject: string, body: string): Promise<void> {
+//
+// Returns whether the email actually sent, rather than throwing — existing
+// callers (notifyFailure below, ops-report) don't need to know and just
+// ignore it, but a caller with state that depends on the email having gone
+// out (feedback-digest marking rows notified) needs to be able to check
+// before acting on that assumption.
+export async function notifyAdmin(subject: string, body: string): Promise<boolean> {
   try {
     const apiKey = process.env.RESEND_API_KEY;
     const from = process.env.NEWSLETTER_FROM_EMAIL;
@@ -10,7 +16,7 @@ export async function notifyAdmin(subject: string, body: string): Promise<void> 
 
     if (!apiKey || !from || !to) {
       console.warn("[alert] Missing RESEND_API_KEY / NEWSLETTER_FROM_EMAIL / ADMIN_EMAIL — skipping admin email");
-      return;
+      return false;
     }
 
     const res = await fetch("https://api.resend.com/emails", {
@@ -21,10 +27,13 @@ export async function notifyAdmin(subject: string, body: string): Promise<void> 
 
     if (!res.ok) {
       console.error(`[alert] Failed to send admin email: ${res.status} ${await res.text()}`);
+      return false;
     }
+    return true;
   } catch (err) {
     // Never let a broken alert path take down the job's own error handling.
     console.error("[alert] Failed to send admin email:", err);
+    return false;
   }
 }
 

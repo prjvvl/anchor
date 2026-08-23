@@ -222,8 +222,6 @@
   }
 
   mountHeader();
-  initThemeToggle();
-  initAuthControl();
 
   // Attached once, not inside loadCourse — that function re-runs on
   // "anchor-auth-change", and #lessons/#play-all-lessons are persistent
@@ -233,11 +231,16 @@
   document.getElementById("play-all-lessons").addEventListener("click", () => window.AnchorPlayer?.playAll(document.getElementById("lessons")));
 
   // loadCourse() calls mountSidebar() synchronously on its first call
-  // (before its first await), so it must run before
-  // initSidebarDrawer()/initRegionLangFilter() — both need elements
-  // mountSidebar renders (#sidebar-close, the filter checkboxes) to
-  // already exist.
+  // (before its first await), so it must run before initThemeToggle() /
+  // initAuthControl() / initSidebarDrawer() / initRegionLangFilter() — all
+  // four target elements (#theme-toggle, #auth-control, #sidebar-close,
+  // the filter checkboxes) that mountSidebar renders and don't exist yet
+  // otherwise. initThemeToggle/initAuthControl used to run before this and
+  // silently no-op (their own `if (!el) return` guards), leaving the
+  // sidebar's auth button and theme icon permanently blank.
   loadCourse();
+  initThemeToggle();
+  initAuthControl();
   initSidebarDrawer();
   initRegionLangFilter();
   window.addEventListener("anchor-auth-change", loadCourse);

@@ -1,0 +1,35 @@
+name: Job - Feedback Digest
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # 7:30 AM IST, daily
+  workflow_dispatch: {}
+
+# Same reasoning as job-newsletter.yml: this job isn't idempotent (it emails
+# then mutates DB state by marking rows notified), so an overlapping
+# workflow_dispatch run or a slow prior run still executing when the next
+# cron fires would otherwise let two runs both fetch the same unnotified
+# rows and send a duplicate admin email for the same feedback.
+concurrency:
+  group: job-feedback-digest
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      - run: npm run job:feedback-digest --workspace=apps/automation
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NEWSLETTER_FROM_EMAIL: ${{ secrets.NEWSLETTER_FROM_EMAIL }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
