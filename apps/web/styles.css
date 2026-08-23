@@ -16,6 +16,36 @@
   --border: #262f45;
 }
 
+/* Thin, theme-matched scrollbar — not hidden outright (that removes the
+   only visual cue a panel scrolls, a real usability regression, especially
+   on Windows where there's no other scroll affordance by default). Instead
+   replaces the default chunky Windows scrollbar with a slim, subtle one
+   that tracks light/dark via the --border/--muted tokens above. Firefox
+   uses scrollbar-width/scrollbar-color; everything Chromium/WebKit-based
+   (most Windows browsers) uses ::-webkit-scrollbar. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
 .material-symbols-outlined {
   font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
   font-size: 20px;
