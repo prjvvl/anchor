@@ -22,12 +22,12 @@ export const feeds: FeedConfig[] = [
 
   // Self-Improvement
   { name: "Farnam Street", url: "https://fs.blog/feed/", category: "Self-Improvement", region: ["global"], language: "en" },
-  // James Clear dropped — the feed returns 200 but has served frozen,
+  // James Clear dropped: the feed returns 200 but has served frozen,
   // stale content since Jan 2020 (confirmed via two independent URLs).
   { name: "Ness Labs", url: "https://nesslabs.com/feed", category: "Self-Improvement", region: ["global"], language: "en" },
 
   // Science
-  // Old NASA URL (.../rss/dyn/breaking_news.rss) 301-redirects here now —
+  // Old NASA URL (.../rss/dyn/breaking_news.rss) 301-redirects here now;
   // pointing at the real URL directly instead of depending on the redirect.
   { name: "NASA", url: "https://www.nasa.gov/news-release/feed/", category: "Science", region: ["global"], language: "en" },
   { name: "ScienceDaily", url: "https://www.sciencedaily.com/rss/top/science.xml", category: "Science", region: ["global"], language: "en" },

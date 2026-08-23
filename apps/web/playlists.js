@@ -164,7 +164,7 @@ window.ANCHOR_PLAYLISTS = {
   },
   "philosophy-fundamental": {
     displayName: "Philosophy for Everyday Life",
-    description: "The School of Life's hand-picked take on philosophy, psychology, and self-knowledge — no jargon required.",
+    description: "The School of Life's hand-picked take on philosophy, psychology, and self-knowledge, no jargon required.",
     type: "course",
     ordered: false,
     source: "The School of Life",
@@ -582,7 +582,7 @@ window.ANCHOR_PLAYLISTS = {
   },
   "investigative-journalism": {
     displayName: "Investigative Journalism",
-    description: "ICIJ's landmark cross-border investigations — the Panama Papers and beyond — hand-picked from their real reporting.",
+    description: "ICIJ's landmark cross-border investigations, from the Panama Papers and beyond, hand-picked from their real reporting.",
     type: "course",
     ordered: false,
     source: "ICIJ",
@@ -694,7 +694,7 @@ window.ANCHOR_PLAYLISTS = {
   },
   "timeline-documentaries": {
     displayName: "World History Documentaries",
-    description: "Timeline's licensed, full-length history documentaries — ancient civilizations to the Cold War.",
+    description: "Timeline's licensed, full-length history documentaries, from ancient civilizations to the Cold War.",
     type: "course",
     ordered: false,
     source: "Timeline",

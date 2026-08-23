@@ -22,6 +22,6 @@ export const channels: ChannelSource[] = [
   { id: "UCZFMm1mMw0F81Z37aaEzTUA", region: ["in"], language: "en" }, // NDTV — Indian news (English)
   { id: "UC_gUM8rL-Lrg6O3adPW9K1g", region: ["in", "global"], language: "en" }, // WION — Indian news, global-affairs lens
   { id: "UCvJJ_dzjViJCoLf5uKUTwoA", region: ["us", "global"], language: "en" }, // CNBC — US network, global markets coverage
-  { id: "UCknLrEdhRCp1aegoMqRaCZg", region: ["eu", "global"], language: "en" }, // DW News — German public broadcaster, sober European coverage
-  { id: "UC1_E8NeF5QHY2dtdLRBCCLA", region: ["africa", "global"], language: "en" }, // Africanews — pan-African, multilingual outlet's English arm
+  { id: "UCknLrEdhRCp1aegoMqRaCZg", region: ["eu", "global"], language: "en" }, // DW News, German public broadcaster, sober European coverage
+  { id: "UC1_E8NeF5QHY2dtdLRBCCLA", region: ["africa", "global"], language: "en" }, // Africanews, pan-African, multilingual outlet's English arm
 ];

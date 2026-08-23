@@ -11,5 +11,5 @@ export const channels: ChannelSource[] = [
   { id: "UC6nSFpj9HTCZ5t-N3Rm3-HA", region: ["global"], language: "en" }, // Vsauce
   { id: "UC7_gcs09iThXybpVgjHZ_7g", region: ["us", "global"], language: "en" }, // PBS Space Time
   { id: "UCR1IuLEqb6UEA_zQ81kwXfg", region: ["global"], language: "en" }, // Real Engineering
-  { id: "UC1yNl2E66ZzKApQdRuTQ4tw", region: ["eu", "global"], language: "en" }, // Sabine Hossenfelder — skeptical/contrarian physics commentary, Germany
+  { id: "UC1yNl2E66ZzKApQdRuTQ4tw", region: ["eu", "global"], language: "en" }, // Sabine Hossenfelder, skeptical/contrarian physics commentary, Germany
 ];

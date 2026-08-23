@@ -59,7 +59,7 @@ function extractImageUrl(item: RawItemExtras): string | undefined {
   if (item.mediaContent?.$?.url && (!item.mediaContent.$.medium || item.mediaContent.$.medium === "image")) {
     return item.mediaContent.$.url;
   }
-  // Some feeds (e.g. NASA's) carry no dedicated image field at all — the
+  // Some feeds (e.g. NASA's) carry no dedicated image field at all; the
   // only image is inline in the full-content HTML. Take the first <img>,
   // which in practice is the article's lead image, not nav/menu chrome
   // (that's typically inline <svg> in the feeds checked).
