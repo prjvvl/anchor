@@ -4,7 +4,7 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// escapeHtml alone isn't safe inside a quoted attribute — the
+// escapeHtml alone isn't safe inside a quoted attribute: the
 // textContent/innerHTML round-trip encodes <, >, and & but not double
 // quotes, so a `"` in the source string could still break out of the
 // attribute. Used for anything placed inside a quoted HTML attribute
@@ -15,7 +15,7 @@ function escapeAttr(str) {
 
 // Shared, reference-counted body-scroll lock. The sidebar drawer
 // (initSidebarDrawer, below) and the video modal (player.js) each need to
-// lock scroll independently, and they can be open at the same time — a
+// lock scroll independently, and they can be open at the same time: a
 // minimized video floats above everything (z-index 200) and stays
 // clickable even while the drawer (z-index 30) is open behind it. Two
 // separate unconditional `overflow = "hidden"` / `overflow = ""` writers
@@ -48,7 +48,7 @@ function formatViews(count) {
   return new Intl.NumberFormat("en", { notation: "compact" }).format(count);
 }
 
-// Minute granularity — rounding straight to hours would show "0h ago"
+// Minute granularity: rounding straight to hours would show "0h ago"
 // for anything under 30 minutes old, which is most of what shows up here
 // given how often these sections refresh.
 function formatMinutesAgo(timestampMs) {
@@ -91,7 +91,7 @@ function renderCourseSkeletons(count) {
     .join("");
 }
 
-// Loading placeholder for courses.html's per-course preview grid —
+// Loading placeholder for courses.html's per-course preview grid:
 // heading/description bars above a row of the same .video thumb skeletons
 // renderVideoSkeletons already produces, so it inherits .card-grid's sizing
 // for free once real content swaps in.
@@ -138,8 +138,8 @@ function renderVideoCards(videos, ordered) {
 
 // Handles a click on a .viewed-badge (unmark) or the grid card's "more
 // options" menu, before falling through to AnchorPlayer.openFromThumb
-// (player.js). .viewed-badge sits next to .thumb rather than inside it —
-// .thumb is itself a <button>, and buttons can't nest — so this dispatcher
+// (player.js). .viewed-badge sits next to .thumb rather than inside it:
+// .thumb is itself a <button>, and buttons can't nest. This dispatcher
 // is what makes it clickable without needing a second, separately-bound
 // listener juggling stopPropagation against the thumb's own click.
 function onThumbGridClick(event) {
@@ -166,7 +166,7 @@ function renderViewedBadge(videoId) {
 
 // The grid card's "more options" button + dropdown (mirrors the video
 // modal's quick actions, but as a menu since a card has less room). Starts
-// hidden — revealCardMenus un-hides it once sign-in is confirmed, same
+// hidden; revealCardMenus un-hides it once sign-in is confirmed, same
 // sign-in-optional principle as the badges above.
 function renderCardMenu(videoId) {
   return `
@@ -187,7 +187,7 @@ function renderCardMenu(videoId) {
     </div>`;
 }
 
-// Best-effort — never blocks playback. No-op if signed out (nothing to
+// Best-effort: never blocks playback. No-op if signed out (nothing to
 // record for an anonymous visitor).
 async function markViewed(videoId) {
   if (!window.ANCHOR_AUTH) return;
@@ -202,7 +202,7 @@ async function markViewed(videoId) {
 async function unmarkViewed(badge) {
   const videoId = badge.dataset.videoId;
   // .thumb is a sibling of the badge, not an ancestor (see the comment on
-  // renderViewedBadge's insertion point) — capture it via the shared parent
+  // renderViewedBadge's insertion point); capture it via the shared parent
   // before removing the badge, so a failed delete below can restore it.
   const cardEl = badge.closest(".video");
   const thumb = cardEl?.querySelector(".thumb");
@@ -221,7 +221,7 @@ async function unmarkViewed(badge) {
 // the given ids the signed-in user has already watched. Runs after the
 // grid is on screen (most callers fire-and-forget this) so it never adds
 // auth-dependent latency to the primary video/headline load. Returns the
-// viewed Set for callers that need it (e.g. a "Resume" button) — null if
+// viewed Set for callers that need it (e.g. a "Resume" button); null if
 // signed out, distinct from an empty Set ("no progress yet").
 async function markViewedBadges(containerEl, youtubeVideoIds) {
   if (!containerEl || !window.ANCHOR_AUTH || youtubeVideoIds.length === 0) return null;
@@ -245,7 +245,7 @@ async function markViewedBadges(containerEl, youtubeVideoIds) {
 }
 
 // Same idea as markViewedBadges, but bookmarks have no grid badge to
-// insert — the card menu (renderCardMenu) is the only place bookmark state
+// insert; the card menu (renderCardMenu) is the only place bookmark state
 // shows on a grid, so this only needs to sync each card's menu item.
 async function syncBookmarkMenuItems(containerEl, youtubeVideoIds) {
   if (!containerEl || !window.ANCHOR_AUTH || youtubeVideoIds.length === 0) return null;
@@ -267,7 +267,7 @@ async function syncBookmarkMenuItems(containerEl, youtubeVideoIds) {
   return bookmarked;
 }
 
-// Un-hides every .card-menu-btn in containerEl once sign-in is confirmed —
+// Un-hides every .card-menu-btn in containerEl once sign-in is confirmed:
 // the menu itself needs no server data (unlike the badges above, which
 // need to know which videos are already watched/bookmarked), so this only
 // needs a session check, not a query.
@@ -290,7 +290,7 @@ function renderCardMenuItemState(menuItem, active) {
   }
 }
 
-// Only one card menu open at a time — opening a new one (or any click
+// Only one card menu open at a time: opening a new one (or any click
 // outside) closes whichever was open. The opening click itself reaches
 // here via onThumbGridClick's own stopPropagation, so it doesn't
 // immediately re-close what it just opened (same trick as initAuthControl).
@@ -334,7 +334,7 @@ async function handleCardMenuAction(menuItem) {
     if (!cardEl.querySelector(".viewed-badge")) thumb.insertAdjacentHTML("afterend", renderViewedBadge(videoId));
     renderCardMenuItemState(menuItem, true);
   } else if (action === "bookmark") {
-    // No badge to check for existing state (see syncBookmarkMenuItems) —
+    // No badge to check for existing state (see syncBookmarkMenuItems);
     // the menu item's own is-active class is the source of truth here.
     const nowBookmarked = !menuItem.classList.contains("is-active");
     renderCardMenuItemState(menuItem, nowBookmarked);
@@ -351,7 +351,7 @@ async function handleCardMenuAction(menuItem) {
 }
 
 // Returns the signed-in user's full watch history as a Set of
-// youtube_video_ids, or null if signed out (distinct from an empty Set —
+// youtube_video_ids, or null if signed out (distinct from an empty Set:
 // "no history yet" vs. "not signed in, don't show progress at all").
 async function fetchViewedSet() {
   if (!window.ANCHOR_AUTH) return null;
@@ -386,7 +386,7 @@ async function fetchLessonIds(slug) {
 }
 
 // First `limit` active videos for a course playlist, full rows (for
-// thumbnails) rather than just ids. Used by courses.html's preview grid —
+// thumbnails) rather than just ids. Used by courses.html's preview grid;
 // fetchLessonIds above still owns the accurate total/watched count, since a
 // preview only ever fetches a capped batch and can't derive an honest total
 // from it.
@@ -481,8 +481,8 @@ function formatDate(iso) {
 }
 
 // auth-control and theme-toggle live in the sidebar footer (renderSidebar),
-// not here — see the note there for why. This <header> only renders at
-// mobile widths (hidden on desktop via CSS) — .sidebar-brand in
+// not here; see the note there for why. This <header> only renders at
+// mobile widths (hidden on desktop via CSS); .sidebar-brand in
 // renderSidebar is its desktop equivalent, sized for the sidebar's ~190px
 // column instead of the full page width. Kept as two separate renders
 // (rather than one element relocated by JS, like the video modal's quick
@@ -538,7 +538,7 @@ function renderSidebar(activeKey) {
       <a class="nav-item" href="paths.html"${activeKey === "paths" ? ' aria-current="page"' : ""}>
         <span class="material-symbols-outlined">route</span> Learning Paths
       </a>
-      <!-- Mobile-only (see the nav-item-headlines CSS rule) — desktop's
+      <!-- Mobile-only (see the nav-item-headlines CSS rule): desktop's
            side column already shows headlines alongside the shelf stack at
            all times, so this would be a redundant destination there. Links
            to a real URL (not a JS click handler) so it behaves like every
@@ -566,9 +566,9 @@ function mountSidebar(activeKey) {
 
 // --- Sitewide region/language filter ---
 // Anonymous-first (localStorage), reconciled into profiles.preferred_regions
-// /preferred_languages on sign-in — see initRegionLangFilter. Lives in the
+// /preferred_languages on sign-in; see initRegionLangFilter. Lives in the
 // sidebar (mounted on every page via mountSidebar) alongside auth-control
-// and theme-toggle (also moved here, out of the header — see renderHeader)
+// and theme-toggle (also moved here, out of the header; see renderHeader)
 // rather than the header: the header was flagged as cramped at mobile
 // widths even before this existed, and consolidating everything
 // account/preferences-related into one place (the sidebar, always visible
@@ -577,25 +577,34 @@ function mountSidebar(activeKey) {
 const REGION_LANG_STORAGE_KEY = "anchor-region-lang";
 const DEFAULT_REGIONS = ["global"];
 const DEFAULT_LANGUAGES = ["en"];
+// Unlike regions/languages (multi-select, always non-empty), "no home
+// region chosen" is a normal, common state: it just means the homepage
+// falls back to Global + one combined Rest of the World shelf instead of
+// also carving out a dedicated shelf for one region.
+const DEFAULT_HOME_REGION = null;
 
 function arraysEqual(a, b) {
   return a.length === b.length && a.every((v, i) => v === b[i]);
 }
 
-// Drops any stored region/language key that's no longer registered (e.g. a
-// region renamed or removed, like "gb" folding into "eu") — without this, a
-// returning user with a now-unknown key stuck in localStorage/their profile
-// would see every sidebar checkbox unchecked (nothing to render a "gb" box
-// for) while the underlying query still silently filtered on it, with no UI
-// path to fix it. Falls back to defaults if filtering empties the list.
-function sanitizeRegionLangSelection(regions, languages) {
+// Drops any stored region/language/home-region key that's no longer
+// registered (e.g. a region renamed or removed, like "gb" folding into
+// "eu"); without this, a returning user with a now-unknown key stuck in
+// localStorage/their profile would see every sidebar checkbox unchecked
+// (nothing to render a "gb" box for) while the underlying query still
+// silently filtered on it, with no UI path to fix it. Regions/languages
+// fall back to defaults if filtering empties the list; homeRegion falls
+// back to "none" instead, since an empty selection is itself valid for it.
+function sanitizeRegionLangSelection(regions, languages, homeRegion) {
   const validRegions = new Set((window.ANCHOR_REGIONS ?? []).map((r) => r.key));
   const validLanguages = new Set((window.ANCHOR_LANGUAGES ?? []).map((l) => l.key));
+  const validHomeRegions = new Set((window.ANCHOR_HOME_REGIONS ?? []).map((r) => r.key));
   const cleanRegions = regions.filter((r) => validRegions.has(r));
   const cleanLanguages = languages.filter((l) => validLanguages.has(l));
   return {
     regions: cleanRegions.length > 0 ? cleanRegions : DEFAULT_REGIONS,
     languages: cleanLanguages.length > 0 ? cleanLanguages : DEFAULT_LANGUAGES,
+    homeRegion: validHomeRegions.has(homeRegion) ? homeRegion : DEFAULT_HOME_REGION,
   };
 }
 
@@ -604,18 +613,19 @@ function getRegionLangFilter() {
     const parsed = JSON.parse(localStorage.getItem(REGION_LANG_STORAGE_KEY));
     const regions = Array.isArray(parsed?.regions) && parsed.regions.length > 0 ? parsed.regions : DEFAULT_REGIONS;
     const languages = Array.isArray(parsed?.languages) && parsed.languages.length > 0 ? parsed.languages : DEFAULT_LANGUAGES;
-    return sanitizeRegionLangSelection(regions, languages);
+    const homeRegion = parsed?.homeRegion ?? DEFAULT_HOME_REGION;
+    return sanitizeRegionLangSelection(regions, languages, homeRegion);
   } catch {
-    return { regions: DEFAULT_REGIONS, languages: DEFAULT_LANGUAGES };
+    return { regions: DEFAULT_REGIONS, languages: DEFAULT_LANGUAGES, homeRegion: DEFAULT_HOME_REGION };
   }
 }
 
-// Best-effort on both writes — a page must keep working with an in-memory
+// Best-effort on both writes: a page must keep working with an in-memory
 // selection even if localStorage is unavailable (private mode, quota) or
 // the profile update fails (signed in but offline, RLS hiccup, etc.).
-function saveRegionLangFilter(regions, languages) {
+function saveRegionLangFilter(regions, languages, homeRegion) {
   try {
-    localStorage.setItem(REGION_LANG_STORAGE_KEY, JSON.stringify({ regions, languages }));
+    localStorage.setItem(REGION_LANG_STORAGE_KEY, JSON.stringify({ regions, languages, homeRegion }));
   } catch (err) {
     console.error(err);
   }
@@ -624,7 +634,7 @@ function saveRegionLangFilter(regions, languages) {
     if (!session) return;
     window.ANCHOR_AUTH.client
       .from("profiles")
-      .update({ preferred_regions: regions, preferred_languages: languages })
+      .update({ preferred_regions: regions, preferred_languages: languages, preferred_home_region: homeRegion })
       .eq("user_id", session.user.id)
       .then(({ error }) => {
         if (error) console.error(error);
@@ -632,15 +642,15 @@ function saveRegionLangFilter(regions, languages) {
   });
 }
 
-// Collapsed by default — plain checkboxes are still the right widget even
+// Collapsed by default: plain checkboxes are still the right widget even
 // at a half-dozen regions and a couple of languages, but a full always-
 // expanded list at that size would compete with the nav items above it for
 // space in a ~190px column. Region and language are two independent
 // dropdowns (not one combined "Filters" menu) so each can be opened and
-// scanned on its own — each toggle reads a fixed word (Region/Language),
+// scanned on its own; each toggle reads a fixed word (Region/Language),
 // not a live-updating summary of the current selection.
 function renderSidebarFilters() {
-  const { regions, languages } = getRegionLangFilter();
+  const { regions, languages, homeRegion } = getRegionLangFilter();
 
   const renderGroup = (options, group, selected) =>
     (options ?? [])
@@ -648,6 +658,22 @@ function renderSidebarFilters() {
         (o) => `
       <label class="filter-option">
         <input type="checkbox" data-filter-group="${group}" value="${escapeAttr(o.key)}"${selected.includes(o.key) ? " checked" : ""} />
+        ${escapeHtml(o.displayName)}
+      </label>`
+      )
+      .join("");
+
+  // Single-select version of renderGroup: radios instead of checkboxes, so
+  // exactly one option is ever checked (including "None"), with no "never let
+  // it go empty" guard needed like the checkbox groups below, since picking
+  // "None" IS the valid empty state, expressed as a real selected option
+  // rather than an absence of one.
+  const renderRadioGroup = (options, group, selectedValue) =>
+    (options ?? [])
+      .map(
+        (o) => `
+      <label class="filter-option">
+        <input type="radio" name="${group}" data-filter-group="${group}" value="${escapeAttr(o.key)}"${selectedValue === o.key ? " checked" : ""} />
         ${escapeHtml(o.displayName)}
       </label>`
       )
@@ -665,34 +691,70 @@ function renderSidebarFilters() {
       </div>
     </div>`;
 
+  const renderHomeRegionDropdown = () => `
+    <div class="filter-dropdown">
+      <button class="filters-toggle" type="button" data-filter-toggle="home-region" aria-expanded="false" aria-controls="filters-body-home-region">
+        <span class="material-symbols-outlined">home_pin</span>
+        <span class="filters-summary">Home region</span>
+        <span class="material-symbols-outlined filters-chevron">expand_more</span>
+      </button>
+      <div class="filters-body" id="filters-body-home-region" hidden>
+        ${renderRadioGroup([{ key: "", displayName: "None" }, ...(window.ANCHOR_HOME_REGIONS ?? [])], "home-region", homeRegion ?? "")}
+      </div>
+    </div>`;
+
   return `
     <div class="sidebar-filters" id="sidebar-filters">
       ${renderDropdown("region", "public", "Region", window.ANCHOR_REGIONS, regions)}
       ${renderDropdown("language", "translate", "Language", window.ANCHOR_LANGUAGES, languages)}
+      ${renderHomeRegionDropdown()}
     </div>
   `;
 }
 
-function applyRegionLangCheckboxes(regions, languages) {
+function applyRegionLangCheckboxes(regions, languages, homeRegion) {
   document.querySelectorAll('input[data-filter-group="region"]').forEach((el) => (el.checked = regions.includes(el.value)));
   document.querySelectorAll('input[data-filter-group="language"]').forEach((el) => (el.checked = languages.includes(el.value)));
+  document.querySelectorAll('input[data-filter-group="home-region"]').forEach((el) => (el.checked = el.value === (homeRegion ?? "")));
 }
 
 // Builds the region/language portion of a hand-built videos/headlines REST
-// query. `ov` (overlap) on the region array column, `in` on the scalar
-// language column — OR within each facet (any selected value matches),
-// AND across the two params (PostgREST ANDs separate query params
-// together), matching how the filter was scoped: a video/headline shows if
-// its region overlaps the selection AND its language is in the selection.
+// query. This is a coarse, overlap-based PRE-filter only: it's `ov`
+// (overlap) on the region array column so it's guaranteed to return a
+// superset of what should actually show (cheap to compute in SQL, no risk
+// of under-fetching), not the final answer. The precise per-row decision
+// (see regionMatchesFilter below) is applied client-side afterward, because
+// it depends on whether "global" is a source's ONLY tag; array overlap
+// alone can't express that distinction in a single PostgREST filter.
+// `in` on the scalar language column is exact and needs no such follow-up.
 function regionLangQueryParams(regions, languages) {
   return `region=ov.{${regions.join(",")}}&language=in.(${languages.join(",")})`;
 }
 
-// Same AND/OR semantics as regionLangQueryParams, for client-side
-// filtering (courses.html filters its static ANCHOR_PLAYLISTS list rather
-// than querying the DB — see that page for why).
+// A source (channel/feed/course) tagged with both a specific region and
+// "global" (e.g. Al Jazeera: middle-east+global, WION: in+global) is meant
+// to be reachable via ITS SPECIFIC region, not via "global": "global" is
+// reserved for sources with no specific region at all (AP, Reuters). Naive
+// array-overlap matching treated "global" as matching every dual-tagged
+// source too, so selecting only Global on the homepage silently pulled in
+// Al Jazeera, CNA, ABC News Australia, etc. under their own region shelves
+// even though those regions were never selected (see flo/2608-anchor
+// session notes). Fix: a source's specific tags (anything but "global")
+// decide the match when it has any; "global" only decides the match for a
+// source whose sole tag is "global".
+function regionMatchesFilter(entryRegions, regions) {
+  const specific = (entryRegions ?? []).filter((r) => r !== "global");
+  if (specific.length === 0) return regions.includes("global");
+  return specific.some((r) => regions.includes(r));
+}
+
+// Same semantics as regionMatchesFilter, plus the language check, used
+// both for client-side filtering (courses.html filters its static
+// ANCHOR_PLAYLISTS list rather than querying the DB) and to narrow down
+// regionLangQueryParams's coarse DB pre-filter to the precise result
+// (index.html, for videos and headlines).
 function matchesRegionLangFilter(entryRegions, entryLanguage, regions, languages) {
-  return (entryRegions ?? []).some((r) => regions.includes(r)) && languages.includes(entryLanguage);
+  return regionMatchesFilter(entryRegions, regions) && languages.includes(entryLanguage);
 }
 
 // Wires the sidebar checkboxes (present on every page via renderSidebar)
@@ -713,12 +775,25 @@ function initRegionLangFilter() {
 
   sidebar.addEventListener("change", (event) => {
     const input = event.target;
+
     if (!(input instanceof HTMLInputElement) || !input.dataset.filterGroup) return;
+
+    // Home region is radios, not checkboxes, handled separately since it
+    // doesn't share the "never let a facet go empty" rule below (no home
+    // region is a valid, common choice for it, selected explicitly via the
+    // "None" radio rather than by unchecking everything).
+    if (input.dataset.filterGroup === "home-region") {
+      const current = getRegionLangFilter();
+      const homeRegion = input.value || null;
+      saveRegionLangFilter(current.regions, current.languages, homeRegion);
+      window.dispatchEvent(new CustomEvent("anchor-filter-change", { detail: { regions: current.regions, languages: current.languages, homeRegion } }));
+      return;
+    }
 
     const group = input.dataset.filterGroup;
     const checked = [...sidebar.querySelectorAll(`input[data-filter-group="${group}"]`)].filter((el) => el.checked).map((el) => el.value);
 
-    // Never let a facet go empty — re-check the box that would have been
+    // Never let a facet go empty: re-check the box that would have been
     // the last one unchecked instead of applying an all-excluding filter.
     if (checked.length === 0) {
       input.checked = true;
@@ -728,14 +803,14 @@ function initRegionLangFilter() {
     const current = getRegionLangFilter();
     const regions = group === "region" ? checked : current.regions;
     const languages = group === "language" ? checked : current.languages;
-    saveRegionLangFilter(regions, languages);
-    window.dispatchEvent(new CustomEvent("anchor-filter-change", { detail: { regions, languages } }));
+    saveRegionLangFilter(regions, languages, current.homeRegion);
+    window.dispatchEvent(new CustomEvent("anchor-filter-change", { detail: { regions, languages, homeRegion: current.homeRegion } }));
   });
 
   if (!window.ANCHOR_AUTH) return;
 
-  // onAuthStateChange also fires on token refreshes, not just real sign-ins
-  // — same guard pattern as fetchProfileExtras in initAuthControl, so this
+  // onAuthStateChange also fires on token refreshes, not just real sign-ins;
+  // same guard pattern as fetchProfileExtras in initAuthControl, so this
   // reconciliation only runs once per actual sign-in.
   let reconciledUserId = null;
   window.ANCHOR_AUTH.onAuthStateChange(async (event, session) => {
@@ -744,33 +819,43 @@ function initRegionLangFilter() {
 
     const { data, error } = await window.ANCHOR_AUTH.client
       .from("profiles")
-      .select("preferred_regions, preferred_languages")
+      .select("preferred_regions, preferred_languages, preferred_home_region")
       .eq("user_id", session.user.id)
       .maybeSingle();
     if (error || !data) return;
 
     // profiles.preferred_regions/languages are NOT NULL with a default of
-    // {global}/{en} — there's no way to tell "never touched" apart from
+    // {global}/{en}, so there's no way to tell "never touched" apart from
     // "explicitly re-picked the default" at the DB level, so both are
-    // treated the same way: not customized. Whichever side (account vs.
-    // local) actually differs from the default wins; if neither does,
-    // there's nothing to reconcile.
+    // treated the same way: not customized. preferred_home_region is
+    // nullable with no default instead, so null unambiguously means
+    // "never touched" there; no such fallback needed for it. Whichever
+    // side (account vs. local) actually differs from the default wins; if
+    // neither does, there's nothing to reconcile.
     const rawAccountRegions = data.preferred_regions?.length ? data.preferred_regions : DEFAULT_REGIONS;
     const rawAccountLanguages = data.preferred_languages?.length ? data.preferred_languages : DEFAULT_LANGUAGES;
-    const { regions: accountRegions, languages: accountLanguages } = sanitizeRegionLangSelection(rawAccountRegions, rawAccountLanguages);
-    const accountCustomized = !arraysEqual(accountRegions, DEFAULT_REGIONS) || !arraysEqual(accountLanguages, DEFAULT_LANGUAGES);
+    const {
+      regions: accountRegions,
+      languages: accountLanguages,
+      homeRegion: accountHomeRegion,
+    } = sanitizeRegionLangSelection(rawAccountRegions, rawAccountLanguages, data.preferred_home_region);
+    const accountCustomized =
+      !arraysEqual(accountRegions, DEFAULT_REGIONS) || !arraysEqual(accountLanguages, DEFAULT_LANGUAGES) || accountHomeRegion !== DEFAULT_HOME_REGION;
 
     const local = getRegionLangFilter();
-    const localCustomized = !arraysEqual(local.regions, DEFAULT_REGIONS) || !arraysEqual(local.languages, DEFAULT_LANGUAGES);
+    const localCustomized =
+      !arraysEqual(local.regions, DEFAULT_REGIONS) || !arraysEqual(local.languages, DEFAULT_LANGUAGES) || local.homeRegion !== DEFAULT_HOME_REGION;
 
     if (accountCustomized) {
-      localStorage.setItem(REGION_LANG_STORAGE_KEY, JSON.stringify({ regions: accountRegions, languages: accountLanguages }));
-      applyRegionLangCheckboxes(accountRegions, accountLanguages);
-      window.dispatchEvent(new CustomEvent("anchor-filter-change", { detail: { regions: accountRegions, languages: accountLanguages } }));
+      localStorage.setItem(REGION_LANG_STORAGE_KEY, JSON.stringify({ regions: accountRegions, languages: accountLanguages, homeRegion: accountHomeRegion }));
+      applyRegionLangCheckboxes(accountRegions, accountLanguages, accountHomeRegion);
+      window.dispatchEvent(
+        new CustomEvent("anchor-filter-change", { detail: { regions: accountRegions, languages: accountLanguages, homeRegion: accountHomeRegion } })
+      );
     } else if (localCustomized) {
       const { error: updateError } = await window.ANCHOR_AUTH.client
         .from("profiles")
-        .update({ preferred_regions: local.regions, preferred_languages: local.languages })
+        .update({ preferred_regions: local.regions, preferred_languages: local.languages, preferred_home_region: local.homeRegion })
         .eq("user_id", session.user.id);
       if (updateError) console.error(updateError);
     }
@@ -803,12 +888,12 @@ function initSidebarDrawer() {
   const closeBtn = document.getElementById("sidebar-close");
   if (!hamburger || !sidebar || !backdrop) return;
 
-  // Body scroll lock while the drawer is open — without it, a touch/wheel
+  // Body scroll lock while the drawer is open: without it, a touch/wheel
   // scroll starting anywhere over the fixed-position drawer or backdrop
   // still scrolls the page underneath (position: fixed doesn't stop that on
   // its own), which reads as the drawer's own contents behaving
   // inconsistently on scroll even though the drawer itself never moves.
-  // Goes through AnchorScrollLock, not a direct overflow write — the video
+  // Goes through AnchorScrollLock, not a direct overflow write: the video
   // modal can be open (minimized, z-index 200) at the same time as this
   // drawer, and two independent unconditional writers would let whichever
   // closes last clobber the other's still-active lock.
@@ -834,26 +919,69 @@ function initSidebarDrawer() {
   // .hamburger/.drawer-backdrop are display:none above 860px (see
   // styles.css), so a drawer left open while crossing into that width
   // (window resize, tablet rotation) would otherwise have no visible way to
-  // close it — the scroll lock especially shouldn't be left stuck on with
+  // close it; the scroll lock especially shouldn't be left stuck on with
   // no click target to release it.
   window.matchMedia("(min-width: 861px)").addEventListener("change", (event) => {
     if (event.matches && sidebar.classList.contains("open")) close();
   });
+
+  initHeaderAutoHide();
+}
+
+// Mobile-only: the top header (hamburger + logo) is position: fixed with a
+// slide-away transform (see styles.css's max-width:860px block), not just
+// sitting in normal flow: without this, once you scroll down there's no
+// way back to the hamburger short of scrolling all the way back to the
+// top. Hides on scroll-down (maximizes reading space, in keeping with the
+// site's uncluttered homepage), reveals immediately on scroll-up. Runs
+// unconditionally (no width check): the CSS transform this toggles only
+// has any visible effect at mobile widths anyway, since header is
+// `display: none` above 860px.
+function initHeaderAutoHide() {
+  const header = document.querySelector("header");
+  if (!header) return;
+
+  let lastScrollY = window.scrollY;
+  let ticking = false;
+
+  const onScroll = () => {
+    const currentScrollY = window.scrollY;
+    // Always show near the very top: otherwise a trivial downward scroll
+    // right after page load hides the header before the user's scrolled
+    // anywhere meaningful.
+    if (currentScrollY <= header.offsetHeight) {
+      header.classList.remove("header-hidden");
+    } else {
+      header.classList.toggle("header-hidden", currentScrollY > lastScrollY);
+    }
+    lastScrollY = currentScrollY;
+    ticking = false;
+  };
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(onScroll);
+    },
+    { passive: true }
+  );
 }
 
 function initAuthControl() {
   const container = document.getElementById("auth-control");
   // window.ANCHOR_AUTH is missing if the Supabase CDN script failed to load
-  // (outage, ad-blocker, flaky network) — bail here rather than throw, since
+  // (outage, ad-blocker, flaky network); bail here rather than throw, since
   // an uncaught error would halt every statement after this call in the
   // page's init script, taking down video/headline loading along with it.
   if (!container || !window.ANCHOR_AUTH) return;
 
   let session = null;
-  let displayName = null; // fetched separately — not part of the auth session itself
-  let newsletterOptIn = null; // null = not yet fetched, true/false once known — see fetchProfileExtras
+  let displayName = null; // fetched separately, not part of the auth session itself
+  let newsletterOptIn = null; // null = not yet fetched, true/false once known; see fetchProfileExtras
   let panelOpen = false;
-  let step = "email"; // "email" | "code" — irrelevant once session is set
+  let step = "email"; // "email" | "code"; irrelevant once session is set
   let pendingEmail = "";
   let cooldownEndsAt = 0;
   let cooldownInterval;
@@ -863,9 +991,9 @@ function initAuthControl() {
   }
 
   // Fetched once per sign-in (guarded by the newsletterOptIn === null check
-  // at the call site below, not displayName — a user with no display name
+  // at the call site below, not displayName, since a user with no display name
   // set stays null forever, which would re-fetch on every auth event
-  // instead of just once) rather than on every auth event —
+  // instead of just once) rather than on every auth event:
   // onAuthStateChange also fires for token refreshes, which don't need a
   // fresh profile fetch.
   async function fetchProfileExtras(userId) {
@@ -941,12 +1069,12 @@ function initAuthControl() {
       render();
     });
 
-    // Footer newsletter CTA is optional — only present on pages that have
-    // it — but when present, it stays in lockstep with this same session
+    // Footer newsletter CTA is optional (only present on pages that have
+    // it), but when present, it stays in lockstep with this same session
     // value rather than running its own separate auth-state subscription.
     // Copy swaps three ways, not just signed-in-vs-not: a signed-in user
     // who already opted in gets an acknowledgement instead of the same
-    // acquisition pitch every other state sees — there's no reason to keep
+    // acquisition pitch every other state sees, since there's no reason to keep
     // asking someone to get the digest they're already getting.
     const footerSlot = document.getElementById("footer-cta");
     if (footerSlot) {
@@ -964,7 +1092,7 @@ function initAuthControl() {
         : `<button class="btn-primary" type="button" id="footer-cta-signin">Sign in to subscribe</button>`;
       document.getElementById("footer-cta-signin")?.addEventListener("click", (event) => {
         // This button lives outside #auth-control, so its click isn't
-        // covered by that container's stopPropagation guard — without this,
+        // covered by that container's stopPropagation guard: without this,
         // the click would bubble to the document listener below right after
         // opening the panel, and immediately close it again (same failure
         // mode the header toggle button hit during Phase 1 testing).
@@ -1038,7 +1166,7 @@ function initAuthControl() {
         }
         pendingEmail = email;
         step = "code";
-        // render() must run first — it's what puts #auth-resend in the DOM.
+        // render() must run first: it's what puts #auth-resend in the DOM.
         // startCooldown()'s own immediate updateCooldownLabel() call bails
         // out (and kills the interval it just started) if that button
         // doesn't exist yet, which silently broke the whole countdown.
@@ -1050,9 +1178,9 @@ function initAuthControl() {
 
   // Pages have their own sign-in-optional content (Continue Learning,
   // watched badges, the card menu's reveal, resume buttons, ...) computed
-  // once from a single getSession() check at load time — completing OTP
+  // once from a single getSession() check at load time: completing OTP
   // mid-session doesn't re-run any of that on its own. Broadcasting a real
-  // sign-in/out transition here (not every fire — onAuthStateChange also
+  // sign-in/out transition here (not every fire; onAuthStateChange also
   // fires on token refreshes) lets each page listen for "anchor-auth-change"
   // and re-run just the parts that need it, same pattern as
   // "anchor-filter-change" for the region/language filter.
@@ -1075,7 +1203,7 @@ function initAuthControl() {
   });
 
   // profile.html's newsletter toggle updates the DB directly, not through
-  // this module — without this, the footer CTA on that same page keeps
+  // this module: without this, the footer CTA on that same page keeps
   // showing the pre-toggle copy until the next full page load, since
   // newsletterOptIn here is otherwise only ever fetched once per sign-in.
   window.addEventListener("anchor-newsletter-change", (event) => {
@@ -1085,7 +1213,7 @@ function initAuthControl() {
 
   // Any click inside the control (including on elements that render()
   // replaces mid-bubble, like the toggle button itself) must never reach
-  // the document listener below — by the time it bubbles up, the original
+  // the document listener below: by the time it bubbles up, the original
   // event.target may already be detached from the DOM, so container.contains()
   // would wrongly read as "outside" and close the panel that was just opened.
   container.addEventListener("click", (event) => event.stopPropagation());

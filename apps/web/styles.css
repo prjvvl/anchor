@@ -16,7 +16,7 @@
   --border: #262f45;
 }
 
-/* Thin, theme-matched scrollbar — not hidden outright (that removes the
+/* Thin, theme-matched scrollbar: not hidden outright (that removes the
    only visual cue a panel scrolls, a real usability regression, especially
    on Windows where there's no other scroll affordance by default). Instead
    replaces the default chunky Windows scrollbar with a slim, subtle one
@@ -57,14 +57,15 @@
   box-sizing: border-box;
 }
 
-/* Native checkboxes otherwise render with the browser's default blue fill
-   regardless of theme — clashes with the site's dark palette and doesn't
-   match the monochrome --ink/--bg look everything else uses for an
+/* Native checkboxes/radios otherwise render with the browser's default blue
+   fill regardless of theme: clashes with the site's dark palette and
+   doesn't match the monochrome --ink/--bg look everything else uses for an
    "active" state (nav-item[aria-current], .btn-primary, ...). One shared
-   rule since checkboxes show up in three unrelated places (region/language
-   filters, the profile newsletter toggle, the video modal's autoplay
+   rule since they show up in several unrelated places (region/language/home
+   region filters, the profile newsletter toggle, the video modal's autoplay
    toggle) that shouldn't each need their own override. */
-input[type="checkbox"] {
+input[type="checkbox"],
+input[type="radio"] {
   accent-color: var(--ink);
 }
 
@@ -75,7 +76,7 @@ body {
   margin: 0;
 }
 
-/* Mobile-only branding bar (hidden at desktop widths further down) —
+/* Mobile-only branding bar (hidden at desktop widths further down):
    .sidebar-brand is the desktop equivalent, sized for the sidebar's ~190px
    column instead of the full page width. */
 header {
@@ -84,11 +85,17 @@ header {
   gap: 0.75rem;
   max-width: 1600px;
   margin: 0 auto;
-  padding: 2rem 1.25rem 1rem;
+  /* Symmetric, not the top-heavy 2rem/1rem this used to be: that split
+     made sense when header just sat at the top of a scrolling page (extra
+     top breathing room from the viewport edge), but reads as visibly
+     unbalanced now that it's a persistent fixed bar with its own
+     background (see the max-width:860px block below). Keep in lockstep
+     with that block's main padding-top comment if this changes again. */
+  padding: 1rem 1.25rem;
 }
 
-/* Wraps the logo/title so the whole header, like .sidebar-brand, links home
-   — its own flex/gap reproduces what a plain sibling img+div used to give
+/* Wraps the logo/title so the whole header, like .sidebar-brand, links home;
+   its own flex/gap reproduces what a plain sibling img+div used to give
    header's own flex for free, since header now only has two children
    (the hamburger and this link). */
 .header-brand {
@@ -136,17 +143,17 @@ header p {
   margin: 0 auto;
 }
 
-/* Full viewport height + sticky, not just "grows with content" — that's
+/* Full viewport height + sticky, not just "grows with content": that's
    what lets .sidebar-footer sit pinned at the bottom (via .sidebar-scroll
    taking the remaining flex:1 space above it) instead of just being last
    in the document flow, which wouldn't reach the bottom on a short page.
    z-index matters here too: position: sticky always creates a stacking
    context, so without an explicit z-index .auth-panel's own z-index (45)
-   only ever competes against its siblings *inside* that context — never
+   only ever competes against its siblings *inside* that context, never
    against main's content. A hovered .video card gets its own stacking
    context too (via transform), and since main comes after .sidebar in the
    DOM, it would win the paint order and cover the panel regardless of the
-   panel's own z-index. Below 200 (.video-modal-backdrop) — this only needs
+   panel's own z-index. Below 200 (.video-modal-backdrop): this only needs
    to beat auto-level main content, not the video modal. */
 .sidebar {
   width: 190px;
@@ -190,7 +197,7 @@ header p {
 }
 
 /* The full-width mobile <header> and .sidebar-brand are two separate
-   renders of the same branding (see the comment on renderHeader) — only
+   renders of the same branding (see the comment on renderHeader): only
    one is ever visible at a time. Hiding the header here also removes the
    gap it used to leave above main on desktop; main now starts at the true
    top of the page (see main's own padding-top override below). */
@@ -207,7 +214,7 @@ header p {
     padding-top: 2rem;
   }
 
-  /* Mobile-only nav destination — desktop's side column already shows
+  /* Mobile-only nav destination: desktop's side column already shows
      headlines alongside the shelf stack at all times (see index.html),
      so this would just be a redundant link there. `a.nav-item-headlines`
      (not just `.nav-item-headlines`) is deliberate: the general `.nav-item`
@@ -292,7 +299,7 @@ header p {
   margin-top: 0.3rem;
 }
 
-/* Author `display: flex` above otherwise beats the UA [hidden] rule — same
+/* Author `display: flex` above otherwise beats the UA [hidden] rule: same
    recurring gap this project has hit before (see .quick-action-btn etc.). */
 .filters-body[hidden] {
   display: none;
@@ -308,7 +315,10 @@ header p {
   cursor: pointer;
 }
 
-.filter-option input[type="checkbox"] {
+/* type="radio" is Home region's single-select list (see renderRadioGroup in
+   helpers.js): same sizing as the checkbox groups above it. */
+.filter-option input[type="checkbox"],
+.filter-option input[type="radio"] {
   width: 15px;
   height: 15px;
   cursor: pointer;
@@ -339,12 +349,49 @@ header p {
   }
 
   /* At mobile widths, hamburger + logo + title still leaves too little
-     room for the subtitle on one line next to "Daily Anchor" — drop it
+     room for the subtitle on one line next to "Daily Anchor": drop it
      rather than let it wrap into a cramped stack. (auth-btn/theme-toggle
      used to compete for this same space too, before they moved into the
-     sidebar footer — see renderSidebar.) */
+     sidebar footer; see renderSidebar.) */
   header p {
     display: none;
+  }
+
+  /* Fixed + slide-away-on-scroll-down/reveal-on-scroll-up (see
+     initHeaderAutoHide in helpers.js): otherwise the header just sits in
+     normal document flow and scrolls off for good, leaving no way back to
+     the hamburger without scrolling all the way back to the top. z-index
+     15: above ordinary content (auto/0) so it doesn't scroll under it, but
+     below .drawer-backdrop (20)/.sidebar (30) so opening the drawer dims
+     the header along with everything else instead of leaving it stranded
+     on top of the dimming overlay. */
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 15;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    transform: translateY(0);
+    transition: transform 0.25s ease;
+  }
+
+  header.header-hidden {
+    transform: translateY(-100%);
+  }
+
+  /* Header is now removed from flow (position: fixed above): main needs
+     its own top offset to clear it instead of the two just naturally
+     stacking. 68px is header's own height (1rem+1rem vertical padding +
+     its 36px-tall content row, `header p`'s subtitle already hidden above);
+     keep this in lockstep with header's padding/content if either
+     changes, or main's first row ends up under the fixed header.
+     `body main`, not bare `main`: the base `main{padding:...}` rule further
+     down the file has equal specificity and would otherwise win this on
+     source order alone regardless of this media query matching. */
+  body main {
+    padding-top: calc(68px + 1rem);
   }
 
   .sidebar-close {
@@ -381,7 +428,7 @@ header p {
     z-index: 30;
   }
 
-  /* .sidebar-brand is desktop-only (see the base rule) — on mobile the top
+  /* .sidebar-brand is desktop-only (see the base rule): on mobile the top
      header already shows branding, so .sidebar-scroll needs its own top
      padding here instead of getting it for free below .sidebar-brand. */
   .sidebar-scroll {
@@ -411,7 +458,7 @@ header p {
 
 /* display: flex + flex:1 on .auth-btn below is what lets the button fill
    the sidebar-footer row (sized by .theme-toggle's fixed 36px + the row's
-   own width) — .auth-panel is position: absolute so it doesn't
+   own width): .auth-panel is position: absolute so it doesn't
    participate in this and isn't affected. */
 .auth-control {
   position: relative;
@@ -443,7 +490,7 @@ header p {
 }
 
 /* text-overflow: ellipsis doesn't reliably render on native <button>
-   elements (a long-standing cross-browser quirk) — the box truncates
+   elements (a long-standing cross-browser quirk): the box truncates
    correctly but silently drops the "…" indicator, reading as broken text
    rather than an intentional truncation. Applying it to this inner span
    instead of the button itself renders correctly everywhere. */
@@ -458,13 +505,13 @@ header p {
   background: var(--border);
 }
 
-/* left: 0, not right: 0 — .auth-control now lives in the ~190px sidebar
+/* left: 0, not right: 0: .auth-control now lives in the ~190px sidebar
    near the viewport's left edge. Anchoring the panel's right edge to
    auth-control's right edge (the old header-era positioning) would push
    most of this 260px-wide panel off-screen to the left; anchoring its left
    edge instead expands it rightward into the main content area, which has
    room.
-   bottom, not top — .auth-control now sits at the very bottom of the
+   bottom, not top: .auth-control now sits at the very bottom of the
    sidebar footer, so opening downward (the old header-era positioning,
    where there was a whole page below it) pushed the panel past the
    viewport's bottom edge. Opening upward has the sidebar's full height
@@ -595,7 +642,7 @@ main {
   padding: 2rem 0;
 }
 
-/* auto-fill + minmax instead of a fixed column count — column count
+/* auto-fill + minmax instead of a fixed column count, so column count
    responds to actual available width (narrower inside a split layout like
    the homepage's videos/headlines columns, wider on courses.html/course.html
    which don't share the row), rather than one hardcoded breakpoint. */
@@ -605,11 +652,11 @@ main {
   gap: 1.25rem;
 }
 
-/* Shared "course preview" component — courses.html (one per course in a
+/* Shared "course preview" component: courses.html (one per course in a
    department) and path.html (one per course in a path) both render a
    course's heading/description above a capped, horizontally-scrolling row
    of its videos, closed out by a .video-cta tile. Single row, not a
-   wrapping grid — vertical space per course stays constant regardless of
+   wrapping grid, so vertical space per course stays constant regardless of
    how many are listed on the page, no reflow needed at narrow widths. */
 .course-preview {
   margin-bottom: 1.75rem;
@@ -666,7 +713,7 @@ main {
    styled like the video cards beside it (no thumbnail) so it reads as an
    action, not a 6th piece of content. Uses --bg/--ink the same direction
    the .video cards' own background does (card-bg is a step off --bg in
-   both themes), rather than .btn-primary's inverted fill — a stark
+   both themes), rather than .btn-primary's inverted fill, because a stark
    white-on-dark tile stood out as looking broken, not accented, once it
    was one repeated tile among many rather than a single button. */
 .video-cta {
@@ -728,7 +775,7 @@ main {
   opacity: 0.75;
 }
 
-/* Small tier-name pill — path.html's per-step badge and paths.html's
+/* Small tier-name pill, used by path.html's per-step badge and paths.html's
    tier-span badge (e.g. "Fundamental → Advanced"). */
 .tier-pill {
   flex-shrink: 0;
@@ -756,7 +803,7 @@ main {
 
 /* Clipping lives here (not on .video) so the card's own rounded corners
    still clip the thumbnail image, without also clipping the card-menu
-   dropdown below — that needs to extend past the card's box when open. */
+   dropdown below, which needs to extend past the card's box when open. */
 .video .thumb {
   display: block;
   position: relative;
@@ -770,7 +817,7 @@ main {
 }
 
 /* Ordered courses' episode number, shared by course.html's full lesson
-   list and courses.html's preview grid — top-left, since .duration/
+   list and courses.html's preview grid: top-left, since .duration/
    .card-menu-wrap/.viewed-badge all live top-right. */
 .episode-badge {
   position: absolute;
@@ -797,7 +844,7 @@ main {
 }
 
 /* Top-right, alongside .card-menu-wrap (also top-right, further out at
-   right:6px) — sits just to that button's left, "before" it in reading
+   right:6px); sits just to that button's left, "before" it in reading
    order. Both only ever show for a signed-in user, so there's no case
    where this renders without the button also being present. */
 .viewed-badge {
@@ -808,7 +855,7 @@ main {
   height: 22px;
   border-radius: 50%;
   border: none;
-  /* Same green as .toast.success — "watched" reuses the site's existing
+  /* Same green as .toast.success, since "watched" reuses the site's existing
      success color instead of introducing a new one. */
   background: #1a9c5f;
   color: #fff;
@@ -828,9 +875,9 @@ main {
   background: #157f45;
 }
 
-/* Grid-card "more options" menu — top-right corner, outermost, with
+/* Grid-card "more options" menu: top-right corner, outermost, with
    .viewed-badge sitting just to its left (see that rule) when present.
-   Positioned relative to .video (not .thumb, which clips — see the
+   Positioned relative to .video (not .thumb, which clips; see the
    comment on .video .thumb) even though it's a sibling of .thumb, same
    reasoning as .viewed-badge's placement. course.html's .episode-badge
    (defined there) uses the top-left corner instead, so no collision. */
@@ -940,7 +987,7 @@ main {
 
 /* Lives inside <main> (a direct sibling of the shelf/content stack, right
    before </main>) precisely so it inherits main's own horizontal padding
-   and its offset past the sidebar — a plain page-level sibling of
+   and its offset past the sidebar: a plain page-level sibling of
    .app-body instead (the old placement) spans the full viewport width,
    including the space the sidebar column occupies, so its content doesn't
    line up with everything above it. No max-width/centering of its own
@@ -1083,8 +1130,8 @@ footer {
 }
 
 /* .btn-primary's own `display: inline-flex` otherwise beats the UA [hidden]
-   rule — same gap as .video-modal-error/.quick-action-btn further
-   down — so the button was visible (and clickable, before the click
+   rule (same gap as .video-modal-error/.quick-action-btn further
+   down), so the button was visible (and clickable, before the click
    listener was even attached) during the initial load window. Scoped to
    .play-all-btn rather than .btn-primary itself since no other .btn-primary
    usage toggles `hidden`. */
@@ -1092,7 +1139,7 @@ footer {
   display: none;
 }
 
-/* Modal/theater video player — replaces the old inline-card iframe swap.
+/* Modal/theater video player, replacing the old inline-card iframe swap.
    z-index sits above both .toast (100) and .auth-panel (45). */
 .video-modal-backdrop {
   display: none;
@@ -1156,7 +1203,7 @@ footer {
    line 1, watched/bookmark quick actions on line 2, both right-aligned.
    Deliberately plain buttons rather than a menu so both states are visible
    and clickable without an extra tap. On mobile, .video-modal-quick-actions
-   is moved out of here entirely (see positionQuickActions in player.js) —
+   is moved out of here entirely (see positionQuickActions in player.js);
    this wrapper just falls back to holding .video-modal-actions alone. */
 .video-modal-header-right {
   display: flex;
@@ -1200,7 +1247,7 @@ footer {
   background: var(--border);
 }
 
-/* Same green as .viewed-badge / .toast.success — reused for any "on" state
+/* Same green as .viewed-badge / .toast.success, reused for any "on" state
    (watched, bookmarked) rather than introducing a new color. */
 .quick-action-btn.is-active {
   border-color: #1a9c5f;
@@ -1228,8 +1275,8 @@ footer {
   }
 }
 
-/* Shared by the grid card's overflow ("more options") menu — see
-   .card-menu-wrap further down. Same anchored-dropdown convention as
+/* Shared by the grid card's overflow ("more options") menu (see
+   .card-menu-wrap further down). Same anchored-dropdown convention as
    .auth-panel: toggled via a class, not the hidden attribute, so it
    doesn't need a defensive [hidden] rule. */
 .menu-panel {
@@ -1331,7 +1378,7 @@ footer {
   max-width: 100%;
   /* Without this, the grid's default align-items: stretch forces this box
      to match the row's height (which the auto-sized track would otherwise
-     take from whichever column is taller — i.e. a long Up Next list),
+     take from whichever column is taller, i.e. a long Up Next list),
      squashing/cropping the embedded video instead of letting aspect-ratio
      govern its size. Sized purely from its own width; player.js then
      measures the result and imposes it as the Up Next column's explicit
@@ -1350,7 +1397,7 @@ footer {
 }
 
 /* Same [hidden]-vs-author-display gap as .video-modal-error/.quick-action-btn
-   above — onError() sets playerMountEl.hidden to swap in the error overlay,
+   above: onError() sets playerMountEl.hidden to swap in the error overlay,
    but without this the mount (and its stale last-frame iframe) kept
    rendering underneath it. */
 .video-modal-player-mount[hidden] {
@@ -1372,7 +1419,7 @@ footer {
 
 /* Author `display: flex` above otherwise beats the UA [hidden] rule, so the
    (empty, transparent) error box stayed laid out over the player even while
-   "hidden" — an invisible layer that silently ate every click meant for the
+   "hidden", an invisible layer that silently ate every click meant for the
    iframe's own play/pause/settings controls. Needs the extra specificity
    here (class + attribute) to actually win. */
 .video-modal-error[hidden] {
@@ -1490,7 +1537,7 @@ footer {
   }
 
   /* Side-by-side titles + actions get cramped next to a long title at
-     narrow widths — stack them instead, actions on top. column-reverse
+     narrow widths, so stack them instead, actions on top. column-reverse
      flips the visual order without reordering the DOM (titles stay first
      for source order / screen readers). */
   .video-modal-header {
@@ -1503,7 +1550,7 @@ footer {
     justify-content: flex-end;
   }
 
-  /* 3 rows, not 2 — player.js's positionQuickActions() reparents
+  /* 3 rows, not 2: player.js's positionQuickActions() reparents
      .video-modal-quick-actions in here (between player-area and upnext)
      at this same breakpoint, since CSS alone can't move it out of the
      header. */
@@ -1519,7 +1566,7 @@ footer {
   }
 }
 
-/* Minimized ("mini player") mode — the video keeps playing in a small
+/* Minimized ("mini player") mode: the video keeps playing in a small
    corner box while the backdrop stops dimming/blocking the rest of the
    page, so the user can keep scrolling/browsing elsewhere. Declared after
    the max-width: 860px block (and using the .minimized class, one level

@@ -16,7 +16,7 @@
   }
 
   /* Continue Learning + Headlines stacked in the right column via a plain
-     flex wrapper, not CSS Grid row-spanning — a spanning .videos-column
+     flex wrapper, not CSS Grid row-spanning: a spanning .videos-column
      next to a short first-row item inflates that row's track height to
      help fit the tall spanning item, leaving dead space below the short
      item. Nesting them avoids the row-track algorithm entirely. */
@@ -30,7 +30,7 @@
      visible right beneath it in .side-column's flex stack. On mobile,
      headlines-column is hidden by default (see the headlines-only-view
      rules below) so Continue Learning is .side-column's only visible
-     child — this margin would just add dead space before the shelf stack
+     child; this margin would just add dead space before the shelf stack
      on top of .layout's own row gap, which is the mobile gap bug. */
   @media (min-width: 861px) {
     #continue-learning:not(:empty) {
@@ -39,14 +39,14 @@
 
     /* Keeps Continue Learning + Headlines in view while the (usually much
        taller, especially with shelves expanded via "Show more") video
-       column scrolls past. Sticky alone isn't enough here — headlines
+       column scrolls past. Sticky alone isn't enough here: headlines
        across every category easily add up to several viewports' worth
        (measured ~4000px against a ~800px viewport in testing), so with no
        height cap .side-column's containing block ends up roughly as tall
        as .side-column itself, leaving no slack for anything to visibly
        stick. Bounding it to the viewport (max-height) and letting the
        headlines list scroll internally (flex: 1 + its own overflow-y,
-       not .side-column's) is what actually keeps it in view — Continue
+       not .side-column's) is what actually keeps it in view: Continue
        Learning, above the scrollable part, stays fully visible throughout
        rather than also scrolling away. top matches main's own desktop
        padding-top just above. */
@@ -162,11 +162,11 @@
     margin-bottom: 1.75rem;
   }
 
-  /* Only when there's an actual course to show — groups the streak badge,
+  /* Only when there's an actual course to show: groups the streak badge,
      label, and cards into one bordered unit instead of three loose
      elements stacked with no shared boundary. A streak with no touched
      course yet (.shelf without this class, see renderShelf) stays a plain
-     pill — a full card around one lone badge would be a lot of chrome for
+     pill; a full card around one lone badge would be a lot of chrome for
      very little content. */
   .shelf-panel {
     background: var(--card-bg);
@@ -359,8 +359,8 @@
     padding: 0.35rem 0.7rem;
   }
 
-  /* Wraps #home-feedback + <footer> (a sibling of .layout, not inside it)
-     — stacked full-width on mobile, side by side on desktop, so the two
+  /* Wraps #home-feedback + <footer> (a sibling of .layout, not inside it),
+     stacked full-width on mobile, side by side on desktop, so the two
      end-of-page cards don't leave one looking lonely next to a big empty
      gap. Owns the top spacing from the shelf stack above and zeroes out
      both children's own margin-top (.feedback-section's own 1.75rem,
@@ -373,7 +373,7 @@
     margin-top: 1.75rem;
   }
 
-  /* Overrides footer's sitewide margin-top (styles.css) — this wrapper's
+  /* Overrides footer's sitewide margin-top (styles.css): this wrapper's
      own gap handles the spacing here instead. */
   .home-footer-row footer {
     margin-top: 0;
@@ -382,7 +382,7 @@
   @media (min-width: 861px) {
     .home-footer-row {
       flex-direction: row;
-      /* stretch (the flex default), not flex-start — the two cards read as
+      /* stretch (the flex default), not flex-start: the two cards read as
          a deliberate pair sized to match, not one arbitrarily taller than
          the other. Both cards' internal layout is adjusted below (height:
          100% + column flex + margin-top: auto on the action) so the extra
@@ -396,8 +396,8 @@
       min-width: 0;
     }
 
-    /* height: 100% goes on .feedback-section — the descendant one level
-       below the actual flex item (#home-feedback) — not on #home-feedback
+    /* height: 100% goes on .feedback-section, the descendant one level
+       below the actual flex item (#home-feedback), not on #home-feedback
        itself. An explicit height on a flex item can override align-items:
        stretch instead of just relying on it (a definite height "wins" over
        stretch per the flex spec), so #home-feedback is left alone to
@@ -410,15 +410,15 @@
     }
 
     /* loadFeedbackCard() renders exactly one of two different components
-       here depending on sign-in state — .signin-prompt (signed out) or
-       .feedback-card (signed in) — and this needs to stretch to match
+       here depending on sign-in state (.signin-prompt for signed out, or
+       .feedback-card for signed in), and this needs to stretch to match
        .subscribe's height either way. flex: 1 (grow to fill) on "whichever
        single child .feedback-section has" does that generically, rather
        than a height: 100% rule naming .feedback-card specifically, which
        would silently stop working the moment a different variant renders
        (as it already did for the signed-out state, which needed the same
        treatment but wasn't covered). Deliberately not also forcing
-       display/flex-direction here — .signin-prompt already declares its
+       display/flex-direction here: .signin-prompt already declares its
        own row layout (icon, text, button side by side) and just needs to
        grow taller so that layout's own align-items: center vertically
        centers it in the extra space; overriding it to a column would
@@ -429,7 +429,7 @@
     }
 
     /* Unlike .signin-prompt (see above), .feedback-card's base rule
-       (defined further down) has no display/direction of its own — it
+       (defined further down) has no display/direction of its own: it
        does need the column treatment, so it's given one here explicitly,
        scoped to this layout rather than changed globally. */
     .home-footer-row .feedback-card {
@@ -453,7 +453,7 @@
     }
 
     /* .subscribe's base rule (styles.css) lays it out as one centered row
-       (copy left, button right) — sized for its old spot as a short,
+       (copy left, button right), sized for its old spot as a short,
        standalone strip. Restructured to a column here so it mirrors
        .feedback-card's shape (copy on top, action pinned to the bottom via
        margin-top: auto), which is what makes the stretched height actually
@@ -516,8 +516,8 @@
     align-self: flex-end;
   }
 
-  /* All rolling content — Top News (split into per-region shelves),
-     Explainers, Business, and any genre added later — renders as one
+  /* All rolling content (Top News, split into per-region shelves;
+     Explainers, Business, and any genre added later) renders as one
      vertical stack of .home-shelf blocks in .videos-column, in that order.
      No tabs: everything is always visible, on every width. Headlines keeps
      its own persistent side column (unchanged). */
@@ -536,7 +536,7 @@
   }
 
   /* Sits below the grid as its own full-width row, not up in the heading
-     next to Play All — reuses styles.css's .btn-secondary shape (block,
+     next to Play All: reuses styles.css's .btn-secondary shape (block,
      full-width, subtle border) as-is, just given a distinct class so its
      text can be swapped between "Show more"/"Show less" without touching
      the shared button style. */
@@ -563,7 +563,7 @@
 
   /* Two-tier visual cap for a shelf's grid: "collapsed" shows the first 6
      (desktop) or 4 (mobile) cards, "Show more" switches to "expanded" which
-     raises the cap to 12 — not unlimited, still a curated amount. Plain
+     raises the cap to 12, not unlimited, still a curated amount. Plain
      descendant selectors, not the [hidden] attribute: an author display
      rule always beats [hidden]'s UA default, a bug this codebase has hit
      repeatedly (see .video-modal-error et al. in player.js's history), so
@@ -576,7 +576,7 @@
     display: none;
   }
 
-  /* Headlines-only view (reached via the mobile-only sidebar nav item —
+  /* Headlines-only view (reached via the mobile-only sidebar nav item;
      see helpers.js and .nav-item-headlines) swaps out the shelf stack and
      Continue Learning entirely so headlines render full-width, instead of
      staying squeezed into the narrow side column. Works at any width, but
@@ -591,7 +591,7 @@
   }
 
   @media (max-width: 860px) {
-    /* Desktop-only — mobile's top header bar already carries a tagline. */
+    /* Desktop-only: mobile's top header bar already carries a tagline. */
     .home-intro {
       display: none;
     }
@@ -600,7 +600,7 @@
       grid-template-columns: 1fr;
       /* Default mobile view stacks Continue Learning (in .side-column,
          reordered first below) directly above the shelf stack, with
-         headlines-column hidden — .layout's 2rem desktop gap was tuned for
+         headlines-column hidden: .layout's 2rem desktop gap was tuned for
          two side-by-side columns and reads as a big dead gap here since
          it's now a row gap between just a small card and the next section. */
       gap: 1.25rem;
@@ -610,7 +610,7 @@
       order: -1;
     }
 
-    /* Default mobile view is shelves-only — headlines are reachable via the
+    /* Default mobile view is shelves-only: headlines are reachable via the
        sidebar nav item instead (see main[data-home-view="headlines"] above),
        so they shouldn't also take up scroll space here at the same time. */
     main:not([data-home-view="headlines"]) .headlines-column {
@@ -627,21 +627,21 @@
        sibling that comes *before* .card-grid in the DOM, so without these
        the grid's cards (later in DOM, no elevated stacking otherwise) would
        paint over it as they scroll underneath rather than the reverse.
-       z-index: 10, not just an arbitrary "above" value — .card-menu-wrap
+       z-index: 10, not just an arbitrary "above" value: .card-menu-wrap
        (the video card's "..." button) sits at z-index: 2, same as this
        used to be, and a tie falls back to DOM order; .card-grid comes
        *after* this row, so the tied dot menu was winning and painting over
        the sticky bar (and its Play All button) as cards scrolled under it.
        10 clears that with headroom, while staying well under .auth-panel
        (45) and the video modal (200), which do need to sit above this.
-       top: -1px, not 0 — a 1-device-pixel gap otherwise appears at the very
+       top: -1px, not 0: a 1-device-pixel gap otherwise appears at the very
        top of the sticky bar on scroll (a subpixel rounding artifact common
        to `position: sticky; top: 0`), letting a sliver of the card behind
        it show through; nudging the stick point 1px above the viewport edge
        closes it.
        Styled like a topbar (opaque background, bottom border, real vertical
        padding) rather than bare text sitting flush against the viewport
-       edge, and forced to one line — title truncates instead of wrapping —
+       edge, and forced to one line (title truncates instead of wrapping)
        so it doesn't grow taller than a normal bar while pinned. */
     .home-shelf .section-heading-row {
       position: sticky;
@@ -686,7 +686,7 @@
     <div class="layout">
       <section class="videos-column">
         <!-- Desktop-only (mobile already has its own tagline in the top
-             header bar — see renderHeader in helpers.js). A static sibling
+             header bar; see renderHeader in helpers.js). A static sibling
              of #home-shelves, not inside it: renderHomeShelves() replaces
              that element's entire innerHTML, which would wipe this out. -->
         <div class="home-intro">
@@ -696,7 +696,7 @@
         <!-- Populated entirely by renderHomeShelves() below: one .home-shelf
              per region-slice of Top News, then one per additional rolling
              playlist (Explainers, Business, ...). No static per-shelf markup
-             here — the region split means the shelf count isn't known until
+             here: the region split means the shelf count isn't known until
              the data comes back. -->
         <div id="home-shelves"></div>
       </section>
@@ -715,7 +715,7 @@
 
     <div class="home-footer-row">
       <!-- Visible to everyone (so its existence is discoverable), but the
-           actual form only renders once signed in — see loadFeedbackCard(). -->
+           actual form only renders once signed in; see loadFeedbackCard(). -->
       <div id="home-feedback"></div>
 
       <footer>
@@ -766,7 +766,7 @@
 
   // loadVideos/loadHeadlines are re-called on every "anchor-filter-change"
   // (see the listener below), not just once at page load like before the
-  // region/language filter existed — this guards the two things that broke
+  // region/language filter existed: this guards the two things that broke
   // on a second call: #status getting .remove()'d the first time round
   // (later calls would find it null) and listEl.addEventListener stacking
   // a duplicate onThumbGridClick listener on every re-run.
@@ -787,14 +787,19 @@
       headers: { apikey: supabasePublishableKey, Authorization: `Bearer ${supabasePublishableKey}` },
     });
     if (!res.ok) throw new Error(`Supabase request failed: ${res.status}`);
-    return res.json();
+    const rows = await res.json();
+    // regionLangQueryParams is a coarse overlap pre-filter; narrow to the
+    // precise per-row rule here (see regionMatchesFilter in helpers.js).
+    return rows.filter((v) => matchesRegionLangFilter(v.region, v.language, regions, languages));
   }
 
   // Top News mixes channels of very different upload volume (e.g. WION
-  // posts far more than AP) — grouping into one shelf per region means a
-  // prolific channel only crowds its own region's shelf, not every other
-  // region's visibility. A channel's `region` is an array (e.g. WION is
-  // {in, global} — see channels.ts), so this picks its most specific tag;
+  // posts far more than AP), resolving each video down to one specific
+  // region first (this function), then bucketing those into Global/home
+  // region/Rest of the World (see renderHomeShelves), means a prolific
+  // channel only crowds the bucket its region lands in, not every other
+  // bucket's visibility. A channel's `region` is an array (e.g. WION is
+  // {in, global}; see channels.ts), so this picks its most specific tag;
   // "global" is the leftover bucket for channels with no specific region.
   function regionShelfKey(regionArr) {
     if (!Array.isArray(regionArr) || regionArr.length === 0) return "global";
@@ -822,16 +827,16 @@
     `;
   }
 
-  // Lower of the two initial caps (desktop:6, mobile:4 — see the CSS
+  // Lower of the two initial caps (desktop:6, mobile:4; see the CSS
   // data-cap-state rules) decides whether "Show more" is worth rendering at
   // all: a shelf with 5 videos needs it on mobile even though desktop
   // already shows all 5 unprompted. Clicking it always goes to "expanded"
-  // (cap 12), never fully unlimited — still a curated amount, not the whole
+  // (cap 12), never fully unlimited, still a curated amount, not the whole
   // fetched batch.
   const MOBILE_INITIAL_CAP = 4;
 
   // Cards beyond the active cap are already in the DOM, just hidden via
-  // data-cap-state (see the .card-grid[data-cap-state] CSS rules) — "Show
+  // data-cap-state (see the .card-grid[data-cap-state] CSS rules): "Show
   // more" toggles that attribute rather than re-fetching, so it's instant
   // and the scroll position doesn't jump to a loading state.
   function shelfHtml(id, heading, videos, failed) {
@@ -878,20 +883,26 @@
     const moreBtn = document.getElementById(`${id}-more`);
     moreBtn?.addEventListener("click", () => {
       const collapsing = listEl.dataset.capState === "expanded";
+
       // Collapsing removes a whole grid's worth of cards *above* wherever
-      // the user has since scrolled to, which shifts everything below it
-      // up the page — the browser doesn't compensate scroll position for
-      // that on its own, so without this the user lands somewhere
-      // unrelated a "few shelves down" from the button they just clicked.
-      // Recording the button's own on-screen position before the toggle and
-      // scrolling by the delta after keeps it (and the shelf around it)
-      // pinned to the same spot on screen either direction, expand or
-      // collapse.
-      const beforeTop = moreBtn.getBoundingClientRect().top;
+      // the user has since scrolled to, which shifts everything below it up
+      // the page: the browser doesn't compensate scroll position for that
+      // on its own, so without this the user lands somewhere unrelated, a
+      // "few shelves up" from the button they just clicked. Recording the
+      // button's own on-screen position before the toggle and scrolling by
+      // the delta after keeps it (and the shelf around it) pinned to the
+      // same spot on screen.
+      //
+      // Expanding deliberately does NOT get the same treatment: the newly-
+      // revealed cards land above the button, and pinning the button in
+      // place would scroll those new cards up out of view, the opposite of
+      // what "show more" should do. Leaving scroll untouched lets the new
+      // cards land right where the button used to be, in view, with the
+      // button itself free to move down out of the viewport.
+      const beforeTop = collapsing ? moreBtn.getBoundingClientRect().top : null;
       listEl.dataset.capState = collapsing ? "collapsed" : "expanded";
       moreBtn.textContent = collapsing ? "Show more" : "Show less";
-      const afterTop = moreBtn.getBoundingClientRect().top;
-      window.scrollBy(0, afterTop - beforeTop);
+      if (collapsing) window.scrollBy(0, moreBtn.getBoundingClientRect().top - beforeTop);
     });
 
     const updatedEl = document.getElementById(`${id}-updated`);
@@ -901,7 +912,7 @@
     }
   }
 
-  // One coordinated render pass for the whole home shelf stack — Top News
+  // One coordinated render pass for the whole home shelf stack: Top News
   // (split into region shelves), then every other rolling playlist in
   // order. A single request token guards the whole pass since
   // "anchor-filter-change" can fire again before these fetches resolve; the
@@ -912,18 +923,18 @@
   // Promise.allSettled, not Promise.all: these three fetches are
   // independent playlists, not one atomic operation, so one failing (a
   // network blip on just the business query, say) shouldn't blank Top
-  // News and Explainers too — each failed playlist renders its own
+  // News and Explainers too: each failed playlist renders its own
   // "failed to load" shelf instead of taking the whole stack down with it.
   let homeShelvesRequestToken = 0;
 
-  // Every rolling playlist below Top News — each is one shelf, in this
+  // Every rolling playlist below Top News: each is one shelf, in this
   // order. Adding another genre later is just one more entry here (plus
-  // its own jobs/<name>/ folder and playlists.js registration) — no
+  // its own jobs/<name>/ folder and playlists.js registration); no
   // rendering/fetch code to touch. Also update the matching filterValues
   // list in apps/automation/src/jobs/archive/tables.ts (retention rule for
-  // these playlists) — the two lists aren't shared, so they only stay in
+  // these playlists); the two lists aren't shared, so they only stay in
   // sync manually.
-  const SINGLE_SHELF_PLAYLISTS = ["explainers", "business", "talks", "podcasts"];
+  const SINGLE_SHELF_PLAYLISTS = ["explainers", "talks", "business", "podcasts"];
 
   async function renderHomeShelves() {
     const thisToken = ++homeShelvesRequestToken;
@@ -937,38 +948,58 @@
 
     container.innerHTML = renderVideoSkeletons(6);
 
+    const { homeRegion } = getRegionLangFilter();
+
     const [topNewsResult, ...playlistResults] = await Promise.allSettled([
-      // 200, not 60: this fetch is a single global "newest N" query, split
-      // into per-region shelves only after the fact (see regionShelfKey
-      // below) — so the limit has to cover the whole live retained pool,
-      // not just what's shown. Archive retention (tables.ts) keeps up to 12
-      // rows per CHANNEL, not per region, and India alone has 3 channels
-      // (NDTV/WION/BBC News Hindi) — worst case is 14 channels * 12 = 168
-      // rows live at once. 60 (or even the region-shelf-cap-based 96) could
-      // still truncate the oldest rows platform-wide before grouping,
-      // silently under-filling whichever region's channels are currently
-      // least-recently-updated. 200 covers the true max pool with headroom —
-      // bump this again in lockstep with channels.ts if more channels are
-      // added (see that file's own retention-vs-fetch-limit coupling note).
-      fetchPlaylistVideos("top-news", 200),
+      // 250, not 60: this fetch is a single global "newest N" query, split
+      // into Global/home-region/Rest-of-the-World buckets only after the
+      // fact (see regionShelfKey below), so the limit has to cover the
+      // whole live retained pool, not just what's shown. Archive retention
+      // (tables.ts) keeps up to 12 rows per CHANNEL, not per bucket, and
+      // channels.ts now has 19 channels (9 global, 10 regional, India alone
+      // has 3); worst case is 19 * 12 = 228 rows live at once. A smaller
+      // limit could still truncate the oldest rows platform-wide before
+      // grouping, silently under-filling whichever bucket's channels are
+      // currently least-recently-updated. 250 covers the true max pool with
+      // headroom; bump this again in lockstep with channels.ts if more
+      // channels are added (see that file's own retention-vs-fetch-limit
+      // coupling note).
+      fetchPlaylistVideos("top-news", 250),
       ...SINGLE_SHELF_PLAYLISTS.map((playlist) => fetchPlaylistVideos(playlist, 24)),
     ]);
     if (thisToken !== homeShelvesRequestToken) return;
 
     const shelves = [];
+    // Rest of the World is appended after every other shelf (including the
+    // single-shelf playlists below), not right after Global/home: it's the
+    // catch-all for whatever didn't earn a dedicated spot, so it belongs at
+    // the bottom of the whole stack, not competing for top-of-page space.
+    let restShelf = null;
 
     if (topNewsResult.status === "fulfilled") {
-      const byRegion = new Map();
+      // Fixed 2-3 bucket model instead of one shelf per distinct region:
+      // different viewers want different granularity (some want a shelf per
+      // region, others just want "my region + everything else lumped
+      // together"), a personal "home region" pick is the one variable that
+      // captures that, everything else funnels into one shared bucket. See
+      // flo/2608-anchor session notes for why this replaced the old
+      // one-shelf-per-present-region approach.
+      const globalVideos = [];
+      const homeVideos = [];
+      const restVideos = [];
       for (const v of topNewsResult.value) {
         const key = regionShelfKey(v.region);
-        if (!byRegion.has(key)) byRegion.set(key, []);
-        byRegion.get(key).push(v);
+        if (key === "global") globalVideos.push(v);
+        else if (homeRegion && key === homeRegion) homeVideos.push(v);
+        else restVideos.push(v);
       }
-      shelves.push(
-        ...(window.ANCHOR_REGIONS ?? [])
-          .filter((r) => byRegion.has(r.key))
-          .map((r) => ({ id: `topnews-${r.key}`, heading: `Top News · ${r.displayName}`, videos: byRegion.get(r.key) }))
-      );
+
+      if (globalVideos.length > 0) shelves.push({ id: "topnews-global", heading: "Top News · Global", videos: globalVideos });
+      if (homeRegion && homeVideos.length > 0) {
+        const homeDisplayName = window.ANCHOR_HOME_REGIONS?.find((r) => r.key === homeRegion)?.displayName ?? homeRegion;
+        shelves.push({ id: "topnews-home", heading: `Top News · ${homeDisplayName}`, videos: homeVideos });
+      }
+      if (restVideos.length > 0) restShelf = { id: "topnews-rest", heading: "Top News · Rest of the World", videos: restVideos };
     } else {
       console.error(topNewsResult.reason);
       shelves.push({ id: "topnews-global", heading: "Top News", videos: [], failed: true });
@@ -984,6 +1015,8 @@
         shelves.push({ id: `watch-${playlist}`, heading, videos: [], failed: true });
       }
     });
+
+    if (restShelf) shelves.push(restShelf);
 
     container.innerHTML = shelves.map((s) => shelfHtml(s.id, s.heading, s.videos, s.failed)).join("");
     shelves.forEach((s) => wireShelf(s.id, s.videos));
@@ -1010,7 +1043,7 @@
     // Controls display order; any category not listed here (e.g. a newly
     // added feed) still renders, just appended after these. Was missing
     // World Affairs/Health/Environment & Climate/Long-form & Culture (added
-    // in a later session than this list) — they fell through to whatever
+    // in a later session than this list); they fell through to whatever
     // order their freshest headline happened to land in, reshuffling day to
     // day. Slotted in next to their nearest thematic neighbor below.
     const CATEGORY_ORDER = [
@@ -1029,7 +1062,7 @@
       "Long-form & Culture",
       // Deliberately last: this sidebar's job is staying informed, not
       // escaping (mirrors playlists.js's entertainment tier doing the
-      // opposite — sports-stunts leads there since that tier's whole
+      // opposite: sports-stunts leads there since that tier's whole
       // point is escaping).
       "Sports",
       "Gaming & Pop Culture",
@@ -1049,7 +1082,9 @@
         throw new Error(`Supabase request failed: ${res.status}`);
       }
 
-      const headlines = await res.json();
+      // regionLangQueryParams is a coarse overlap pre-filter; narrow to the
+      // precise per-row rule here (see regionMatchesFilter in helpers.js).
+      const headlines = (await res.json()).filter((h) => matchesRegionLangFilter(h.region, h.language, regions, languages));
       if (requestToken !== headlinesRequestToken) return;
 
       if (headlines.length === 0) {
@@ -1111,7 +1146,7 @@
     }
   }
 
-  // Consecutive days (ending today or yesterday — a day not yet started
+  // Consecutive days (ending today or yesterday; a day not yet started
   // shouldn't zero out a real streak) with at least one video marked
   // viewed. Derived from user_progress.viewed_at rather than a separate
   // daily_checkins table, since the raw data already has what's needed.
@@ -1184,7 +1219,7 @@
         : "";
 
     // No touched course yet (e.g. a streak built purely from watching Top
-    // News videos) — a lone streak pill doesn't need the full card treatment,
+    // News videos), a lone streak pill doesn't need the full card treatment,
     // and "Continue Learning" would be a misleading label with nothing to
     // continue.
     if (cards.length === 0) return streakBadge ? `<div class="shelf">${streakBadge}</div>` : "";
@@ -1214,14 +1249,14 @@
       </div>`;
   }
 
-  // Signed out: a soft upsell, not a wall — the whole rest of the site
+  // Signed out: a soft upsell, not a wall: the whole rest of the site
   // works without an account, this is the one spot worth surfacing what
   // signing in actually buys you. Signed in with zero progress: nothing to
   // show yet, so nothing renders (an empty shelf reads as broken, not
   // inviting). Signed in with progress: real courses, most recently
   // touched first.
   // Re-run on "anchor-auth-change" (completing OTP without a reload), not
-  // just once at page load — same overlapping-call hazard as loadVideos/
+  // just once at page load: same overlapping-call hazard as loadVideos/
   // loadHeadlines/loadCourses, same request-token fix.
   let continueLearningRequestToken = 0;
 
@@ -1247,7 +1282,7 @@
       return;
     }
 
-    // Capped — the shelf only ever shows the 3 most recently touched
+    // Capped: the shelf only ever shows the 3 most recently touched
     // courses and the streak only cares about recent days, so an unbounded
     // history isn't needed. Without a cap, a long-time user's full watch
     // history could grow the `in.()` filter below past URL length limits.
@@ -1279,7 +1314,7 @@
 
     const byCourse = new Map();
     for (const row of rows) {
-      if (!courseSlugs.has(row.playlist)) continue; // e.g. a watched top-news video — not a course
+      if (!courseSlugs.has(row.playlist)) continue; // e.g. a watched top-news video, not a course
       if (!byCourse.has(row.playlist)) byCourse.set(row.playlist, { watchedIds: new Set(), lastViewedAt: null });
       const entry = byCourse.get(row.playlist);
       entry.watchedIds.add(row.youtube_video_id);
@@ -1338,7 +1373,7 @@
       </div>`;
   }
 
-  // Unlike loadContinueLearning, no request-token guard needed — rendering
+  // Unlike loadContinueLearning, no request-token guard needed: rendering
   // depends only on session presence, not an async data fetch that could
   // resolve out of order across overlapping calls.
   async function loadFeedbackCard() {
@@ -1350,8 +1385,8 @@
 
     if (!session) {
       slot.querySelector("#feedback-signin").addEventListener("click", (event) => {
-        // Same bubbling trap as the Continue Learning / footer sign-in CTAs
-        // — this button lives outside #auth-control, so without stopping
+        // Same bubbling trap as the Continue Learning / footer sign-in CTAs:
+        // this button lives outside #auth-control, so without stopping
         // propagation here, the click reaches the document-level
         // "close if open" listener right after the synthetic click below
         // opens the panel, immediately closing it again.
@@ -1384,16 +1419,16 @@
   }
 
   // On mobile, "Headlines" is a sidebar nav item (see renderSidebar in
-  // helpers.js) rather than inline content — clicking it links to
+  // helpers.js) rather than inline content: clicking it links to
   // index.html?view=headlines, which swaps the whole home screen to a
   // headlines-only view (see the main[data-home-view="headlines"] CSS)
   // instead of permanently taking up scroll space above the video shelves.
-  // Desktop ignores this entirely — its side column already shows headlines
+  // Desktop ignores this entirely: its side column already shows headlines
   // alongside the shelf stack at all times.
   const homeView = new URLSearchParams(location.search).get("view") === "headlines" ? "headlines" : "home";
   document.querySelector("main").dataset.homeView = homeView;
 
-  // .home-intro is desktop-only (see its CSS), but harmless to always set —
+  // .home-intro is desktop-only (see its CSS), but harmless to always set:
   // the element just never renders on mobile.
   const introDateEl = document.getElementById("home-intro-date");
   if (introDateEl) {
@@ -1423,7 +1458,7 @@
     // Completing sign-in (OTP) mid-session doesn't otherwise touch the
     // watched badges/card menu (computed once per render), the Continue
     // Learning shelf, or the feedback card (both show a sign-in prompt
-    // until this re-runs them) — headlines have no sign-in-dependent
+    // until this re-runs them); headlines have no sign-in-dependent
     // rendering, so no need to reload those.
     window.addEventListener("anchor-auth-change", () => {
       renderHomeShelves();

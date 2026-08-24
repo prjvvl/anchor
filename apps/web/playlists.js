@@ -9,16 +9,16 @@
 //   so course.html shows an episode number badge on each card instead of
 //   a view count.
 // region/language: unlike tier/department/subject below, these mirror real
-//   columns on the videos table (see migration 0011/0012) — every course's
+//   columns on the videos table (see migration 0011/0012): every course's
 //   videos were already seeded with the {global}/"en" default, which is
 //   accurate for all of them (no current course is region-specific
 //   content). Listed here anyway as reference for whoever seeds a new
 //   course later, so its rows get tagged consistently with its source.
-//   Omitted for "top-news" — that playlist's region genuinely varies by
+//   Omitted for "top-news": that playlist's region genuinely varies by
 //   channel (see top-news/channels.ts), so no single value belongs here.
 // tier/department/subject: the Anchor Academy taxonomy (see
 //   flo/2608-anchor/docs/260822-course-taxonomy-playlist-candidates.md).
-//   Config-layer only, no DB schema involved — `category` on the videos
+//   Config-layer only, no DB schema involved: `category` on the videos
 //   table already doubles as "Subject" and `playlist` as "Course", so this
 //   is purely a display-grouping hint for courses.html/course.html.
 //   Omitted for "rolling" playlists, which sit outside the tier ladder.
@@ -35,7 +35,7 @@ window.ANCHOR_TIERS = [
   { key: "miscellaneous", displayName: "Miscellaneous", icon: "apps" },
 ];
 
-// Tiers with no fixed academic promise — courses.html skips the
+// Tiers with no fixed academic promise: courses.html skips the
 // locked/"coming soon" placeholder treatment for these (see INFORMAL_TIERS
 // there), same as extracurricular already did before this list existed.
 window.ANCHOR_INFORMAL_TIERS = ["extracurricular", "entertainment", "miscellaneous"];
@@ -48,7 +48,7 @@ window.ANCHOR_DEPARTMENTS = {
   "society-civics": { displayName: "Society & Civics", icon: "gavel" },
   "arts-culture": { displayName: "Arts & Culture", icon: "palette" },
   "media-literacy": { displayName: "Media & Information Literacy", icon: "fact_check" },
-  // Extracurricular-only departments — informal groupings, not academic.
+  // Extracurricular-only departments, informal groupings, not academic.
   "games-strategy": { displayName: "Games & Strategy", icon: "extension" },
   "tech-curiosities": { displayName: "Tech Curiosities", icon: "memory" },
   "places-culture": { displayName: "Places & Culture", icon: "public" },
@@ -57,6 +57,7 @@ window.ANCHOR_DEPARTMENTS = {
   "money-finance": { displayName: "Money & Personal Finance", icon: "savings" },
   // Entertainment-only departments.
   "sports-stunts": { displayName: "Sports & Stunts", icon: "sports" },
+  comedy: { displayName: "Comedy", icon: "theater_comedy" },
   "travel-adventure": { displayName: "Travel & Adventure", icon: "flight_takeoff" },
   documentaries: { displayName: "Documentaries", icon: "theaters" },
   "short-films": { displayName: "Short Films", icon: "movie_filter" },
@@ -64,6 +65,7 @@ window.ANCHOR_DEPARTMENTS = {
   "podcasts-conversations": { displayName: "Podcasts & Conversations", icon: "podcasts" },
   storytelling: { displayName: "Storytelling", icon: "auto_stories" },
   "business-startups": { displayName: "Business & Startups", icon: "rocket_launch" },
+  "health-wellness": { displayName: "Health & Wellness", icon: "self_improvement" },
 };
 
 // Departments shown under each tier, in display order. The academic ladder
@@ -71,7 +73,7 @@ window.ANCHOR_DEPARTMENTS = {
 // get the "locked, coming soon" placeholder for empty ones (see courses.html)
 // since that's a fixed curriculum promise; informal tiers (see
 // ANCHOR_INFORMAL_TIERS above) each get their own department list and skip
-// that placeholder — a department just doesn't render if it has no courses.
+// that placeholder: a department just doesn't render if it has no courses.
 const ACADEMIC_DEPARTMENTS = ["humanities", "sciences", "stem", "society-civics", "arts-culture", "media-literacy"];
 window.ANCHOR_TIER_DEPARTMENTS = {
   fundamental: ACADEMIC_DEPARTMENTS,
@@ -83,13 +85,13 @@ window.ANCHOR_TIER_DEPARTMENTS = {
   // purest spectacle goes first (mirrors headlines' CATEGORY_ORDER doing
   // the opposite: fun categories trail there since that sidebar's job is
   // staying informed, not escaping).
-  entertainment: ["sports-stunts", "travel-adventure", "documentaries", "short-films"],
-  miscellaneous: ["podcasts-conversations", "storytelling", "business-startups"],
+  entertainment: ["sports-stunts", "comedy", "travel-adventure", "documentaries", "short-films"],
+  miscellaneous: ["podcasts-conversations", "storytelling", "business-startups", "health-wellness"],
 };
 
 // The sitewide region/language filter's option list (see the sidebar
 // filter in helpers.js). Hardcoded rather than derived from distinct
-// values in the DB — only a handful of codes are in real use across all
+// values in the DB: only a handful of codes are in real use across all
 // sources (top-news/channels.ts, rss-headlines/feeds.ts, the course
 // entries below), so a fixed list is simpler than a live query. Add a new
 // entry here whenever a source using a new code gets added.
@@ -107,7 +109,18 @@ window.ANCHOR_REGIONS = [
 window.ANCHOR_LANGUAGES = [
   { key: "en", displayName: "English" },
   { key: "hi", displayName: "Hindi" },
-  { key: "es", displayName: "Spanish" },
+];
+
+// The homepage's "which region gets its own dedicated Top News shelf"
+// preference, separate from ANCHOR_REGIONS (which controls what's
+// included at all). Deliberately a short, curated list rather than every
+// ANCHOR_REGIONS entry: it's opt-in real estate on the homepage, not a
+// filter, so it only lists regions worth a dedicated shelf for enough
+// users to justify one. Add an entry here when that changes; no other code
+// needs to change (see regionShelfKey/renderHomeShelves in index.html).
+window.ANCHOR_HOME_REGIONS = [
+  { key: "in", displayName: "India" },
+  { key: "us", displayName: "United States" },
 ];
 
 window.ANCHOR_PLAYLISTS = {
@@ -822,6 +835,18 @@ window.ANCHOR_PLAYLISTS = {
     department: "food-culture",
     subject: "Home Cooking",
   },
+  "otr-food-history": {
+    displayName: "Food & History",
+    description: "OTR digs into the history and culture behind dishes and ingredients, where food's stories are people's stories.",
+    type: "course",
+    ordered: false,
+    source: "OTR Food & History",
+    region: ["global"],
+    language: "en",
+    tier: "extracurricular",
+    department: "food-culture",
+    subject: "Food History",
+  },
   blacksmithing: {
     displayName: "Blacksmithing Projects",
     description: "Alec Steele's hands-on bladesmithing and blacksmithing project videos.",
@@ -884,6 +909,42 @@ window.ANCHOR_PLAYLISTS = {
     department: "sports-stunts",
     subject: "Trick Shots",
   },
+  "people-are-awesome": {
+    displayName: "Amazing Feats",
+    description: "People Are Awesome's best-of compilations of extreme sports, stunts, and jaw-dropping physical skill.",
+    type: "course",
+    ordered: false,
+    source: "People Are Awesome",
+    region: ["global"],
+    language: "en",
+    tier: "entertainment",
+    department: "sports-stunts",
+    subject: "Extreme Sports & Skill",
+  },
+  "key-and-peele": {
+    displayName: "Key & Peele",
+    description: "Keegan-Michael Key and Jordan Peele's Emmy-winning sketch comedy, from Obama's Anger Translator to the East/West Bowl.",
+    type: "course",
+    ordered: false,
+    source: "Key & Peele",
+    region: ["global"],
+    language: "en",
+    tier: "entertainment",
+    department: "comedy",
+    subject: "Sketch Comedy",
+  },
+  "biswa-kalyan-rath": {
+    displayName: "Stand-Up, Biswa Kalyan Rath",
+    description: "Observational stand-up from one of India's sharpest comedians, story-driven and dry.",
+    type: "course",
+    ordered: false,
+    source: "Biswa Kalyan Rath",
+    region: ["global"],
+    language: "en",
+    tier: "entertainment",
+    department: "comedy",
+    subject: "Stand-Up Comedy",
+  },
   "travel-immersion": {
     displayName: "Immersive Travel",
     description: "Peter Santenello's deep, unscripted immersion in specific places and communities.",
@@ -943,6 +1004,18 @@ window.ANCHOR_PLAYLISTS = {
     tier: "entertainment",
     department: "short-films",
     subject: "Short Films",
+  },
+  "dust-shorts": {
+    displayName: "Sci-Fi Shorts",
+    description: "DUST's curated short science fiction films: independent, thought-provoking, one story at a time.",
+    type: "course",
+    ordered: false,
+    source: "DUST",
+    region: ["global"],
+    language: "en",
+    tier: "entertainment",
+    department: "short-films",
+    subject: "Science Fiction",
   },
 
   // --- Miscellaneous ---
@@ -1005,5 +1078,67 @@ window.ANCHOR_PLAYLISTS = {
     tier: "miscellaneous",
     department: "business-startups",
     subject: "Startup Lessons",
+  },
+  "company-man-business": {
+    displayName: "Company Case Studies",
+    description: "Company Man breaks down the rise, fall, and strategy behind well-known businesses.",
+    type: "course",
+    ordered: false,
+    source: "Company Man",
+    region: ["global"],
+    language: "en",
+    tier: "miscellaneous",
+    department: "business-startups",
+    subject: "Company History",
+  },
+
+  // --- Miscellaneous: Health & Wellness ---
+  "tara-brach-meditation": {
+    displayName: "Meditation & Emotional Healing",
+    description: "Tara Brach, clinical psychologist and Buddhist meditation teacher, on mindfulness, self-compassion, and working with difficult emotions.",
+    type: "course",
+    ordered: false,
+    source: "Tara Brach",
+    region: ["global"],
+    language: "en",
+    tier: "miscellaneous",
+    department: "health-wellness",
+    subject: "Meditation",
+  },
+  "jeff-nippard-exercise": {
+    displayName: "Exercise Science",
+    description: "Jeff Nippard on what the research actually says about training, muscle growth, and recovery, no bro-science.",
+    type: "course",
+    ordered: false,
+    source: "Jeff Nippard",
+    region: ["global"],
+    language: "en",
+    tier: "miscellaneous",
+    department: "health-wellness",
+    subject: "Exercise Science",
+  },
+  "abbey-sharp-nutrition": {
+    displayName: "Nutrition, Fact-Checked",
+    description: "Registered Dietitian Abbey Sharp debunks diet trends and breaks down what's actually backed by nutrition science.",
+    type: "course",
+    ordered: false,
+    source: "Abbey Sharp",
+    region: ["global"],
+    language: "en",
+    tier: "miscellaneous",
+    department: "health-wellness",
+    subject: "Nutrition",
+  },
+  "therapy-in-a-nutshell": {
+    displayName: "Understanding Mental Health",
+    description: "Licensed therapist Emma McAdam on anxiety, depression, and practical, evidence-based emotional-regulation skills.",
+    type: "course",
+    ordered: false,
+    source: "Therapy in a Nutshell",
+    region: ["global"],
+    language: "en",
+    tier: "miscellaneous",
+    department: "health-wellness",
+    subject: "Mental Health",
   },
 };
