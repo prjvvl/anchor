@@ -8,27 +8,72 @@
 <script src="theme-init.js"></script>
 <link rel="stylesheet" href="styles.css" />
 <style>
-  .profile-card {
-    max-width: 420px;
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1.5rem;
+  /* Left-aligned, not space-between: with only a few text controls (no
+     images, unlike the History/Saved grids below), stretching them to the
+     page's full width put a ~1000px dead gap between the email and Sign
+     out on a wide viewport - technically "full width" but reading as
+     broken, not intentional. Grouping everything on the left instead (its
+     own natural width, page background, no border) is what actually makes
+     this read as page content rather than a boxed-off widget. */
+  .profile-account-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
   }
 
-  .profile-card p {
+  .profile-account-row-top {
+    gap: 2.5rem;
+  }
+
+  .profile-account-row .btn-secondary {
+    width: auto;
+    margin-top: 0;
+    flex-shrink: 0;
+  }
+
+  .profile-header {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  .profile-header .material-symbols-outlined {
+    font-size: 2.75rem;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .profile-header-email {
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 700;
+    word-break: break-all;
+  }
+
+  .profile-header-meta {
+    margin: 0.15rem 0 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .profile-divider {
+    border-top: 1px solid var(--border);
+    margin: 1.1rem 0;
+  }
+
+  .profile-field {
     margin: 0 0 1.1rem;
-    font-size: 0.92rem;
   }
 
-  .profile-card p strong {
+  .profile-field > label {
     display: block;
     font-size: 0.78rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--muted);
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.35rem;
   }
 
   .profile-toggle {
@@ -36,7 +81,7 @@
     align-items: center;
     gap: 0.6rem;
     font-size: 0.9rem;
-    margin: 0 0 1.25rem;
+    margin: 0;
     cursor: pointer;
   }
 
@@ -57,8 +102,8 @@
   }
 
   .display-name-row input {
-    flex: 1;
-    min-width: 0;
+    width: 100%;
+    max-width: 220px;
     padding: 0.5rem 0.7rem;
     border-radius: 8px;
     border: 1px solid var(--border);
@@ -67,23 +112,47 @@
     font-size: 0.9rem;
   }
 
+  /* .btn-secondary defaults to width:100%/margin-top for a standalone
+     full-width button - reset back to a natural, inline-sized button here
+     too (the .profile-account-row rule above only covers its own direct
+     children, not this button nested inside .display-name-row). */
   .display-name-row button {
-    /* .btn-secondary defaults to width:100%/margin-top for standalone
-       full-width buttons elsewhere (e.g. Sign out) — inside this flex row
-       that fights flex-shrink:0 for space, squeezing the input to nothing.
-       Reset back to a natural, inline-sized button here. */
     flex-shrink: 0;
     width: auto;
     margin-top: 0;
   }
 
-  .saved-section {
+  .profile-section {
     margin-top: 2rem;
   }
 
-  #saved-empty {
+  #saved-empty,
+  #history-empty {
     color: var(--muted);
     font-size: 0.9rem;
+  }
+
+  /* Same shape as index.html's .show-more-line - not in styles.css since
+     it's page-specific there too. */
+  .show-more-line {
+    display: block;
+    width: 100%;
+    margin-top: 0.85rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  .show-more-line:hover {
+    background: var(--card-bg);
+    color: var(--ink);
   }
 </style>
 
@@ -101,28 +170,52 @@
       <p>Sign in using the button in the top right to view your profile.</p>
     </div>
 
-    <div id="profile-content" class="profile-card" hidden>
-      <p><strong>Email</strong><span id="profile-email"></span></p>
-      <p><strong>Member since</strong><span id="profile-member-since"></span></p>
-      <p>
-        <strong>Display name</strong>
+    <div id="profile-content" hidden>
+      <div class="profile-account-row profile-account-row-top">
+        <div class="profile-header">
+          <span class="material-symbols-outlined" aria-hidden="true">account_circle</span>
+          <div>
+            <p class="profile-header-email" id="profile-email"></p>
+            <p class="profile-header-meta">Member since <span id="profile-member-since"></span></p>
+          </div>
+        </div>
+        <button class="btn-secondary" type="button" id="profile-signout">Sign out</button>
+      </div>
+
+      <div class="profile-divider"></div>
+
+      <div class="profile-field">
+        <label for="profile-display-name">Display name</label>
         <span class="display-name-row">
           <input type="text" id="profile-display-name" maxlength="60" placeholder="Not set" disabled />
           <button class="btn-secondary" type="button" id="profile-display-name-save" disabled>Save</button>
         </span>
-      </p>
+      </div>
+
       <label class="profile-toggle">
         <input type="checkbox" id="profile-newsletter-toggle" disabled />
         Send me the daily digest by email
       </label>
-      <button class="btn-secondary" type="button" id="profile-signout">Sign out</button>
     </div>
 
-    <section class="saved-section" id="saved-section" hidden>
+    <section class="profile-section" id="history-section" hidden>
+      <h2 class="page-heading">History</h2>
+      <div id="history-status" class="sr-only">Loading history…</div>
+      <p id="history-empty" hidden>Nothing in progress — videos you start watching will show up here so you can pick up where you left off.</p>
+      <div class="card-grid" id="history-videos"></div>
+      <button class="show-more-line" type="button" id="history-load-more" hidden>Show more</button>
+    </section>
+
+    <section class="profile-section" id="saved-section" hidden>
       <h2 class="page-heading">Saved</h2>
       <div id="saved-status" class="sr-only">Loading saved videos…</div>
       <p id="saved-empty" hidden>Nothing saved yet — use the bookmark option in the video player to save something for later.</p>
       <div class="card-grid" id="saved-videos"></div>
+    </section>
+
+    <section class="profile-section" id="feedback-section" hidden>
+      <h2 class="page-heading">Feedback</h2>
+      <div id="profile-feedback"></div>
     </section>
   </main>
 </div>
@@ -143,10 +236,14 @@
     document.getElementById("status")?.remove();
     document.getElementById("profile-signed-out").hidden = Boolean(session);
     document.getElementById("profile-content").hidden = !session;
+    document.getElementById("history-section").hidden = !session;
     document.getElementById("saved-section").hidden = !session;
+    document.getElementById("feedback-section").hidden = !session;
     if (!session) return;
 
+    loadHistory(false);
     loadSavedVideos();
+    loadFeedbackCard("profile-feedback");
 
     document.getElementById("profile-email").textContent = session.user.email;
 
@@ -172,12 +269,120 @@
       });
   }
 
+  const HISTORY_PAGE_SIZE = 12;
+  let historyCursor = null; // updated_at of the oldest row loaded so far
+  let historyExhausted = false;
+
+  // Keyset-paginated on updated_at, not offset - offset would skew as rows
+  // get touched/reordered between pages. append=false (initial load) resets
+  // the grid/cursor; append=true (Show more) fetches the next page and
+  // appends to what's already rendered.
+  async function loadHistory(append) {
+    const statusEl = document.getElementById("history-status");
+    const emptyEl = document.getElementById("history-empty");
+    const gridEl = document.getElementById("history-videos");
+    const moreBtn = document.getElementById("history-load-more");
+
+    if (!append) {
+      emptyEl.hidden = true;
+      gridEl.innerHTML = renderVideoSkeletons(HISTORY_PAGE_SIZE);
+      historyCursor = null;
+      historyExhausted = false;
+    }
+    moreBtn.disabled = true;
+
+    let query = window.ANCHOR_AUTH.client
+      .from("user_progress")
+      .select("youtube_video_id, position_seconds, updated_at")
+      .eq("status", "in_progress")
+      .order("updated_at", { ascending: false })
+      .limit(HISTORY_PAGE_SIZE);
+    if (historyCursor) query = query.lt("updated_at", historyCursor);
+
+    const { data: progressRows, error: progressError } = await query;
+    if (progressError) {
+      console.error(progressError);
+      statusEl.remove();
+      if (!append) gridEl.innerHTML = "";
+      return;
+    }
+
+    historyExhausted = progressRows.length < HISTORY_PAGE_SIZE;
+    if (progressRows.length > 0) historyCursor = progressRows[progressRows.length - 1].updated_at;
+    moreBtn.hidden = historyExhausted;
+    moreBtn.disabled = false;
+
+    if (progressRows.length === 0) {
+      statusEl.remove();
+      if (!append) {
+        gridEl.innerHTML = "";
+        emptyEl.hidden = false;
+      }
+      return;
+    }
+
+    const ids = progressRows.map((r) => r.youtube_video_id);
+    const { data: videos, error: videosError } = await window.ANCHOR_AUTH.client
+      .from("videos")
+      .select("youtube_video_id, title, channel_name, duration")
+      .in("youtube_video_id", ids);
+    if (videosError) {
+      console.error(videosError);
+      statusEl.remove();
+      if (!append) gridEl.innerHTML = "";
+      return;
+    }
+
+    // A video can exist as more than one playlist row (see migration 0007).
+    const byId = new Map();
+    for (const v of videos) {
+      if (!byId.has(v.youtube_video_id)) byId.set(v.youtube_video_id, v);
+    }
+
+    if (!append) gridEl.innerHTML = "";
+    statusEl.remove();
+    gridEl.insertAdjacentHTML(
+      "beforeend",
+      progressRows
+        .map((row) => ({ ...byId.get(row.youtube_video_id), positionSeconds: row.position_seconds }))
+        .filter((v) => v.youtube_video_id)
+        .map((v) => {
+          const pct = v.duration ? Math.round((v.positionSeconds / v.duration) * 100) : 0;
+          return `
+      <div class="video">
+        <button class="thumb" type="button" data-video-id="${escapeAttr(v.youtube_video_id)}" data-title="${escapeAttr(v.title)}" data-channel="${escapeAttr(v.channel_name ?? "")}" data-duration="${v.duration ?? ""}" aria-label="Play ${escapeAttr(v.title)}">
+          <img src="https://img.youtube.com/vi/${escapeAttr(v.youtube_video_id)}/hqdefault.jpg" alt="" loading="lazy" />
+          <span class="play-badge"></span>
+          ${v.duration ? `<span class="duration">${formatDuration(v.duration)}</span>` : ""}
+          ${pct > 0 ? renderProgressBar(pct) : ""}
+        </button>
+        ${renderCardMenu(v.youtube_video_id)}
+        <div class="video-body">
+          <span class="title">${escapeHtml(v.title)}</span>
+          <div class="meta"><span>${escapeHtml(v.channel_name ?? "")}</span></div>
+        </div>
+      </div>
+    `;
+        })
+        .join("")
+    );
+
+    gridEl.dataset.contextLabel = "History";
+    // Delegated listener on the container - only bind once, since it
+    // already covers cards appended by a later "Show more" page too.
+    if (!append) gridEl.addEventListener("click", onThumbGridClick);
+    syncBookmarkMenuItems(gridEl, ids);
+    revealCardMenus(gridEl);
+  }
+
+  document.getElementById("history-load-more").addEventListener("click", () => loadHistory(true));
+
   async function loadSavedVideos() {
     const statusEl = document.getElementById("saved-status");
     const emptyEl = document.getElementById("saved-empty");
     const gridEl = document.getElementById("saved-videos");
     emptyEl.hidden = true;
-    gridEl.innerHTML = "";
+    gridEl.innerHTML = renderVideoSkeletons(6);
 
     const { data: bookmarks, error: bookmarksError } = await window.ANCHOR_AUTH.client
       .from("bookmarks")
@@ -186,10 +391,12 @@
     if (bookmarksError) {
       console.error(bookmarksError);
       statusEl.remove();
+      gridEl.innerHTML = "";
       return;
     }
     if (bookmarks.length === 0) {
       statusEl.remove();
+      gridEl.innerHTML = "";
       emptyEl.hidden = false;
       return;
     }
@@ -202,6 +409,7 @@
     if (videosError) {
       console.error(videosError);
       statusEl.remove();
+      gridEl.innerHTML = "";
       return;
     }
 

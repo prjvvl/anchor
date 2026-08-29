@@ -152,7 +152,22 @@
       return;
     }
 
-    stepsEl.innerHTML = renderCoursePreviewSkeletons(info.courses.length);
+    // Mirrors pathStepHtml's real .path-step/.path-step-top wrapper (step
+    // number circle + tier pill) around the shared course-preview skeleton -
+    // without it, the numbered-step look only appears once real content
+    // loads, never during the loading state itself.
+    stepsEl.innerHTML = info.courses
+      .map(
+        () => `
+      <div class="path-step">
+        <div class="path-step-top">
+          <span class="skeleton" style="width: 1.9rem; height: 1.9rem; border-radius: 50%;"></span>
+          <span class="skeleton line" style="width: 70px; height: 1.1rem;"></span>
+        </div>
+        ${renderCoursePreviewSkeletons(1)}
+      </div>`
+      )
+      .join("");
 
     try {
       const [idResults, previewResults, viewedSet] = await Promise.all([

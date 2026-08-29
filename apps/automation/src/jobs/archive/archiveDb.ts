@@ -57,3 +57,12 @@ export async function deleteRowsByIds(table: string, ids: string[]): Promise<voi
     if (error) throw error;
   }
 }
+
+// Not in `tables` above: user_progress is mutated in place and has no `id`
+// column. A plain filtered delete has a fixed-length URL regardless of row
+// count, so it needs no chunking.
+export async function deleteStaleUserProgress(olderThanDays: number): Promise<void> {
+  const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await supabase.from("user_progress").delete().eq("status", "in_progress").lt("updated_at", cutoff);
+  if (error) throw error;
+}

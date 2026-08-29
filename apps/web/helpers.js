@@ -187,29 +187,45 @@ function renderCardMenu(videoId) {
     </div>`;
 }
 
-// Best-effort: never blocks playback. No-op if signed out (nothing to
-// record for an anonymous visitor).
-async function markViewed(videoId) {
-  if (!window.ANCHOR_AUTH) return;
+// Fields left out of `fields` are untouched on an existing row - Supabase's
+// merge-duplicates upsert only SETs columns present in the payload - so a
+// manual "Mark watched" (no playback session) never clobbers position_seconds.
+async function upsertProgress(videoId, fields) {
+  if (!window.ANCHOR_AUTH) return false;
   const { session } = await window.ANCHOR_AUTH.getSession();
-  if (!session) return;
+  if (!session) return false;
   const { error } = await window.ANCHOR_AUTH.client
     .from("user_progress")
-    .upsert({ youtube_video_id: videoId }, { onConflict: "user_id,youtube_video_id", ignoreDuplicates: true });
+    .upsert({ youtube_video_id: videoId, updated_at: new Date().toISOString(), ...fields }, { onConflict: "user_id,youtube_video_id" });
   if (error) console.error(error);
+  return !error;
+}
+
+async function markViewed(videoId) {
+  await upsertProgress(videoId, { status: "completed" });
+}
+
+// Downgrades a completed mark back to in_progress instead of deleting the
+// row - deleting would also throw away the saved resume position.
+async function unmarkWatched(videoId) {
+  const { error } = await window.ANCHOR_AUTH.client
+    .from("user_progress")
+    .update({ status: "in_progress", updated_at: new Date().toISOString() })
+    .eq("youtube_video_id", videoId);
+  if (error) console.error(error);
+  return !error;
 }
 
 async function unmarkViewed(badge) {
   const videoId = badge.dataset.videoId;
   // .thumb is a sibling of the badge, not an ancestor (see the comment on
   // renderViewedBadge's insertion point); capture it via the shared parent
-  // before removing the badge, so a failed delete below can restore it.
+  // before removing the badge, so a failed update below can restore it.
   const cardEl = badge.closest(".video");
   const thumb = cardEl?.querySelector(".thumb");
   badge.remove();
-  const { error } = await window.ANCHOR_AUTH.client.from("user_progress").delete().eq("youtube_video_id", videoId);
-  if (error) {
-    console.error(error);
+  const ok = await unmarkWatched(videoId);
+  if (!ok) {
     thumb?.insertAdjacentHTML("afterend", renderViewedBadge(videoId));
     return;
   }
@@ -217,31 +233,64 @@ async function unmarkViewed(badge) {
   if (menuItem) renderCardMenuItemState(menuItem, false);
 }
 
-// Patches .viewed-badge onto already-rendered video cards for whichever of
-// the given ids the signed-in user has already watched. Runs after the
-// grid is on screen (most callers fire-and-forget this) so it never adds
-// auth-dependent latency to the primary video/headline load. Returns the
-// viewed Set for callers that need it (e.g. a "Resume" button); null if
-// signed out, distinct from an empty Set ("no progress yet").
+// Patches .viewed-badge (completed) or a resume sliver (in_progress) onto
+// already-rendered cards in one query - two per-status queries would
+// double every grid's round trips. Runs after the grid is on screen (most
+// callers fire-and-forget this) so it never adds auth-dependent latency to
+// the primary load. Returns the completed Set for callers that need it
+// (e.g. a "Resume" button); null if signed out, distinct from an empty Set.
 async function markViewedBadges(containerEl, youtubeVideoIds) {
   if (!containerEl || !window.ANCHOR_AUTH || youtubeVideoIds.length === 0) return null;
   const { session } = await window.ANCHOR_AUTH.getSession();
   if (!session) return null;
 
-  const { data, error } = await window.ANCHOR_AUTH.client.from("user_progress").select("youtube_video_id").in("youtube_video_id", youtubeVideoIds);
+  const { data, error } = await window.ANCHOR_AUTH.client
+    .from("user_progress")
+    .select("youtube_video_id, status, position_seconds")
+    .in("youtube_video_id", youtubeVideoIds);
   if (error) {
     console.error(error);
     return null;
   }
 
-  const viewed = new Set((data ?? []).map((row) => row.youtube_video_id));
-  containerEl.querySelectorAll(".thumb").forEach((thumb) => {
-    if (!viewed.has(thumb.dataset.videoId)) return;
-    thumb.insertAdjacentHTML("afterend", renderViewedBadge(thumb.dataset.videoId));
-    const menuItem = thumb.closest(".video")?.querySelector('.menu-item[data-action="watched"]');
-    if (menuItem) renderCardMenuItemState(menuItem, true);
+  const viewed = new Set();
+  (data ?? []).forEach((row) => {
+    const thumb = containerEl.querySelector(`.thumb[data-video-id="${CSS.escape(row.youtube_video_id)}"]`);
+    if (!thumb) return;
+    if (row.status === "completed") {
+      viewed.add(row.youtube_video_id);
+      thumb.insertAdjacentHTML("afterend", renderViewedBadge(row.youtube_video_id));
+      const menuItem = thumb.closest(".video")?.querySelector('.menu-item[data-action="watched"]');
+      if (menuItem) renderCardMenuItemState(menuItem, true);
+    } else {
+      const duration = Number(thumb.dataset.duration);
+      const pct = duration ? Math.round((row.position_seconds / duration) * 100) : 0;
+      if (pct > 0) thumb.insertAdjacentHTML("beforeend", renderProgressBar(pct));
+    }
   });
   return viewed;
+}
+
+function renderProgressBar(pct) {
+  return `<span class="thumb-progress"><span style="width:${Math.min(100, pct)}%"></span></span>`;
+}
+
+// Batch fetch of status + resume position, used by the player to know
+// which queued item to resume, and from where.
+async function fetchProgressMap(youtubeVideoIds) {
+  if (!window.ANCHOR_AUTH || youtubeVideoIds.length === 0) return new Map();
+  const { session } = await window.ANCHOR_AUTH.getSession();
+  if (!session) return new Map();
+
+  const { data, error } = await window.ANCHOR_AUTH.client
+    .from("user_progress")
+    .select("youtube_video_id, status, position_seconds")
+    .in("youtube_video_id", youtubeVideoIds);
+  if (error) {
+    console.error(error);
+    return new Map();
+  }
+  return new Map((data ?? []).map((row) => [row.youtube_video_id, row]));
 }
 
 // Same idea as markViewedBadges, but bookmarks have no grid badge to
@@ -358,7 +407,7 @@ async function fetchViewedSet() {
   const { session } = await window.ANCHOR_AUTH.getSession();
   if (!session) return null;
 
-  const { data, error } = await window.ANCHOR_AUTH.client.from("user_progress").select("youtube_video_id");
+  const { data, error } = await window.ANCHOR_AUTH.client.from("user_progress").select("youtube_video_id").eq("status", "completed");
   if (error) {
     console.error(error);
     return null;
@@ -1031,7 +1080,6 @@ function initAuthControl() {
   function panelBody() {
     if (session) {
       return `
-        <p class="auth-email">${escapeHtml(session.user.email)}</p>
         <a class="btn-secondary" href="profile.html">Profile</a>
         <button class="btn-secondary" type="button" id="auth-signout">Sign out</button>
       `;
@@ -1056,16 +1104,32 @@ function initAuthControl() {
 
   function render() {
     const label = session ? truncateLabel(displayName || session.user.email) : "Sign in";
+    // Same slot either way: the signed-in email, or a heading for whichever
+    // step of the sign-in form is showing - never blank, so the close
+    // button never sits alone on its own row.
+    const headLabel = session ? session.user.email : step === "code" ? "Enter code" : "Sign in";
     container.innerHTML = `
       <button class="auth-btn" type="button" id="auth-toggle" aria-label="Account menu">
         <span class="material-symbols-outlined" aria-hidden="true">account_circle</span>
         <span class="auth-btn-label">${escapeHtml(label)}</span>
       </button>
-      <div class="auth-panel${panelOpen ? " open" : ""}" id="auth-panel">${panelBody()}</div>
+      <div class="auth-panel${panelOpen ? " open" : ""}" id="auth-panel">
+        <div class="auth-panel-head">
+          <span class="auth-panel-title" title="${escapeAttr(headLabel)}">${escapeHtml(headLabel)}</span>
+          <button class="auth-panel-close" type="button" id="auth-panel-close" aria-label="Close">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+          </button>
+        </div>
+        ${panelBody()}
+      </div>
     `;
 
     document.getElementById("auth-toggle").addEventListener("click", () => {
       panelOpen = !panelOpen;
+      render();
+    });
+    document.getElementById("auth-panel-close").addEventListener("click", () => {
+      panelOpen = false;
       render();
     });
 
@@ -1228,6 +1292,83 @@ function initAuthControl() {
       panelOpen = false;
       render();
     }
+  });
+}
+
+function renderFeedbackCard(session) {
+  if (!session) {
+    return `
+      <div class="feedback-section">
+        <div class="signin-prompt">
+          <span class="material-symbols-outlined">forum</span>
+          <div>
+            <strong>Have feedback or a suggestion?</strong>
+            <p>Sign in to send it straight to the team.</p>
+          </div>
+          <button class="btn-primary" type="button" id="feedback-signin">Sign in</button>
+        </div>
+      </div>`;
+  }
+
+  return `
+    <div class="feedback-section">
+      <div class="feedback-card">
+        <div class="feedback-card-copy">
+          <strong>Have feedback or a suggestion?</strong>
+          <p>Tell us what's working, what's not, or what you'd like to see.</p>
+        </div>
+        <form class="feedback-form" id="feedback-form">
+          <textarea id="feedback-message" maxlength="2000" rows="3" placeholder="Your feedback…" required></textarea>
+          <button class="btn-primary" type="submit" id="feedback-submit">Send feedback</button>
+        </form>
+      </div>
+    </div>`;
+}
+
+// Shared by index.html (paired with the newsletter CTA in its own
+// .home-footer-row layout) and profile.html (standalone) - slotId picks
+// which page's container this renders into. No request-token guard needed:
+// rendering depends only on session presence, not an async data fetch that
+// could resolve out of order across overlapping calls.
+async function loadFeedbackCard(slotId) {
+  const slot = document.getElementById(slotId);
+  if (!slot || !window.ANCHOR_AUTH) return;
+
+  const { session } = await window.ANCHOR_AUTH.getSession();
+  slot.innerHTML = renderFeedbackCard(session);
+
+  if (!session) {
+    slot.querySelector("#feedback-signin").addEventListener("click", (event) => {
+      // Same bubbling trap as the Continue Learning / footer sign-in CTAs:
+      // this button lives outside #auth-control, so without stopping
+      // propagation here, the click reaches the document-level
+      // "close if open" listener right after the synthetic click below
+      // opens the panel, immediately closing it again.
+      event.stopPropagation();
+      document.getElementById("auth-toggle")?.click();
+      document.getElementById("auth-toggle")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return;
+  }
+
+  slot.querySelector("#feedback-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const textarea = slot.querySelector("#feedback-message");
+    const message = textarea.value.trim();
+    if (!message) return;
+
+    const submitBtn = slot.querySelector("#feedback-submit");
+    submitBtn.disabled = true;
+    const { error } = await window.ANCHOR_AUTH.client.from("feedback").insert({ email: session.user.email, message });
+    submitBtn.disabled = false;
+
+    if (error) {
+      console.error(error);
+      showToast("Couldn't send feedback. Please try again.", "error");
+      return;
+    }
+    textarea.value = "";
+    showToast("Thanks for the feedback!", "success");
   });
 }
 

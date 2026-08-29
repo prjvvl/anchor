@@ -41,10 +41,11 @@ async function run() {
   const unsubscribeBase = process.env.UNSUBSCRIBE_BASE_URL;
   if (!unsubscribeBase) throw new Error("Missing UNSUBSCRIBE_BASE_URL");
 
+  const dateLabel = istDateLabel();
   const messages = subscribers.map((s) => ({
     to: s.email,
     subject: digest.subject,
-    html: renderDigestEmail(digest, picks, `${unsubscribeBase}?token=${s.unsubscribe_token}`),
+    html: renderDigestEmail(digest, picks, `${unsubscribeBase}?token=${s.unsubscribe_token}`, dateLabel),
   }));
 
   await sendBatch(messages);
@@ -60,6 +61,12 @@ function istDateString(): string {
   const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
   const nowIst = new Date(Date.now() + IST_OFFSET_MS);
   return nowIst.toISOString().slice(0, 10);
+}
+
+function istDateLabel(): string {
+  const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+  const nowIst = new Date(Date.now() + IST_OFFSET_MS);
+  return nowIst.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
 runJob("newsletter", run);

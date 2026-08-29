@@ -534,6 +534,49 @@ header p {
   display: block;
 }
 
+/* In-flow, not absolutely positioned in the corner: the email/code input
+   sits flush against the panel's own padding, so an overlaid button there
+   would sit on top of it. */
+.auth-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: -0.2rem -0.3rem 0.75rem 0;
+}
+
+.auth-panel-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.auth-panel-close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.auth-panel-close:hover {
+  background: var(--border);
+  color: var(--ink);
+}
+
+.auth-panel-close .material-symbols-outlined {
+  font-size: 18px;
+}
+
 .auth-panel form {
   display: flex;
   flex-direction: column;
@@ -569,13 +612,6 @@ header p {
 .auth-panel form button:disabled {
   opacity: 0.6;
   cursor: default;
-}
-
-.auth-email {
-  margin: 0 0 0.75rem;
-  font-size: 0.88rem;
-  font-weight: 600;
-  word-break: break-all;
 }
 
 .btn-secondary {
@@ -875,6 +911,23 @@ main {
   background: #157f45;
 }
 
+/* Resume-progress sliver, flush along .thumb's bottom edge. Black/white
+   like .duration rather than --ink/--border, since it sits over a photo. */
+.thumb-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.thumb-progress > span {
+  display: block;
+  height: 100%;
+  background: #fff;
+}
+
 /* Grid-card "more options" menu: top-right corner, outermost, with
    .viewed-badge sitting just to its left (see that rule) when present.
    Positioned relative to .video (not .thumb, which clips; see the
@@ -1043,6 +1096,99 @@ footer {
 .btn-primary:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+/* Generic icon+text+button horizontal CTA - used by the feedback card's
+   signed-out state (helpers.js's renderFeedbackCard) on both index.html and
+   profile.html. */
+.signin-prompt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+}
+
+.signin-prompt .material-symbols-outlined {
+  font-size: 1.6rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.signin-prompt strong {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.signin-prompt p {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.signin-prompt .btn-primary {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+@media (max-width: 860px) {
+  .signin-prompt .btn-primary {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Shared feedback card (helpers.js's renderFeedbackCard/loadFeedbackCard),
+   used standalone on profile.html and paired with the newsletter CTA in
+   index.html's own .home-footer-row layout (that pairing's height-matching
+   overrides live there, page-specific; this is just the card itself). */
+.feedback-section {
+  margin-top: 0;
+}
+
+.feedback-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.2rem 1.3rem;
+}
+
+.feedback-card-copy strong {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.feedback-card-copy p {
+  margin: 0.2rem 0 0.9rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.feedback-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.feedback-form textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 0.65rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.88rem;
+  resize: vertical;
+}
+
+.feedback-form .btn-primary {
+  align-self: flex-end;
 }
 
 .toast {

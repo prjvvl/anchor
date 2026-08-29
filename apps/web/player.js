@@ -6,11 +6,16 @@
 // instead of marking a video watched the instant it's clicked.
 //
 // Depends on globals from helpers.js: escapeHtml, escapeAttr, formatDuration,
-// markViewed, renderViewedBadge. Load this script after helpers.js.
+// markViewed, renderViewedBadge, upsertProgress, unmarkWatched,
+// fetchProgressMap. Load this script after helpers.js.
 
 (function () {
   const WATCHED_THRESHOLD = 0.9;
   const POLL_INTERVAL_MS = 5000;
+  const HISTORY_THRESHOLD_SECONDS = 5;
+  // DB writes throttle independently of the 5s poll above - a 2-hour
+  // podcast shouldn't fire an upsert every tick.
+  const PROGRESS_WRITE_INTERVAL_MS = 20000;
   const MOBILE_QUERY = window.matchMedia("(max-width: 860px)");
 
   let apiPromise = null;
@@ -59,6 +64,13 @@
   let isOpen = false;
   let isMinimized = false;
   let contextLabel = "";
+  let lastProgressWriteAt = 0;
+  // Where furthestReached started this playback (set in playAt) - lets a
+  // rewatch of an already-completed video register progress again, instead
+  // of comparing against its stale, near-full-duration saved position.
+  let sessionStartPosition = 0;
+  // Saved status/position for the current queue, fetched once per open().
+  let progressByVideoId = new Map();
   const markedIds = new Set();
 
   function ensureModal() {
@@ -240,7 +252,8 @@
     backdropEl.classList.add("open");
     window.AnchorScrollLock.lock();
     renderUpNext();
-    ensureYouTubeApi().then(() => {
+    Promise.all([ensureYouTubeApi(), fetchProgressMap(list.map((item) => item.videoId))]).then(([, progress]) => {
+      progressByVideoId = progress;
       if (isOpen) playAt(startIndex);
     });
   }
@@ -293,12 +306,18 @@
     finalizeWatchCheck();
     stopPolling();
 
+    const item = queue[index];
+    // Only an in_progress row has a resume position worth honoring -
+    // reopening a completed video starts over, same as clicking a fresh one.
+    const saved = progressByVideoId.get(item.videoId);
+    const resumeFrom = saved && saved.status === "in_progress" ? saved.position_seconds : 0;
+
     currentIndex = index;
-    furthestReached = 0;
+    furthestReached = resumeFrom;
+    sessionStartPosition = resumeFrom;
     errorEl.hidden = true;
     playerMountEl.hidden = false;
 
-    const item = queue[index];
     breadcrumbEl.textContent = contextLabel ? `${contextLabel} · ${index + 1} of ${queue.length}` : "";
     titleEl.textContent = item.title;
     metaEl.textContent = [item.channel, item.duration ? formatDuration(item.duration) : null].filter(Boolean).join(" · ");
@@ -307,14 +326,14 @@
     updateQuickActions();
 
     if (ytPlayer) {
-      ytPlayer.loadVideoById(item.videoId);
+      ytPlayer.loadVideoById({ videoId: item.videoId, startSeconds: resumeFrom });
     } else {
       playerMountEl.innerHTML = "";
       const mount = document.createElement("div");
       playerMountEl.appendChild(mount);
       ytPlayer = new YT.Player(mount, {
         videoId: item.videoId,
-        playerVars: { autoplay: 1, rel: 0, modestbranding: 1, iv_load_policy: 3 },
+        playerVars: { autoplay: 1, rel: 0, modestbranding: 1, iv_load_policy: 3, start: resumeFrom },
         events: { onStateChange, onError },
       });
     }
@@ -328,7 +347,7 @@
       stopPolling();
     } else if (state === YT.PlayerState.ENDED) {
       stopPolling();
-      markWatchedIfNeeded(true);
+      writeProgressIfNeeded({ forceFlush: true, forceCompleted: true });
       if (autoplayCheckboxEl.checked && currentIndex + 1 < queue.length) {
         playAt(currentIndex + 1);
       }
@@ -358,7 +377,7 @@
       if (!ytPlayer || typeof ytPlayer.getCurrentTime !== "function") return;
       const current = ytPlayer.getCurrentTime();
       if (current > furthestReached) furthestReached = current;
-      markWatchedIfNeeded(false);
+      writeProgressIfNeeded();
     }, POLL_INTERVAL_MS);
   }
 
@@ -367,37 +386,65 @@
     pollTimer = null;
   }
 
-  // forced=true on a natural ENDED event (always counts as watched even if
-  // duration lookup is momentarily off); otherwise only counts once the
-  // furthest point reached crosses WATCHED_THRESHOLD of the real duration.
-  async function markWatchedIfNeeded(forced) {
+  // forceCompleted=true on a natural ENDED event (always counts as watched
+  // even if duration lookup is momentarily off); forceFlush=true bypasses
+  // the write throttle (close/pause/queue-advance, so the last position
+  // isn't lost). Nothing below HISTORY_THRESHOLD_SECONDS gets written at all.
+  async function writeProgressIfNeeded(options) {
+    const { forceFlush = false, forceCompleted = false } = options || {};
     if (currentIndex < 0) return;
     const item = queue[currentIndex];
-    if (!item || markedIds.has(item.videoId)) return;
+    if (!item || furthestReached < HISTORY_THRESHOLD_SECONDS) return;
 
+    // markedIds alone would miss a video already completed in a prior page
+    // load (it's an in-memory Set, empty on every fresh load) - falling
+    // back to the server-fetched progressByVideoId catches that case too,
+    // so briefly reopening an already-finished video can't downgrade it.
+    const saved = progressByVideoId.get(item.videoId);
+    const wasCompleted = markedIds.has(item.videoId) || saved?.status === "completed";
     const duration = ytPlayer && typeof ytPlayer.getDuration === "function" ? ytPlayer.getDuration() : 0;
-    const ratio = duration > 0 ? furthestReached / duration : 0;
-    if (!forced && ratio < WATCHED_THRESHOLD) return;
+    const isCompleted = wasCompleted || forceCompleted || (duration > 0 && furthestReached / duration >= WATCHED_THRESHOLD);
+    const isNewlyCompleted = isCompleted && !wasCompleted;
 
-    // Only cache this video as "handled" once there's actually a session to
-    // write it against — otherwise a signed-out watch would permanently
-    // block a later sign-in (same page, no reload) from ever recording it,
-    // since markedIds would already (wrongly) claim it's done.
+    // Nothing new to persist if playback hasn't advanced since this session
+    // started (e.g. resuming a video and closing again immediately) - avoids
+    // a no-op write that would otherwise bump updated_at (streak, Continue
+    // Learning ordering) for zero real new watch time.
+    if (furthestReached <= sessionStartPosition && !isNewlyCompleted) return;
+
+    if (!forceFlush && !isNewlyCompleted && Date.now() - lastProgressWriteAt < PROGRESS_WRITE_INTERVAL_MS) return;
+
+    // Captured now, before any await below: close()/playAt() call this
+    // fire-and-forget then immediately reset furthestReached to 0/resumeFrom
+    // synchronously, which would otherwise race a later read of the live
+    // variable once the awaited session check resumes.
+    const position = Math.floor(furthestReached);
+    const status = isCompleted ? "completed" : "in_progress";
+
+    // Only cache/write once there's actually a session to write it against
+    // — otherwise a signed-out watch would permanently block a later
+    // sign-in (same page, no reload) from ever recording it, since
+    // markedIds would already (wrongly) claim it's done.
     if (!window.ANCHOR_AUTH) return;
     const { session } = await window.ANCHOR_AUTH.getSession();
     if (!session) return;
 
-    markedIds.add(item.videoId);
-    markViewed(item.videoId);
-    const thumb = findThumbFor(item);
-    if (thumb && !thumb.parentElement.querySelector(".viewed-badge")) {
-      thumb.insertAdjacentHTML("afterend", renderViewedBadge(item.videoId));
+    lastProgressWriteAt = Date.now();
+    if (isCompleted) markedIds.add(item.videoId);
+    await upsertProgress(item.videoId, { status, position_seconds: position });
+    progressByVideoId.set(item.videoId, { status, position_seconds: position });
+
+    if (isNewlyCompleted) {
+      const thumb = findThumbFor(item);
+      if (thumb && !thumb.parentElement.querySelector(".viewed-badge")) {
+        thumb.insertAdjacentHTML("afterend", renderViewedBadge(item.videoId));
+      }
+      syncCardMenuItem(thumb, "watched", true);
     }
-    syncCardMenuItem(thumb, "watched", true);
-    // Re-checked rather than assumed: the await above is a real yield point
-    // now, so currentIndex may have moved on to a different video by the
-    // time this resolves.
-    if (item === queue[currentIndex]) renderWatchedToggle(true);
+    // Re-checked rather than assumed: the awaits above are real yield
+    // points, so currentIndex may have moved on to a different video by
+    // the time this resolves.
+    if (item === queue[currentIndex]) renderWatchedToggle(isCompleted);
   }
 
   function findThumbFor(item) {
@@ -460,16 +507,15 @@
     if (nowWatched) {
       markedIds.add(item.videoId);
       await markViewed(item.videoId);
+      progressByVideoId.set(item.videoId, { status: "completed", position_seconds: Math.floor(furthestReached) });
       if (thumb && !thumb.parentElement.querySelector(".viewed-badge")) {
         thumb.insertAdjacentHTML("afterend", renderViewedBadge(item.videoId));
       }
     } else {
       markedIds.delete(item.videoId);
       const { session } = await window.ANCHOR_AUTH.getSession();
-      if (session) {
-        const { error } = await window.ANCHOR_AUTH.client.from("user_progress").delete().eq("youtube_video_id", item.videoId);
-        if (error) console.error(error);
-      }
+      if (session) await unmarkWatched(item.videoId);
+      progressByVideoId.set(item.videoId, { status: "in_progress", position_seconds: Math.floor(furthestReached) });
       thumb?.parentElement.querySelector(".viewed-badge")?.remove();
     }
     syncCardMenuItem(thumb, "watched", nowWatched);
@@ -521,7 +567,7 @@
       const current = ytPlayer.getCurrentTime();
       if (current > furthestReached) furthestReached = current;
     }
-    markWatchedIfNeeded(false);
+    writeProgressIfNeeded({ forceFlush: true });
   }
 
   function renderUpNext() {

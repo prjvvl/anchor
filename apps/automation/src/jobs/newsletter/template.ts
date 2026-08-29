@@ -31,31 +31,56 @@ export function resolvePicks(digest: CuratedDigest, videos: VideoRow[], headline
     .filter((p): p is ResolvedPick => p !== null);
 }
 
-export function renderDigestEmail(digest: CuratedDigest, picks: ResolvedPick[], unsubscribeUrl: string): string {
+export function renderDigestEmail(digest: CuratedDigest, picks: ResolvedPick[], unsubscribeUrl: string, dateLabel: string): string {
   const items = picks
     .map(
-      (p) => `
+      (p, i) => `
       <tr>
-        <td style="padding:14px 0;border-bottom:1px solid #e5e7eb;">
-          <a href="${escapeAttr(p.url)}" style="color:#16233f;font-weight:600;font-size:16px;text-decoration:none;">${escapeHtml(p.title)}</a>
-          <div style="color:#6b7280;font-size:13px;margin-top:2px;">${escapeHtml(p.sourceLabel)}</div>
-          <div style="color:#16233f;font-size:14px;margin-top:6px;">${escapeHtml(p.blurb)}</div>
+        <td style="padding:18px 0;border-bottom:1px solid #e5e7eb;">
+          <table role="presentation" width="100%">
+            <tr>
+              <td width="30" valign="top" style="padding-right:12px;">
+                <div style="width:22px;height:22px;border-radius:50%;background:#16233f;color:#ffffff;font-size:12px;font-weight:700;text-align:center;line-height:22px;">${
+                  i + 1
+                }</div>
+              </td>
+              <td valign="top">
+                <div style="color:#6b7280;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">${escapeHtml(
+                  p.sourceLabel
+                )}</div>
+                <a href="${escapeAttr(p.url)}" style="color:#16233f;font-weight:600;font-size:16px;line-height:1.35;text-decoration:none;">${escapeHtml(
+        p.title
+      )}</a>
+                <div style="color:#4b5563;font-size:14px;line-height:1.5;margin-top:6px;">${escapeHtml(p.blurb)}</div>
+              </td>
+            </tr>
+          </table>
         </td>
       </tr>`
     )
     .join("");
 
+  // Preheader: the preview snippet shown in an inbox list before the email
+  // is opened. Gmail/Apple Mail pull it from the first visible text unless
+  // one's given explicitly, which would otherwise be the (fairly generic)
+  // brand name rather than today's actual intro.
   return `<!doctype html>
 <html>
   <body style="margin:0;background:#f6f7fb;font-family:-apple-system,Segoe UI,system-ui,sans-serif;">
-    <table role="presentation" width="100%" style="max-width:600px;margin:0 auto;padding:24px 16px;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(digest.intro)}</div>
+    <table role="presentation" width="100%" style="max-width:600px;margin:0 auto;padding:32px 16px;">
       <tr>
         <td>
-          <h1 style="font-size:20px;margin:0 0 4px;color:#16233f;">Daily Anchor</h1>
-          <p style="color:#6b7280;font-size:13px;margin:0 0 20px;">${escapeHtml(digest.intro)}</p>
+          <table role="presentation" width="100%" style="margin-bottom:22px;">
+            <tr>
+              <td style="font-size:19px;font-weight:700;color:#16233f;">&#9875; Daily Anchor</td>
+              <td align="right" style="color:#9ca3af;font-size:12px;white-space:nowrap;">${escapeHtml(dateLabel)}</td>
+            </tr>
+          </table>
+          <p style="color:#374151;font-size:14px;line-height:1.5;margin:0 0 22px;">${escapeHtml(digest.intro)}</p>
           <table role="presentation" width="100%">${items}</table>
-          <p style="color:#9ca3af;font-size:12px;margin-top:28px;">
-            You're receiving this because you subscribed at Daily Anchor.
+          <p style="color:#9ca3af;font-size:12px;line-height:1.6;margin-top:28px;">
+            You're receiving this because you subscribed at Daily Anchor.<br />
             <a href="${escapeAttr(unsubscribeUrl)}" style="color:#9ca3af;">Unsubscribe</a>
           </p>
         </td>

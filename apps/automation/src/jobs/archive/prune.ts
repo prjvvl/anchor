@@ -1,9 +1,12 @@
 import "dotenv/config";
 import { tables } from "./tables.js";
-import { fetchIdsForRetention, deleteRowsByIds, type RetentionRow } from "./archiveDb.js";
+import { fetchIdsForRetention, deleteRowsByIds, deleteStaleUserProgress, type RetentionRow } from "./archiveDb.js";
 import { runJob } from "../../runJob.js";
 
 const JOB_NAME = "archive-prune";
+
+// `completed` rows are never pruned - only abandoned in_progress ones.
+const STALE_PROGRESS_DAYS = 45;
 
 async function run() {
   for (const table of tables) {
@@ -22,6 +25,9 @@ async function run() {
 
     await deleteRowsByIds(table.name, [...deleteIds]);
   }
+
+  await deleteStaleUserProgress(STALE_PROGRESS_DAYS);
+  console.log(`[${JOB_NAME}] user_progress: pruned in_progress rows older than ${STALE_PROGRESS_DAYS} days`);
 }
 
 // `rows` is newest-first; grouping preserves that order within each group,

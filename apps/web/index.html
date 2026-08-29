@@ -269,39 +269,6 @@
     background: var(--ink);
   }
 
-  .signin-prompt {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.9rem;
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem 1.2rem;
-  }
-
-  .signin-prompt .material-symbols-outlined {
-    font-size: 1.6rem;
-    color: var(--muted);
-    flex-shrink: 0;
-  }
-
-  .signin-prompt strong {
-    display: block;
-    font-size: 0.92rem;
-  }
-
-  .signin-prompt p {
-    margin: 0.2rem 0 0;
-    font-size: 0.82rem;
-    color: var(--muted);
-  }
-
-  .signin-prompt .btn-primary {
-    margin-left: auto;
-    flex-shrink: 0;
-  }
-
   /* Continue Learning slot's teaser row (see renderTeaserRow): sign-in
      prompt and/or paths teaser as fixed-shape cards that sit side by side
      when there's room and wrap to stacked, full-width cards when there
@@ -418,20 +385,20 @@
        would silently stop working the moment a different variant renders
        (as it already did for the signed-out state, which needed the same
        treatment but wasn't covered). Deliberately not also forcing
-       display/flex-direction here: .signin-prompt already declares its
-       own row layout (icon, text, button side by side) and just needs to
-       grow taller so that layout's own align-items: center vertically
-       centers it in the extra space; overriding it to a column would
-       stack the icon/text/button instead. */
+       display/flex-direction here: .signin-prompt (styles.css) already
+       declares its own row layout (icon, text, button side by side) and
+       just needs to grow taller so that layout's own align-items: center
+       vertically centers it in the extra space; overriding it to a column
+       would stack the icon/text/button instead. */
     .home-footer-row .feedback-section > * {
       flex: 1;
       box-sizing: border-box;
     }
 
-    /* Unlike .signin-prompt (see above), .feedback-card's base rule
-       (defined further down) has no display/direction of its own: it
-       does need the column treatment, so it's given one here explicitly,
-       scoped to this layout rather than changed globally. */
+    /* Unlike .signin-prompt (styles.css), .feedback-card's base rule (also
+       styles.css) has no display/direction of its own: it does need the
+       column treatment, so it's given one here explicitly, scoped to this
+       layout rather than changed globally. */
     .home-footer-row .feedback-card {
       display: flex;
       flex-direction: column;
@@ -467,53 +434,6 @@
       margin-top: auto;
       align-self: flex-end;
     }
-  }
-
-  /* Visible to everyone so its existence is discoverable, same reasoning
-     as .signin-prompt above, which the signed-out state reuses directly. */
-  .feedback-section {
-    margin-top: 0;
-  }
-
-  .feedback-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1.2rem 1.3rem;
-  }
-
-  .feedback-card-copy strong {
-    display: block;
-    font-size: 0.92rem;
-  }
-
-  .feedback-card-copy p {
-    margin: 0.2rem 0 0.9rem;
-    font-size: 0.82rem;
-    color: var(--muted);
-  }
-
-  .feedback-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.7rem;
-  }
-
-  .feedback-form textarea {
-    width: 100%;
-    min-height: 80px;
-    padding: 0.65rem 0.8rem;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--ink);
-    font: inherit;
-    font-size: 0.88rem;
-    resize: vertical;
-  }
-
-  .feedback-form .btn-primary {
-    align-self: flex-end;
   }
 
   /* All rolling content (Top News, split into per-region shelves;
@@ -662,16 +582,6 @@
 
     .home-shelf .section-heading-row .shelf-actions {
       flex-shrink: 0;
-    }
-
-    .signin-prompt {
-      flex-wrap: wrap;
-    }
-
-    .signin-prompt .btn-primary {
-      margin-left: 0;
-      width: 100%;
-      justify-content: center;
     }
   }
 </style>
@@ -946,7 +856,21 @@
       return;
     }
 
-    container.innerHTML = renderVideoSkeletons(6);
+    // Mirrors shelfHtml's real .home-shelf/.section-heading-row/.last-updated/
+    // .card-grid structure - a flat skeleton dump here had no grid to lay
+    // cards out in, stacking into one tall block instead of several small
+    // shelves. Three fake shelves, not an exact count (depends on the
+    // region split, not known yet). The second line stands in for
+    // .last-updated, whose margin is what separates heading from grid.
+    container.innerHTML = Array.from(
+      { length: 3 },
+      () => `
+      <div class="home-shelf">
+        <div class="section-heading-row"><div class="skeleton line" style="width: 160px; height: 1.4rem;"></div></div>
+        <div class="skeleton line" style="width: 110px; height: 0.78rem; margin: 0.2rem 0 0.85rem;"></div>
+        <div class="card-grid">${renderVideoSkeletons(6)}</div>
+      </div>`
+    ).join("");
 
     const { homeRegion } = getRegionLangFilter();
 
@@ -1147,11 +1071,11 @@
   }
 
   // Consecutive days (ending today or yesterday; a day not yet started
-  // shouldn't zero out a real streak) with at least one video marked
-  // viewed. Derived from user_progress.viewed_at rather than a separate
-  // daily_checkins table, since the raw data already has what's needed.
-  function computeStreak(viewedAtList) {
-    const days = new Set(viewedAtList.map((ts) => new Date(ts).toDateString()));
+  // shouldn't zero out a real streak) with at least one video touched
+  // (in_progress or completed both count). Derived from
+  // user_progress.updated_at rather than a separate daily_checkins table.
+  function computeStreak(updatedAtList) {
+    const days = new Set(updatedAtList.map((ts) => new Date(ts).toDateString()));
     const cursor = new Date();
     if (!days.has(cursor.toDateString())) cursor.setDate(cursor.getDate() - 1);
     let streak = 0;
@@ -1288,8 +1212,8 @@
     // history could grow the `in.()` filter below past URL length limits.
     const { data: progressRows, error } = await window.ANCHOR_AUTH.client
       .from("user_progress")
-      .select("youtube_video_id, viewed_at")
-      .order("viewed_at", { ascending: false })
+      .select("youtube_video_id, status, updated_at")
+      .order("updated_at", { ascending: false })
       .limit(200);
     if (requestToken !== continueLearningRequestToken) return;
     if (error || !progressRows || progressRows.length === 0) {
@@ -1298,8 +1222,9 @@
       return;
     }
 
-    const streak = computeStreak(progressRows.map((r) => r.viewed_at));
-    const viewedAtById = new Map(progressRows.map((r) => [r.youtube_video_id, r.viewed_at]));
+    const streak = computeStreak(progressRows.map((r) => r.updated_at));
+    const updatedAtById = new Map(progressRows.map((r) => [r.youtube_video_id, r.updated_at]));
+    const statusById = new Map(progressRows.map((r) => [r.youtube_video_id, r.status]));
 
     const { supabaseUrl, supabasePublishableKey } = window.ANCHOR_CONFIG;
     const idsParam = progressRows.map((r) => encodeURIComponent(r.youtube_video_id)).join(",");
@@ -1312,13 +1237,17 @@
 
     const courseSlugs = new Set(Object.entries(window.ANCHOR_PLAYLISTS ?? {}).filter(([, info]) => info.type === "course").map(([slug]) => slug));
 
+    // A course only shows up here once at least one of its videos is
+    // actually completed - merely starting one (in_progress) shouldn't
+    // surface a "0/N" card.
     const byCourse = new Map();
     for (const row of rows) {
       if (!courseSlugs.has(row.playlist)) continue; // e.g. a watched top-news video, not a course
+      if (statusById.get(row.youtube_video_id) !== "completed") continue;
       if (!byCourse.has(row.playlist)) byCourse.set(row.playlist, { watchedIds: new Set(), lastViewedAt: null });
       const entry = byCourse.get(row.playlist);
       entry.watchedIds.add(row.youtube_video_id);
-      const at = viewedAtById.get(row.youtube_video_id);
+      const at = updatedAtById.get(row.youtube_video_id);
       if (at && (!entry.lastViewedAt || at > entry.lastViewedAt)) entry.lastViewedAt = at;
     }
 
@@ -1343,80 +1272,6 @@
     slot.innerHTML = renderShelf(cards, streak);
   }
 
-  function renderFeedbackCard(session) {
-    if (!session) {
-      return `
-        <div class="feedback-section">
-          <div class="signin-prompt">
-            <span class="material-symbols-outlined">forum</span>
-            <div>
-              <strong>Have feedback or a suggestion?</strong>
-              <p>Sign in to send it straight to the team.</p>
-            </div>
-            <button class="btn-primary" type="button" id="feedback-signin">Sign in</button>
-          </div>
-        </div>`;
-    }
-
-    return `
-      <div class="feedback-section">
-        <div class="feedback-card">
-          <div class="feedback-card-copy">
-            <strong>Have feedback or a suggestion?</strong>
-            <p>Tell us what's working, what's not, or what you'd like to see.</p>
-          </div>
-          <form class="feedback-form" id="feedback-form">
-            <textarea id="feedback-message" maxlength="2000" rows="3" placeholder="Your feedback…" required></textarea>
-            <button class="btn-primary" type="submit" id="feedback-submit">Send feedback</button>
-          </form>
-        </div>
-      </div>`;
-  }
-
-  // Unlike loadContinueLearning, no request-token guard needed: rendering
-  // depends only on session presence, not an async data fetch that could
-  // resolve out of order across overlapping calls.
-  async function loadFeedbackCard() {
-    const slot = document.getElementById("home-feedback");
-    if (!slot || !window.ANCHOR_AUTH) return;
-
-    const { session } = await window.ANCHOR_AUTH.getSession();
-    slot.innerHTML = renderFeedbackCard(session);
-
-    if (!session) {
-      slot.querySelector("#feedback-signin").addEventListener("click", (event) => {
-        // Same bubbling trap as the Continue Learning / footer sign-in CTAs:
-        // this button lives outside #auth-control, so without stopping
-        // propagation here, the click reaches the document-level
-        // "close if open" listener right after the synthetic click below
-        // opens the panel, immediately closing it again.
-        event.stopPropagation();
-        document.getElementById("auth-toggle")?.click();
-        document.getElementById("auth-toggle")?.scrollIntoView({ behavior: "smooth", block: "center" });
-      });
-      return;
-    }
-
-    slot.querySelector("#feedback-form").addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const textarea = document.getElementById("feedback-message");
-      const message = textarea.value.trim();
-      if (!message) return;
-
-      const submitBtn = document.getElementById("feedback-submit");
-      submitBtn.disabled = true;
-      const { error } = await window.ANCHOR_AUTH.client.from("feedback").insert({ email: session.user.email, message });
-      submitBtn.disabled = false;
-
-      if (error) {
-        console.error(error);
-        showToast("Couldn't send feedback. Please try again.", "error");
-        return;
-      }
-      textarea.value = "";
-      showToast("Thanks for the feedback!", "success");
-    });
-  }
 
   // On mobile, "Headlines" is a sidebar nav item (see renderSidebar in
   // helpers.js) rather than inline content: clicking it links to
@@ -1453,7 +1308,7 @@
   if (homeView !== "headlines") {
     renderHomeShelves();
     loadContinueLearning();
-    loadFeedbackCard();
+    loadFeedbackCard("home-feedback");
     window.addEventListener("anchor-filter-change", () => renderHomeShelves());
     // Completing sign-in (OTP) mid-session doesn't otherwise touch the
     // watched badges/card menu (computed once per render), the Continue
@@ -1463,7 +1318,7 @@
     window.addEventListener("anchor-auth-change", () => {
       renderHomeShelves();
       loadContinueLearning();
-      loadFeedbackCard();
+      loadFeedbackCard("home-feedback");
     });
   }
 </script>
