@@ -9,4 +9,5 @@ export const channels: ChannelSource[] = [
   { id: "UCQ-rrUCsJLNjFdPtKq0YOfA", region: ["global"], language: "en" }, // Founders (David Senra) — book-based founder/company histories
   { id: "UCKZozRVHRYsYHGEyNKuhhdA", region: ["in", "global"], language: "en" }, // Think School — Indian business case-study deep dives
   { id: "UCyFqFYfTW2VoIQKylJ04Rtw", region: ["us", "global"], language: "en" }, // Acquired — company/M&A history
+  { id: "UC4QZ_LsYcvcq7qOsOhpAX4A", region: ["global"], language: "en" }, // ColdFusion — tech company/business-history documentaries (Theranos, Dropbox, etc.)
 ];

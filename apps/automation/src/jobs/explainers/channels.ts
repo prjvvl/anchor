@@ -13,4 +13,8 @@ export const channels: ChannelSource[] = [
   { id: "UCR1IuLEqb6UEA_zQ81kwXfg", region: ["global"], language: "en" }, // Real Engineering
   { id: "UC1yNl2E66ZzKApQdRuTQ4tw", region: ["eu", "global"], language: "en" }, // Sabine Hossenfelder, skeptical/contrarian physics commentary, Germany
   { id: "UC-CSyyi47VX1lD9zyeABW3w", region: ["in"], language: "hi" }, // Dhruv Rathee — Hindi explainer/documentary channel, covers science, politics, and social issues
+  { id: "UCbfYPyITQ-7l4upoX8nvctg", region: ["global"], language: "en" }, // Two Minute Papers — AI research paper breakdowns
+  { id: "UC9-y-6csu5WGm29I7JiwpnA", region: ["global"], language: "en" }, // Computerphile — Brady Haran/Nottingham (same family as Numberphile), broad CS incl. AI
+  { id: "UCNJ1Ymd5yFuUPtn21xtRbbw", region: ["global"], language: "en" }, // AI Explained — deep-dive analysis of major AI model releases/news, non-hype framing
+  { id: "UCsBjURrPoezykLs9EqgamOA", region: ["global"], language: "en" }, // Fireship — fast-paced tech/AI news and code
 ];
