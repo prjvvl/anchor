@@ -17,7 +17,7 @@ async function run() {
       const feedItems = await fetchFeed(feed.url, feed.name, feed.category, feed.region, feed.language);
       items.push(...feedItems.filter((item) => withinLookback(item.publishedAt, LOOKBACK_MINUTES)));
     } catch (err) {
-      // One broken/unreachable feed shouldn't take down the other 13.
+      // One broken/unreachable feed shouldn't take down the rest.
       console.warn(`[${JOB_NAME}] Failed to fetch "${feed.name}": ${(err as Error).message}`);
     }
   }

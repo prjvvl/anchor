@@ -889,7 +889,7 @@
       // channels are added (see that file's own retention-vs-fetch-limit
       // coupling note).
       fetchPlaylistVideos("top-news", 250),
-      ...SINGLE_SHELF_PLAYLISTS.map((playlist) => fetchPlaylistVideos(playlist, 24)),
+      ...SINGLE_SHELF_PLAYLISTS.map((playlist) => fetchPlaylistVideos(playlist, 12)),
     ]);
     if (thisToken !== homeShelvesRequestToken) return;
 

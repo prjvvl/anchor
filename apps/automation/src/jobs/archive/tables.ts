@@ -32,10 +32,10 @@ export const tables: TableConfig[] = [
       // (index.html's data-cap-state="expanded" nth-child(n+13) rule).
       { keep: 12, groupBy: "channel_name", filterColumn: "playlist", filterValues: ["top-news"] },
       // The 4 daily single-shelf rolling jobs: each is one shelf (not
-      // region-split), so a flat per-playlist cap is fine — no per-channel
+      // region-split), so a flat per-playlist cap is fine, no per-channel
       // fairness concern. keep:30 gives headroom above the frontend's
-      // 24-item fetch per shelf (fetchPlaylistVideos(playlist, 24)). This
-      // list mirrors SINGLE_SHELF_PLAYLISTS in apps/web/index.html — not
+      // 12-item fetch per shelf (fetchPlaylistVideos(playlist, 12)). This
+      // list mirrors SINGLE_SHELF_PLAYLISTS in apps/web/index.html, not
       // shared, so a new rolling job needs updating in both places.
       {
         keep: 30,

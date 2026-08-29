@@ -29,20 +29,32 @@ export async function runChannelJob(config: ChannelJobConfig): Promise<void> {
     return;
   }
 
-  const allCandidates: VideoCandidate[] = [];
-  for (const channel of channels) {
-    const uploadsPlaylistId = await getUploadsPlaylistId(channel.id);
-    if (!uploadsPlaylistId) {
-      console.warn(`[${name}] Could not resolve uploads playlist for channel ${channel.id}`);
-      continue;
-    }
+  // Concurrent, not sequential: channels are independent, so one slow or
+  // failing channel shouldn't delay or take down the rest.
+  const channelResults = await Promise.allSettled(
+    channels.map(async (channel) => {
+      const uploadsPlaylistId = await getUploadsPlaylistId(channel.id);
+      if (!uploadsPlaylistId) {
+        console.warn(`[${name}] Could not resolve uploads playlist for channel ${channel.id}`);
+        return [];
+      }
 
-    const videoIds = await getRecentUploads(uploadsPlaylistId);
-    const videos = await getVideoDetails(videoIds);
-    // Tagged here, per channel, rather than in youtube.ts — that module has
-    // no notion of region/language, only this per-channel config does.
-    const tagged = videos.map((v) => ({ ...v, region: channel.region, language: channel.language }));
-    allCandidates.push(...tagged.filter((v) => passesFilters(v, thresholds)));
+      const videoIds = await getRecentUploads(uploadsPlaylistId);
+      const videos = await getVideoDetails(videoIds);
+      // Tagged here, per channel, rather than in youtube.ts, that module has
+      // no notion of region/language, only this per-channel config does.
+      const tagged = videos.map((v) => ({ ...v, region: channel.region, language: channel.language }));
+      return tagged.filter((v) => passesFilters(v, thresholds));
+    })
+  );
+
+  const allCandidates: VideoCandidate[] = [];
+  for (const result of channelResults) {
+    if (result.status === "fulfilled") {
+      allCandidates.push(...result.value);
+    } else {
+      console.warn(`[${name}] Channel fetch failed: ${result.reason}`);
+    }
   }
 
   console.log(`[${name}] ${allCandidates.length} candidate(s) after filtering`);

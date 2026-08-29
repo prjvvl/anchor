@@ -512,19 +512,22 @@
     showToast("Signed out", "success");
   });
 
+  async function loadProfile() {
+    if (!window.ANCHOR_AUTH) {
+      renderProfile(null); // Supabase failed to load, resolve to signed-out rather than stay stuck loading
+      return;
+    }
+    const { session } = await window.ANCHOR_AUTH.getSession();
+    renderProfile(session);
+  }
+
   mountHeader();
   mountSidebar(null);
   initThemeToggle();
   initSidebarDrawer();
   initAuthControl();
   initRegionLangFilter();
-
-  // Fires immediately with any restored session, then again on every future
-  // change — including signing out via the header widget on this same page.
-  // Single source of truth, no separate getSession() call needed here.
-  if (window.ANCHOR_AUTH) {
-    window.ANCHOR_AUTH.onAuthStateChange((event, session) => renderProfile(session));
-  } else {
-    renderProfile(null); // Supabase failed to load — resolve to signed-out rather than stay stuck loading
-  }
+  loadProfile();
+  // Fires on real sign-in/out only, not token refreshes.
+  window.addEventListener("anchor-auth-change", (event) => renderProfile(event.detail.session));
 </script>

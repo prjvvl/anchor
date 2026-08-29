@@ -48,8 +48,9 @@ async function run() {
     html: renderDigestEmail(digest, picks, `${unsubscribeBase}?token=${s.unsubscribe_token}`, dateLabel),
   }));
 
-  await sendBatch(messages);
+  // Log before sending so a crash mid-send can't cause a retry to resend.
   await logSend(sentDate, subscribers.length);
+  await sendBatch(messages);
 
   console.log(`[${JOB_NAME}] Sent "${digest.subject}" (${picks.length} picks) to ${subscribers.length} subscriber(s)`);
 }
