@@ -48,9 +48,12 @@ export async function fetchIdsForRetention(
   }));
 }
 
-export async function deleteRowsByIds(table: string, ids: string[]): Promise<void> {
-  if (ids.length === 0) return;
+const DELETE_CHUNK_SIZE = 200;
 
-  const { error } = await supabase.from(table).delete().in("id", ids);
-  if (error) throw error;
+export async function deleteRowsByIds(table: string, ids: string[]): Promise<void> {
+  for (let i = 0; i < ids.length; i += DELETE_CHUNK_SIZE) {
+    const chunk = ids.slice(i, i + DELETE_CHUNK_SIZE);
+    const { error } = await supabase.from(table).delete().in("id", chunk);
+    if (error) throw error;
+  }
 }

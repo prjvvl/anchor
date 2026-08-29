@@ -38,6 +38,7 @@ export async function notifyAdmin(subject: string, body: string): Promise<boolea
 }
 
 export async function notifyFailure(jobName: string, err: unknown): Promise<void> {
-  const detail = err instanceof Error ? (err.stack ?? err.message) : String(err);
+  const detail =
+    err instanceof Error ? (err.stack ?? err.message) : JSON.stringify(err, null, 2);
   await notifyAdmin(`[Daily Anchor] ${jobName} failed`, detail);
 }
