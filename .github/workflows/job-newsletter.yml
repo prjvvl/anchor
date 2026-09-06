@@ -2,7 +2,7 @@ name: Job - Newsletter
 
 on:
   schedule:
-    - cron: "30 1 * * *" # 7:00 AM IST
+    - cron: "5 9 * * *" # 09:05 UTC / 2:35 PM IST
   workflow_dispatch: {}
 
 concurrency:

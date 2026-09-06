@@ -2,7 +2,7 @@ name: Job - Top News
 
 on:
   schedule:
-    - cron: "0 * * * *" # hourly
+    - cron: "13 */3 * * *" # every 3h, starting 00:13 UTC / 5:43 AM IST
   workflow_dispatch: {}
 
 concurrency:

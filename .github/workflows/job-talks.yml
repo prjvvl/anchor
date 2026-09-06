@@ -2,7 +2,7 @@ name: Job - Talks
 
 on:
   schedule:
-    - cron: "0 18 * * *" # 11:30 PM IST — before job-podcasts/explainers/business
+    - cron: "35 9 * * *" # 09:35 UTC / 3:05 PM IST
   workflow_dispatch: {}
 
 concurrency:

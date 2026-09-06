@@ -2,7 +2,7 @@ name: Job - Explainers
 
 on:
   schedule:
-    - cron: "0 19 * * *" # 12:30 AM IST — before the daily archive sync
+    - cron: "15 9 * * *" # 09:15 UTC / 2:45 PM IST
   workflow_dispatch: {}
 
 concurrency:

@@ -2,7 +2,7 @@ name: Job - Business
 
 on:
   schedule:
-    - cron: "30 19 * * *" # 1:00 AM IST — staggered 30min after job-explainers
+    - cron: "25 9 * * *" # 09:25 UTC / 2:55 PM IST
   workflow_dispatch: {}
 
 concurrency:
